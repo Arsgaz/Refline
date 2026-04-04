@@ -39,10 +39,18 @@ public class ActivityMetricsService : IActivityMetricsService
                 group => group.Key,
                 group => group.Sum(activity => activity.TimeSpentSeconds));
 
-        var topCategory = categorySeconds
+        var knownCategorySeconds = categorySeconds
+            .Where(item => item.Key != ActivityCategory.Unknown && item.Value > 0)
+            .ToDictionary(item => item.Key, item => item.Value);
+
+        var effectiveCategorySeconds = knownCategorySeconds.Count > 0
+            ? knownCategorySeconds
+            : categorySeconds;
+
+        var topCategory = effectiveCategorySeconds
             .OrderByDescending(item => item.Value)
             .Select(item => item.Key)
-            .FirstOrDefault();
+            .FirstOrDefault(ActivityCategory.Unknown);
 
         return new ActivityMetricsSummary
         {
@@ -52,7 +60,7 @@ public class ActivityMetricsService : IActivityMetricsService
             ProductiveSeconds = productiveSeconds,
             TopApplicationName = topApplications.FirstOrDefault()?.ApplicationName ?? "—",
             TopCategory = topCategory,
-            CategorySeconds = categorySeconds,
+            CategorySeconds = effectiveCategorySeconds,
             TopApplications = topApplications
         };
     }

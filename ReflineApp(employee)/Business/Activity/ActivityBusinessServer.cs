@@ -185,7 +185,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
     {
         if (string.IsNullOrWhiteSpace(activity.WindowTitle))
         {
-            activity.WindowTitle = windowTitle ?? activity.AppName;
+            activity.WindowTitle = string.IsNullOrWhiteSpace(windowTitle)
+                ? activity.AppName
+                : windowTitle.Trim();
         }
 
         activity.IsIdle = isIdle ||

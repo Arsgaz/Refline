@@ -7,6 +7,7 @@ public class ActivityClassificationService : IActivityClassificationService
     private static readonly string[] WorkMarkers =
     {
         "refline", "refline employee", "аналитика рабочего времени",
+        "analytics", "activity tracker",
         "visual studio", "visual studio code", "vs code", "code",
         "figma", "word", "excel", "powerpoint", "notion", "jira", "trello",
         "github desktop", "github", "cmd", "powershell", "windows terminal", "terminal",
