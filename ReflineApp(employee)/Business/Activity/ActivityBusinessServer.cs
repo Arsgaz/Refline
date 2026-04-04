@@ -147,6 +147,8 @@ public class ActivityBusinessServer : IActivityBusinessServer
     {
         return _lockService.ExecuteLocked(() =>
         {
+            EnsureActivitiesEnriched();
+
             // Приложение локальное и однопользовательское: синхронизация внутри процесса
             // закрывает риск параллельной записи одной и той же активности.
             var saveResult = _activityDataService.SaveAll(_todayActivities.Select(Clone), DateTime.Today);
@@ -166,6 +168,8 @@ public class ActivityBusinessServer : IActivityBusinessServer
             return new ActivitySummary();
         }
 
+        EnsureActivitiesEnriched();
+
         var metrics = _metricsService.Calculate(_todayActivities.Select(Clone).ToList());
         var totalTs = TimeSpan.FromSeconds(metrics.TotalTrackedSeconds);
         var mostActiveTitle = metrics.TopApplicationName.Length > 25
@@ -179,6 +183,14 @@ public class ActivityBusinessServer : IActivityBusinessServer
             MostActiveAppName = mostActiveTitle,
             Metrics = metrics
         };
+    }
+
+    private void EnsureActivitiesEnriched()
+    {
+        foreach (var activity in _todayActivities)
+        {
+            EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+        }
     }
 
     private void EnrichActivity(AppActivity activity, string? windowTitle, bool isIdle)

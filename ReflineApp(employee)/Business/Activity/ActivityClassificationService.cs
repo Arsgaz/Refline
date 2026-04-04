@@ -53,6 +53,11 @@ public class ActivityClassificationService : IActivityClassificationService
             return ActivityCategory.Unknown;
         }
 
+        if (ContainsReflineWorkContext(normalizedAppName, normalizedTitle))
+        {
+            return ActivityCategory.Work;
+        }
+
         if (ContainsAny(normalizedAppName, normalizedTitle, SystemMarkers))
         {
             return ActivityCategory.System;
@@ -79,6 +84,14 @@ public class ActivityClassificationService : IActivityClassificationService
         }
 
         return ActivityCategory.Unknown;
+    }
+
+    private static bool ContainsReflineWorkContext(string appName, string windowTitle)
+    {
+        return appName.Contains("refline", StringComparison.OrdinalIgnoreCase) ||
+            appName.Contains("аналитика рабочего времени", StringComparison.OrdinalIgnoreCase) ||
+            windowTitle.Contains("refline", StringComparison.OrdinalIgnoreCase) ||
+            windowTitle.Contains("аналитика рабочего времени", StringComparison.OrdinalIgnoreCase);
     }
 
     public string NormalizeApplicationName(string windowTitle, bool isIdle)
