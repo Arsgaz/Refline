@@ -55,7 +55,9 @@ public sealed class AppCompositionRoot
         ActivityBusinessServer = new ActivityBusinessServer(
             activityDataService,
             new ActivityValidationService(),
-            new ActivityLockService());
+            new ActivityLockService(),
+            new ActivityClassificationService(),
+            new ActivityMetricsService());
 
         SettingsBusinessServer = new SettingsBusinessServer(
             settingsDataService,
@@ -77,6 +79,11 @@ public sealed class AppCompositionRoot
     public SettingsViewModel CreateSettingsViewModel()
     {
         return new SettingsViewModel(SettingsBusinessServer);
+    }
+
+    public LoginActivationViewModel CreateLoginActivationViewModel()
+    {
+        return new LoginActivationViewModel(AuthenticationService, LicenseActivationService);
     }
 
     public Task<OperationResult> BootstrapIdentityAsync()
