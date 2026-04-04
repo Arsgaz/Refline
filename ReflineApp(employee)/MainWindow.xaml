@@ -1,0 +1,160 @@
+<Window x:Class="Refline.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
+        Title="Refline — Аналитика рабочего времени"
+        Height="650" Width="1050"
+        WindowStartupLocation="CenterScreen"
+        Background="#0D1117"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+
+        <!-- ======= Стиль боковых кнопок меню ======= -->
+        <Style x:Key="SidebarButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="Foreground" Value="#DDE6F1"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderBrush" Value="#2DC7FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+
+            <!-- ВОТ! Фикс ширины кнопок -->
+            <Setter Property="Width" Value="180"/>
+            <Setter Property="Margin" Value="20,6,0,6"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="6"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#4DE0FF"/>
+                                <Setter Property="Foreground" Value="#4DE0FF"/>
+                            </Trigger>
+
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="BorderBrush" Value="#1FA1CD"/>
+                                <Setter Property="Foreground" Value="#1FA1CD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+
+        <!-- ======= СИСТЕМНЫЙ ТРЕЙ ======= -->
+        <tb:TaskbarIcon x:Name="AppNotifyIcon"
+                        ToolTipText="Refline Tracker"
+                        TrayMouseDoubleClick="AppNotifyIcon_TrayMouseDoubleClick">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Развернуть" Click="TrayRestore_Click" />
+                    <MenuItem Header="Выйти" Click="TrayExit_Click" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
+        <!-- ======= БОКОВОЕ МЕНЮ ======= -->
+        <DockPanel Background="#111827" Width="220" HorizontalAlignment="Left">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ▬▬▬ ЛОГОТИП ▬▬▬ -->
+                <StackPanel Grid.Row="0" Margin="0,40,0,25" HorizontalAlignment="Center">
+                    <Image Source="/Resources/refline_logo.png"
+                           Width="160"
+                           Stretch="Uniform"
+                           Opacity="0.95"/>
+                </StackPanel>
+
+                <!-- ▬▬▬ КНОПКИ ОСНОВНОГО МЕНЮ ▬▬▬ -->
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center">
+
+                    <Button x:Name="DashboardBtn"
+                            Style="{StaticResource SidebarButton}"
+                            Click="DashboardBtn_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ViewDashboardOutline"
+                                                     Width="20" Height="20"
+                                                     Margin="0,0,8,0"
+                                                     Foreground="#DDE6F1"/>
+                            <TextBlock Text="Главная" Foreground="#DDE6F1"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="ReportsBtn"
+                            Style="{StaticResource SidebarButton}"
+                            Click="ReportsBtn_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ChartLine"
+                                                     Width="20" Height="20"
+                                                     Margin="0,0,8,0"
+                                                     Foreground="#DDE6F1"/>
+                            <TextBlock Text="Отчёты" Foreground="#DDE6F1"/>
+                        </StackPanel>
+                    </Button>
+
+                </StackPanel>
+
+                <!-- ▬▬▬ НИЖНИЕ КНОПКИ ▬▬▬ -->
+                <StackPanel Grid.Row="2" Margin="0,0,0,20" HorizontalAlignment="Center">
+
+                    <Separator Margin="0,10"/>
+
+                    <Button x:Name="SettingsBtn"
+                            Style="{StaticResource SidebarButton}"
+                            Click="SettingsBtn_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CogOutline"
+                                                     Width="20" Height="20"
+                                                     Margin="0,0,8,0"
+                                                     Foreground="#DDE6F1"/>
+                            <TextBlock Text="Настройки" Foreground="#DDE6F1"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="ExitBtn"
+                            Style="{StaticResource SidebarButton}"
+                            Click="ExitBtn_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Logout"
+                                                     Width="20" Height="20"
+                                                     Margin="0,0,8,0"
+                                                     Foreground="#DDE6F1"/>
+                            <TextBlock Text="Выход" Foreground="#DDE6F1"/>
+                        </StackPanel>
+                    </Button>
+
+                </StackPanel>
+
+            </Grid>
+        </DockPanel>
+
+        <!-- ======= ОСНОВНАЯ ЗОНА ДЛЯ ПЕРЕЛИСТЫВАНИЯ СТРАНИЦ ======= -->
+        <Frame x:Name="MainFrame"
+               NavigationUIVisibility="Hidden"
+               Margin="220,0,0,0"
+               Background="#0D1117"/>
+    </Grid>
+
+</Window>

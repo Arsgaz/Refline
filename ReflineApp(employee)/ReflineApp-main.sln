@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Refline", "Refline.csproj", "{92705FCB-7852-8931-14B1-410F8883D961}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{92705FCB-7852-8931-14B1-410F8883D961}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92705FCB-7852-8931-14B1-410F8883D961}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92705FCB-7852-8931-14B1-410F8883D961}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92705FCB-7852-8931-14B1-410F8883D961}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E1500767-2318-4C60-86F1-16DD261B8556}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,56 @@
+[
+  {
+    "AppName": "Refline - Activity Tracker",
+    "TimeSpentSeconds": 24,
+    "DurationString": "0 \u043C\u0438\u043D 24 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:09:41.4713411+03:00"
+  },
+  {
+    "AppName": "Google Gemini - Google Chrome",
+    "TimeSpentSeconds": 15,
+    "DurationString": "0 \u043C\u0438\u043D 15 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:46:26.8964214+03:00"
+  },
+  {
+    "AppName": "Happ 2.1.0 (507)",
+    "TimeSpentSeconds": 78,
+    "DurationString": "1 \u043C\u0438\u043D 18 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:53:50.7671547+03:00"
+  },
+  {
+    "AppName": "Telegram (2)",
+    "TimeSpentSeconds": 3,
+    "DurationString": "0 \u043C\u0438\u043D 03 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T13:18:54.1827981+03:00"
+  },
+  {
+    "AppName": "Refline - Antigravity - App.xaml",
+    "TimeSpentSeconds": 2,
+    "DurationString": "0 \u043C\u0438\u043D 02 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T13:18:58.1898301+03:00"
+  },
+  {
+    "AppName": "Telegram (1)",
+    "TimeSpentSeconds": 17,
+    "DurationString": "0 \u043C\u0438\u043D 17 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:09:58.4920308+03:00"
+  },
+  {
+    "AppName": "Refline \u2014 \u0410\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430 \u0440\u0430\u0431\u043E\u0447\u0435\u0433\u043E \u0432\u0440\u0435\u043C\u0435\u043D\u0438",
+    "TimeSpentSeconds": 28,
+    "DurationString": "0 \u043C\u0438\u043D 28 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T18:02:04.9692167+03:00"
+  },
+  {
+    "AppName": "Untitled (Workspace) - Antigravity - Task",
+    "TimeSpentSeconds": 1,
+    "DurationString": "0 \u043C\u0438\u043D 01 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:46:29.9373104+03:00"
+  },
+  {
+    "AppName": "Untitled (Workspace) - Antigravity - Implementation Plan",
+    "TimeSpentSeconds": 3,
+    "DurationString": "0 \u043C\u0438\u043D 03 \u0441\u0435\u043A",
+    "LastActive": "2026-03-07T16:51:47.2142157+03:00"
+  }
+]
