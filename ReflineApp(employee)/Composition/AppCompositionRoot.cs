@@ -55,7 +55,9 @@ public sealed class AppCompositionRoot
         ActivityBusinessServer = new ActivityBusinessServer(
             activityDataService,
             new ActivityValidationService(),
-            new ActivityLockService());
+            new ActivityLockService(),
+            new ActivityClassificationService(),
+            new ActivityMetricsService());
 
         SettingsBusinessServer = new SettingsBusinessServer(
             settingsDataService,

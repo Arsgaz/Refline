@@ -7,6 +7,10 @@ public class AppActivity : INotifyPropertyChanged
 {
     private int _id;
     private string _appName = string.Empty;
+    private string _windowTitle = string.Empty;
+    private ActivityCategory _category = ActivityCategory.Unknown;
+    private bool _isIdle;
+    private bool _isProductive;
     private int _timeSpentSeconds;
     private DateTime _lastActive;
     private DateTime _activityDate = DateTime.Today;
@@ -33,6 +37,58 @@ public class AppActivity : INotifyPropertyChanged
             if (_appName != value)
             {
                 _appName = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string WindowTitle
+    {
+        get => _windowTitle;
+        set
+        {
+            if (_windowTitle != value)
+            {
+                _windowTitle = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public ActivityCategory Category
+    {
+        get => _category;
+        set
+        {
+            if (_category != value)
+            {
+                _category = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsIdle
+    {
+        get => _isIdle;
+        set
+        {
+            if (_isIdle != value)
+            {
+                _isIdle = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsProductive
+    {
+        get => _isProductive;
+        set
+        {
+            if (_isProductive != value)
+            {
+                _isProductive = value;
                 OnPropertyChanged();
             }
         }

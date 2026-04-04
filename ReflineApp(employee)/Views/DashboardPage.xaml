@@ -85,28 +85,17 @@
 
 
             <!-- ===== НИЖНИЕ МЕТРИКИ ===== -->
-            <Grid Margin="0,0,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Левая метрика -->
-                <Border Grid.Column="1"
-                        Background="#111827"
+            <UniformGrid Columns="3" Margin="0,0,0,0" HorizontalAlignment="Center">
+                <Border Background="#111827"
                         CornerRadius="12"
                         Padding="20"
                         Width="260"
-                        Margin="0,0,20,0">
-
+                        Margin="0,0,20,20">
                     <StackPanel>
-                        <TextBlock Text="За сегодня"
+                        <TextBlock Text="Общее время"
                                    Foreground="#9BAEC2"
                                    FontSize="15"/>
-                        <TextBlock x:Name="TodayTotalText"
-                                   Text="{Binding TodayTotalString}"
+                        <TextBlock Text="{Binding TotalTrackedTimeText}"
                                    Foreground="#2DC7FF"
                                    FontSize="28"
                                    FontWeight="Bold"
@@ -114,28 +103,94 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Правая метрика -->
-                <Border Grid.Column="2"
-                        Background="#111827"
+                <Border Background="#111827"
                         CornerRadius="12"
                         Padding="20"
-                        Width="260">
-
+                        Width="260"
+                        Margin="0,0,20,20">
                     <StackPanel>
-                        <TextBlock Text="Самое активное приложение"
+                        <TextBlock Text="Активное время"
                                    Foreground="#9BAEC2"
-                                   FontSize="15"
-                                   TextWrapping="Wrap"/>
-                        <TextBlock x:Name="MostActiveApp"
-                                   Text="{Binding MostActiveAppName}"
+                                   FontSize="15"/>
+                        <TextBlock Text="{Binding ActiveTimeText}"
                                    Foreground="#2DC7FF"
-                                   FontSize="26"
+                                   FontSize="28"
                                    FontWeight="Bold"
                                    Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-            </Grid>
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="Время бездействия"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"/>
+                        <TextBlock Text="{Binding IdleTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,0">
+                    <StackPanel>
+                        <TextBlock Text="Продуктивное время"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"/>
+                        <TextBlock Text="{Binding ProductiveTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,0">
+                    <StackPanel>
+                        <TextBlock Text="Топ приложение"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TopApplicationText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260">
+                    <StackPanel>
+                        <TextBlock Text="Ведущая категория"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TopCategoryText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
 
         </StackPanel>
     </ScrollViewer>
