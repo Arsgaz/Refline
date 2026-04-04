@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -49,16 +50,7 @@ namespace Refline.Views
             }
 
             ReportArea.UpdateLayout();
-            CategoryPieChart.UpdateLayout();
-            TopApplicationsChart.UpdateLayout();
-
-            CategoryPieChart.InvalidateMeasure();
-            CategoryPieChart.InvalidateArrange();
-            CategoryPieChart.InvalidateVisual();
-
-            TopApplicationsChart.InvalidateMeasure();
-            TopApplicationsChart.InvalidateArrange();
-            TopApplicationsChart.InvalidateVisual();
+            InvalidateVisual();
         }
     }
 }
