@@ -28,6 +28,8 @@ public class LoginActivationViewModel : ViewModelBase
 
     public event Action? LoginSucceeded;
 
+    public ICommand LoginAndActivateCommand { get; }
+    
     public string Login
     {
         get => _login;
