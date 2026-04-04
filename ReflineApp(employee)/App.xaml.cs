@@ -75,4 +75,32 @@ public partial class App : Application
         MainWindow = mainWindow;
         mainWindow.Show();
     }
+
+    public void ShowLoginWindowAfterLogout(Window currentWindow)
+    {
+        if (_composition == null)
+        {
+            Shutdown();
+            return;
+        }
+
+        currentWindow.Hide();
+        MainWindow = null;
+
+        var loginViewModel = _composition.CreateLoginActivationViewModel();
+        var loginWindow = new LoginActivationWindow(loginViewModel);
+        var loginResult = loginWindow.ShowDialog();
+
+        currentWindow.Close();
+
+        if (loginResult == true && ShouldOpenMainWindow())
+        {
+            OpenMainWindow();
+            AppLogger.Log("Application restarted after logout/login.");
+            return;
+        }
+
+        AppLogger.Log("Application shutdown after logout: login activation was not completed.");
+        Shutdown();
+    }
 }

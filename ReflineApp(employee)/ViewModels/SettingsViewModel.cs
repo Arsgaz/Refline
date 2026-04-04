@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
+using Refline.Business.Identity;
 using Refline.Business.Settings;
+using Refline.Data.Identity;
 using Refline.Models;
 using Refline.Utils;
 
@@ -10,21 +12,34 @@ namespace Refline.ViewModels;
 public class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsBusinessServer _settingsBusinessServer;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
+    private readonly ILocalActivationStateStore _localActivationStateStore;
+    private readonly ICurrentUserContext _currentUserContext;
 
     private string _reportsPath = string.Empty;
     private bool _autoStartWindows;
     private bool _allowBackgroundTracking = true;
     private bool _enableLocalLog = true;
 
-    public SettingsViewModel(ISettingsBusinessServer settingsBusinessServer)
+    public SettingsViewModel(
+        ISettingsBusinessServer settingsBusinessServer,
+        ICurrentUserSessionStore currentUserSessionStore,
+        ILocalActivationStateStore localActivationStateStore,
+        ICurrentUserContext currentUserContext)
     {
         _settingsBusinessServer = settingsBusinessServer;
+        _currentUserSessionStore = currentUserSessionStore;
+        _localActivationStateStore = localActivationStateStore;
+        _currentUserContext = currentUserContext;
 
         SelectFolderCommand = new RelayCommand(ExecuteSelectFolder);
         SaveSettingsCommand = new RelayCommand(ExecuteSaveSettings);
+        LogoutCommand = new RelayCommand(async () => await ExecuteLogoutAsync());
 
         LoadSettings();
     }
+
+    public event Action? LogoutCompleted;
 
     public string ReportsPath
     {
@@ -52,6 +67,7 @@ public class SettingsViewModel : ViewModelBase
 
     public ICommand SelectFolderCommand { get; }
     public ICommand SaveSettingsCommand { get; }
+    public ICommand LogoutCommand { get; }
 
     private void LoadSettings()
     {
@@ -103,5 +119,26 @@ public class SettingsViewModel : ViewModelBase
 
         AppLogger.Log("Settings saved.");
         MessageBox.Show("Настройки успешно сохранены!", "Сохранение", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private async Task ExecuteLogoutAsync()
+    {
+        var clearSessionResult = await _currentUserSessionStore.ClearAsync();
+        if (!clearSessionResult.IsSuccess)
+        {
+            MessageBox.Show(clearSessionResult.Message, "Ошибка выхода", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var clearActivationResult = await _localActivationStateStore.ClearAsync();
+        if (!clearActivationResult.IsSuccess)
+        {
+            MessageBox.Show(clearActivationResult.Message, "Ошибка выхода", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _currentUserContext.Clear();
+        AppLogger.Log("User logged out.");
+        LogoutCompleted?.Invoke();
     }
 }

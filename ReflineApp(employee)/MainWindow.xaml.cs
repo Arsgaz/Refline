@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private DashboardPage? _dashboardPage;
     private ReportsPage? _reportsPage;
     private SettingsPage? _settingsPage;
+    private bool _isLogoutInProgress;
 
     public MainWindow(
         MainViewModel mainViewModel,
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
         _dashboardPage = new DashboardPage { DataContext = _mainViewModel };
         MainFrame.Navigate(_dashboardPage);
 
+        _settingsViewModel.LogoutCompleted += OnLogoutCompleted;
         Closing += MainWindow_Closing;
     }
 
@@ -61,6 +63,13 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
+        if (_isLogoutInProgress)
+        {
+            _settingsViewModel.LogoutCompleted -= OnLogoutCompleted;
+            _mainViewModel.OnClosing();
+            return;
+        }
+
         var allowBackgroundResult = _settingsBusinessServer.IsBackgroundTrackingAllowed();
         if (allowBackgroundResult.IsSuccess && allowBackgroundResult.Value)
         {
@@ -89,5 +98,11 @@ public partial class MainWindow : Window
     {
         _mainViewModel.OnClosing();
         Application.Current.Shutdown();
+    }
+
+    private void OnLogoutCompleted()
+    {
+        _isLogoutInProgress = true;
+        ((App)Application.Current).ShowLoginWindowAfterLogout(this);
     }
 }
