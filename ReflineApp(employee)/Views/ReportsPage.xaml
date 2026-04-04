@@ -218,7 +218,8 @@
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,16"/>
 							<Grid Height="320">
-								<lvc:PieChart Series="{Binding CategoryTimeSeries}"
+								<lvc:PieChart x:Name="CategoryPieChart"
+                                              Series="{Binding CategoryTimeSeries}"
                                               LegendPosition="Right"
                                               Background="Transparent">
 									<lvc:PieChart.Style>
@@ -265,7 +266,8 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,16"/>
-							<lvc:CartesianChart Series="{Binding TopApplicationsSeries}"
+							<lvc:CartesianChart x:Name="TopApplicationsChart"
+                                                Series="{Binding TopApplicationsSeries}"
                                                 XAxes="{Binding TopApplicationsXAxes}"
                                                 YAxes="{Binding TopApplicationsYAxes}"
                                                 Height="320"

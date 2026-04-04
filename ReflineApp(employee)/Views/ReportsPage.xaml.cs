@@ -1,7 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using Refline.ViewModels;
 
 namespace Refline.Views
@@ -17,20 +16,18 @@ namespace Refline.Views
         {
             ShowReportButton.Visibility = Visibility.Collapsed;
             ReportArea.Visibility = Visibility.Visible;
+
+            if (DataContext is MainViewModel mainViewModel)
+            {
+                mainViewModel.RefreshReportData();
+            }
+
             ReportArea.UpdateLayout();
+            CategoryPieChart.UpdateLayout();
+            TopApplicationsChart.UpdateLayout();
 
             var fade = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(350)));
             ReportArea.BeginAnimation(UIElement.OpacityProperty, fade);
-
-            Dispatcher.BeginInvoke(
-                DispatcherPriority.Background,
-                new Action(() =>
-                {
-                    if (DataContext is MainViewModel mainViewModel)
-                    {
-                        mainViewModel.RefreshReportData();
-                    }
-                }));
         }
     }
 }
