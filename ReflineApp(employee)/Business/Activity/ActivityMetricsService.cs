@@ -19,19 +19,30 @@ public class ActivityMetricsService : IActivityMetricsService
             .Where(activity => activity.IsProductive)
             .Sum(activity => activity.TimeSpentSeconds);
 
-        var topApplicationName = activities
+        var topApplications = activities
             .GroupBy(activity => string.IsNullOrWhiteSpace(activity.AppName)
                 ? "Неизвестное приложение"
                 : activity.AppName)
-            .OrderByDescending(group => group.Sum(activity => activity.TimeSpentSeconds))
-            .First()
-            .Key;
+            .Select(group => new ActivityApplicationUsage
+            {
+                ApplicationName = group.Key,
+                TotalSeconds = group.Sum(activity => activity.TimeSpentSeconds)
+            })
+            .OrderByDescending(item => item.TotalSeconds)
+            .ThenBy(item => item.ApplicationName, StringComparer.OrdinalIgnoreCase)
+            .Take(5)
+            .ToList();
 
-        var topCategory = activities
+        var categorySeconds = activities
             .GroupBy(activity => activity.Category)
-            .OrderByDescending(group => group.Sum(activity => activity.TimeSpentSeconds))
-            .First()
-            .Key;
+            .ToDictionary(
+                group => group.Key,
+                group => group.Sum(activity => activity.TimeSpentSeconds));
+
+        var topCategory = categorySeconds
+            .OrderByDescending(item => item.Value)
+            .Select(item => item.Key)
+            .FirstOrDefault();
 
         return new ActivityMetricsSummary
         {
@@ -39,8 +50,10 @@ public class ActivityMetricsService : IActivityMetricsService
             ActiveSeconds = Math.Max(0, totalTrackedSeconds - idleSeconds),
             IdleSeconds = idleSeconds,
             ProductiveSeconds = productiveSeconds,
-            TopApplicationName = topApplicationName,
-            TopCategory = topCategory
+            TopApplicationName = topApplications.FirstOrDefault()?.ApplicationName ?? "—",
+            TopCategory = topCategory,
+            CategorySeconds = categorySeconds,
+            TopApplications = topApplications
         };
     }
 }

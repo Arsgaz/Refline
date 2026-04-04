@@ -2,11 +2,15 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 using Refline.Business.Activity;
 using Refline.Business.Reports;
 using Refline.Models;
 using Refline.Services;
 using Refline.Utils;
+using SkiaSharp;
 
 namespace Refline.ViewModels;
 
@@ -33,6 +37,10 @@ public class MainViewModel : ViewModelBase
     private string _productiveTimeText = "00:00:00";
     private string _topApplicationText = "Нет данных";
     private string _topCategoryText = "Нет данных";
+    private ISeries[] _categoryTimeSeries = Array.Empty<ISeries>();
+    private ISeries[] _topApplicationsSeries = Array.Empty<ISeries>();
+    private Axis[] _topApplicationsXAxes = Array.Empty<Axis>();
+    private Axis[] _topApplicationsYAxes = Array.Empty<Axis>();
 
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
@@ -134,6 +142,30 @@ public class MainViewModel : ViewModelBase
     {
         get => _topCategoryText;
         set => SetProperty(ref _topCategoryText, value);
+    }
+
+    public ISeries[] CategoryTimeSeries
+    {
+        get => _categoryTimeSeries;
+        set => SetProperty(ref _categoryTimeSeries, value);
+    }
+
+    public ISeries[] TopApplicationsSeries
+    {
+        get => _topApplicationsSeries;
+        set => SetProperty(ref _topApplicationsSeries, value);
+    }
+
+    public Axis[] TopApplicationsXAxes
+    {
+        get => _topApplicationsXAxes;
+        set => SetProperty(ref _topApplicationsXAxes, value);
+    }
+
+    public Axis[] TopApplicationsYAxes
+    {
+        get => _topApplicationsYAxes;
+        set => SetProperty(ref _topApplicationsYAxes, value);
     }
 
     public ICommand ToggleTrackingCommand { get; }
@@ -299,6 +331,7 @@ public class MainViewModel : ViewModelBase
         ProductiveTimeText = "00:00:00";
         TopApplicationText = "Нет данных";
         TopCategoryText = "Нет данных";
+        ApplyEmptyCharts();
     }
 
     private void ApplySummary(ActivitySummary summary)
@@ -314,6 +347,7 @@ public class MainViewModel : ViewModelBase
                 ? "Нет данных"
                 : summary.Metrics.TopApplicationName;
         TopCategoryText = ToCategoryDisplayName(summary.Metrics.TopCategory);
+        ApplyCharts(summary.Metrics);
     }
 
     private static string FormatDuration(int totalSeconds)
@@ -329,11 +363,123 @@ public class MainViewModel : ViewModelBase
         return category switch
         {
             ActivityCategory.Work => "Работа",
-            ActivityCategory.Communication => "Коммуникация",
-            ActivityCategory.ConditionalWork => "Условно рабочее",
+            ActivityCategory.Communication => "Коммуникации",
+            ActivityCategory.ConditionalWork => "Условная работа",
             ActivityCategory.Entertainment => "Развлечения",
             ActivityCategory.System => "Система",
             _ => "Нет данных"
+        };
+    }
+
+    private void ApplyCharts(ActivityMetricsSummary metrics)
+    {
+        var pieSeries = metrics.CategorySeconds
+            .Where(item => item.Value > 0)
+            .OrderByDescending(item => item.Value)
+            .Select(item => new PieSeries<int>
+            {
+                Name = ToCategoryDisplayName(item.Key),
+                Values = new[] { item.Value },
+                Fill = new SolidColorPaint(GetCategoryColor(item.Key)),
+                Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
+                DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
+                DataLabelsSize = 13,
+                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: {FormatDuration((int)point.Coordinate.PrimaryValue)}"
+            })
+            .Cast<ISeries>()
+            .ToArray();
+
+        if (pieSeries.Length == 0)
+        {
+            pieSeries = new ISeries[]
+            {
+                new PieSeries<int>
+                {
+                    Name = "Нет данных",
+                    Values = new[] { 1 },
+                    Fill = new SolidColorPaint(new SKColor(55, 65, 81)),
+                    Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
+                    DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
+                    DataLabelsSize = 13
+                }
+            };
+        }
+
+        var topApps = metrics.TopApplications
+            .Where(item => item.TotalSeconds > 0)
+            .Take(5)
+            .ToList();
+
+        var appLabels = topApps.Count == 0
+            ? new[] { "Нет данных" }
+            : topApps.Select(item => TrimChartLabel(item.ApplicationName)).ToArray();
+
+        var appValues = topApps.Count == 0
+            ? new[] { 0 }
+            : topApps.Select(item => item.TotalSeconds).ToArray();
+
+        CategoryTimeSeries = pieSeries;
+        TopApplicationsSeries = new ISeries[]
+        {
+            new ColumnSeries<int>
+            {
+                Name = "Время",
+                Values = appValues,
+                Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
+                Stroke = null,
+                MaxBarWidth = 42,
+                ToolTipLabelFormatter = point => FormatDuration((int)point.Coordinate.PrimaryValue)
+            }
+        };
+        TopApplicationsXAxes = new[]
+        {
+            new Axis
+            {
+                Labels = appLabels,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
+        TopApplicationsYAxes = new[]
+        {
+            new Axis
+            {
+                MinLimit = 0,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                Labeler = value => FormatDuration((int)value),
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
+    }
+
+    private void ApplyEmptyCharts()
+    {
+        ApplyCharts(new ActivityMetricsSummary());
+    }
+
+    private static string TrimChartLabel(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "Нет данных";
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length > 18 ? trimmed[..18] + "..." : trimmed;
+    }
+
+    private static SKColor GetCategoryColor(ActivityCategory category)
+    {
+        return category switch
+        {
+            ActivityCategory.Work => new SKColor(45, 199, 255),
+            ActivityCategory.Communication => new SKColor(0, 255, 200),
+            ActivityCategory.ConditionalWork => new SKColor(99, 102, 241),
+            ActivityCategory.Entertainment => new SKColor(248, 113, 113),
+            ActivityCategory.System => new SKColor(148, 163, 184),
+            _ => new SKColor(55, 65, 81)
         };
     }
 
