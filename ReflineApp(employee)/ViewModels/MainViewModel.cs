@@ -428,7 +428,6 @@ public class MainViewModel : ViewModelBase
                 Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
                 Stroke = null,
                 MaxBarWidth = 42,
-                ToolTipLabelFormatter = point => FormatDuration((int)point.Coordinate.PrimaryValue)
             }
         };
         TopApplicationsXAxes = new[]

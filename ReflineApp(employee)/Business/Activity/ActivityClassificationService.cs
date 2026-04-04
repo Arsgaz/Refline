@@ -6,8 +6,13 @@ public class ActivityClassificationService : IActivityClassificationService
 {
     private static readonly string[] WorkMarkers =
     {
-        "visual studio", "visual studio code", "vs code", "figma", "word", "excel",
-        "powerpoint", "notion", "jira", "terminal", "github desktop",
+        "refline", "refline employee", "аналитика рабочего времени",
+        "visual studio", "visual studio code", "vs code", "code",
+        "figma", "word", "excel", "powerpoint", "notion", "jira", "trello",
+        "github desktop", "github", "cmd", "powershell", "windows terminal", "terminal",
+        "chatgpt", "gemini", "copilot", "stack overflow",
+        "google docs", "docs.google.com", "google sheets", "sheets.google.com",
+        "google drive", "drive.google.com",
         "rider", "intellij", "pycharm", "webstorm"
     };
 
@@ -18,18 +23,23 @@ public class ActivityClassificationService : IActivityClassificationService
 
     private static readonly string[] ConditionalWorkMarkers =
     {
-        "chrome", "microsoft edge", "firefox", "explorer", "browser"
+        "chrome", "google chrome", "microsoft edge", "firefox",
+        "opera", "explorer", "проводник", "browser"
     };
 
     private static readonly string[] EntertainmentMarkers =
     {
-        "steam", "spotify", "youtube", "netflix", "vlc", "game", "dota", "counter-strike"
+        "steam", "youtube", "youtu.be", "twitch", "netflix", "spotify", "vlc",
+        "media player", "windows media player", "game", "games", "launcher",
+        "epic games", "battle.net", "riot client", "dota", "counter-strike",
+        "valorant", "minecraft", "roblox"
     };
 
     private static readonly string[] SystemMarkers =
     {
-        "idle", "unknown/desktop", "lock screen", "windows input experience",
-        "program manager", "windows search", "windows settings"
+        "idle", "простой", "unknown/desktop", "lock screen", "screen saver",
+        "заставка", "windows input experience", "program manager",
+        "windows search", "windows settings", "параметры", "служебное окно"
     };
 
     public ActivityCategory Classify(string appName, string? windowTitle)
@@ -57,14 +67,14 @@ public class ActivityClassificationService : IActivityClassificationService
             return ActivityCategory.Communication;
         }
 
-        if (ContainsAny(normalizedAppName, normalizedTitle, ConditionalWorkMarkers))
-        {
-            return ActivityCategory.ConditionalWork;
-        }
-
         if (ContainsAny(normalizedAppName, normalizedTitle, EntertainmentMarkers))
         {
             return ActivityCategory.Entertainment;
+        }
+
+        if (ContainsAny(normalizedAppName, normalizedTitle, ConditionalWorkMarkers))
+        {
+            return ActivityCategory.ConditionalWork;
         }
 
         return ActivityCategory.Unknown;
@@ -108,8 +118,15 @@ public class ActivityClassificationService : IActivityClassificationService
 
     private static string NormalizeText(string? value)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? string.Empty
-            : value.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return string.Join(
+                ' ',
+                value.Trim().ToLowerInvariant()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Trim();
     }
 }
