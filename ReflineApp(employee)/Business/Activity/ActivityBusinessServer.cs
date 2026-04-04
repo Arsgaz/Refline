@@ -42,9 +42,21 @@ public class ActivityBusinessServer : IActivityBusinessServer
             _todayActivities.Clear();
             _todayActivities.AddRange(loadResult.Value.Select(Clone));
 
+            var hasMetadataChanges = false;
             foreach (var activity in _todayActivities)
             {
-                EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+                hasMetadataChanges |= EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+            }
+
+            if (hasMetadataChanges)
+            {
+                var saveResult = _activityDataService.SaveAll(_todayActivities.Select(Clone), DateTime.Today);
+                if (!saveResult.IsSuccess)
+                {
+                    return OperationResult<IReadOnlyList<AppActivity>>.Failure(
+                        saveResult.Message,
+                        saveResult.ErrorCode);
+                }
             }
 
             return OperationResult<IReadOnlyList<AppActivity>>.Success(_todayActivities.Select(Clone).ToList());
@@ -193,8 +205,13 @@ public class ActivityBusinessServer : IActivityBusinessServer
         }
     }
 
-    private void EnrichActivity(AppActivity activity, string? windowTitle, bool isIdle)
+    private bool EnrichActivity(AppActivity activity, string? windowTitle, bool isIdle)
     {
+        var previousWindowTitle = activity.WindowTitle;
+        var previousIsIdle = activity.IsIdle;
+        var previousCategory = activity.Category;
+        var previousIsProductive = activity.IsProductive;
+
         if (string.IsNullOrWhiteSpace(activity.WindowTitle))
         {
             activity.WindowTitle = string.IsNullOrWhiteSpace(windowTitle)
@@ -207,6 +224,11 @@ public class ActivityBusinessServer : IActivityBusinessServer
             string.Equals(activity.AppName, "Idle", StringComparison.OrdinalIgnoreCase);
         activity.Category = _classificationService.Classify(activity.AppName, activity.WindowTitle);
         activity.IsProductive = ActivityProductivityRules.IsProductive(activity);
+
+        return !string.Equals(previousWindowTitle, activity.WindowTitle, StringComparison.Ordinal) ||
+            previousIsIdle != activity.IsIdle ||
+            previousCategory != activity.Category ||
+            previousIsProductive != activity.IsProductive;
     }
 
     private static AppActivity Clone(AppActivity source)
