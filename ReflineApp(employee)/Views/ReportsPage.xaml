@@ -217,10 +217,40 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,16"/>
-							<lvc:PieChart Series="{Binding CategoryTimeSeries}"
-                                          Height="320"
-                                          LegendPosition="Right"
-                                          Background="Transparent"/>
+							<Grid Height="320">
+								<lvc:PieChart Series="{Binding CategoryTimeSeries}"
+                                              LegendPosition="Right"
+                                              Background="Transparent">
+									<lvc:PieChart.Style>
+										<Style TargetType="lvc:PieChart">
+											<Setter Property="Visibility" Value="Collapsed"/>
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
+													<Setter Property="Visibility" Value="Visible"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</lvc:PieChart.Style>
+								</lvc:PieChart>
+
+								<TextBlock Text="{Binding CategoryChartPlaceholderText}"
+                                           Foreground="#9BAEC2"
+                                           FontSize="16"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center">
+									<TextBlock.Style>
+										<Style TargetType="TextBlock">
+											<Setter Property="Visibility" Value="Visible"/>
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
+													<Setter Property="Visibility" Value="Collapsed"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</TextBlock.Style>
+								</TextBlock>
+							</Grid>
 						</StackPanel>
 					</Border>
 

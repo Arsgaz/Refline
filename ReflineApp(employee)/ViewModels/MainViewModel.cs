@@ -37,6 +37,8 @@ public class MainViewModel : ViewModelBase
     private string _productiveTimeText = "00:00:00";
     private string _topApplicationText = "Нет данных";
     private string _topCategoryText = "Нет данных";
+    private bool _hasCategoryChartData;
+    private string _categoryChartPlaceholderText = "Категории пока не определены";
     private ISeries[] _categoryTimeSeries = Array.Empty<ISeries>();
     private ISeries[] _topApplicationsSeries = Array.Empty<ISeries>();
     private Axis[] _topApplicationsXAxes = Array.Empty<Axis>();
@@ -144,6 +146,18 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _topCategoryText, value);
     }
 
+    public bool HasCategoryChartData
+    {
+        get => _hasCategoryChartData;
+        set => SetProperty(ref _hasCategoryChartData, value);
+    }
+
+    public string CategoryChartPlaceholderText
+    {
+        get => _categoryChartPlaceholderText;
+        set => SetProperty(ref _categoryChartPlaceholderText, value);
+    }
+
     public ISeries[] CategoryTimeSeries
     {
         get => _categoryTimeSeries;
@@ -172,6 +186,11 @@ public class MainViewModel : ViewModelBase
     public ICommand ExportCommand { get; }
 
     private void LoadInitialData()
+    {
+        RefreshReportData();
+    }
+
+    public void RefreshReportData()
     {
         var loadResult = _activityBusinessServer.LoadTodayActivities();
         if (loadResult.IsSuccess && loadResult.Value != null)
@@ -331,6 +350,8 @@ public class MainViewModel : ViewModelBase
         ProductiveTimeText = "00:00:00";
         TopApplicationText = "Нет данных";
         TopCategoryText = "Нет данных";
+        HasCategoryChartData = false;
+        CategoryChartPlaceholderText = "Категории пока не определены";
         ApplyEmptyCharts();
     }
 
@@ -384,26 +405,13 @@ public class MainViewModel : ViewModelBase
                 Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
                 DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
                 DataLabelsSize = 13,
-                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: {FormatDuration((int)point.Coordinate.PrimaryValue)}"
+                ToolTipLabelFormatter = point => FormatDuration((int)point.Coordinate.PrimaryValue)
             })
             .Cast<ISeries>()
             .ToArray();
 
-        if (pieSeries.Length == 0)
-        {
-            pieSeries = new ISeries[]
-            {
-                new PieSeries<int>
-                {
-                    Name = "Нет данных",
-                    Values = new[] { 1 },
-                    Fill = new SolidColorPaint(new SKColor(55, 65, 81)),
-                    Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
-                    DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
-                    DataLabelsSize = 13
-                }
-            };
-        }
+        HasCategoryChartData = pieSeries.Length > 0;
+        CategoryChartPlaceholderText = "Категории пока не определены";
 
         var topApps = metrics.TopApplications
             .Where(item => item.TotalSeconds > 0)
@@ -455,7 +463,31 @@ public class MainViewModel : ViewModelBase
 
     private void ApplyEmptyCharts()
     {
-        ApplyCharts(new ActivityMetricsSummary());
+        HasCategoryChartData = false;
+        CategoryChartPlaceholderText = "Категории пока не определены";
+        CategoryTimeSeries = Array.Empty<ISeries>();
+        TopApplicationsSeries = Array.Empty<ISeries>();
+        TopApplicationsXAxes = new[]
+        {
+            new Axis
+            {
+                Labels = new[] { "Нет данных" },
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
+        TopApplicationsYAxes = new[]
+        {
+            new Axis
+            {
+                MinLimit = 0,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                Labeler = value => FormatDuration((int)value),
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
     }
 
     private static string TrimChartLabel(string value)
