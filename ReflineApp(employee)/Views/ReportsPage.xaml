@@ -91,7 +91,7 @@
 				</Grid.RowDefinitions>
 
 				<!-- Метрики -->
-				<StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,30">
+				<WrapPanel Grid.Row="0" Margin="0,0,0,30">
 
 					<!-- Метрика 1 -->
 					<Border x:Name="Card1"
@@ -100,13 +100,13 @@
                             CornerRadius="12"
                             Padding="20"
                             Width="260"
-                            Margin="0,0,20,0">
+                            Margin="0,0,20,20">
 
 						<StackPanel>
-							<TextBlock Text="Сегодня отработано:"
+							<TextBlock Text="Общее время"
                                        Foreground="#9BAEC2"
                                        FontSize="15"/>
-							<TextBlock Text="{Binding TodayTotalString}"
+							<TextBlock Text="{Binding TotalTrackedTimeText}"
                                        Foreground="#2DC7FF"
                                        FontSize="28"
                                        FontWeight="Bold"
@@ -121,22 +121,81 @@
                             Background="#111827"
                             CornerRadius="12"
                             Padding="20"
-                            Width="260">
+                            Width="260"
+                            Margin="0,0,20,20">
 
 						<StackPanel>
-							<TextBlock Text="Самое активное приложение:"
+							<TextBlock Text="Активное время"
                                        Foreground="#9BAEC2"
-                                       FontSize="15"
-                                       TextWrapping="Wrap"/>
-							<TextBlock Text="{Binding MostActiveAppName}"
+                                       FontSize="15"/>
+							<TextBlock Text="{Binding ActiveTimeText}"
                                        Foreground="#2DC7FF"
-                                       FontSize="26"
+                                       FontSize="28"
                                        FontWeight="Bold"
                                        Margin="0,5,0,0"/>
 						</StackPanel>
 					</Border>
 
-				</StackPanel>
+					<Border Style="{StaticResource AppearScale}"
+                            Background="#111827"
+                            CornerRadius="12"
+                            Padding="20"
+                            Width="260"
+                            Margin="0,0,20,20">
+
+						<StackPanel>
+							<TextBlock Text="Время бездействия"
+                                       Foreground="#9BAEC2"
+                                       FontSize="15"/>
+							<TextBlock Text="{Binding IdleTimeText}"
+                                       Foreground="#2DC7FF"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Margin="0,5,0,0"/>
+						</StackPanel>
+					</Border>
+
+					<Border Style="{StaticResource AppearScale}"
+                            Background="#111827"
+                            CornerRadius="12"
+                            Padding="20"
+                            Width="260"
+                            Margin="0,0,20,20">
+
+						<StackPanel>
+							<TextBlock Text="Продуктивное время"
+                                       Foreground="#9BAEC2"
+                                       FontSize="15"/>
+							<TextBlock Text="{Binding ProductiveTimeText}"
+                                       Foreground="#2DC7FF"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Margin="0,5,0,0"/>
+						</StackPanel>
+					</Border>
+
+					<Border Style="{StaticResource AppearScale}"
+                            Background="#111827"
+                            CornerRadius="12"
+                            Padding="20"
+                            Width="260"
+                            Margin="0,0,20,20">
+
+						<StackPanel>
+							<TextBlock Text="Топ приложение"
+                                       Foreground="#9BAEC2"
+                                       FontSize="15"
+                                       TextWrapping="Wrap"/>
+							<TextBlock Text="{Binding TopApplicationText}"
+                                       Foreground="#2DC7FF"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Margin="0,5,0,0"
+                                       TextTrimming="CharacterEllipsis"/>
+						</StackPanel>
+					</Border>
+
+				</WrapPanel>
 
 				<!-- Таблица Заголовок и Действия -->
 				<Grid Grid.Row="1" Margin="0,0,0,10">

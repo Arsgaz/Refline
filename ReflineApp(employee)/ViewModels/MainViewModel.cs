@@ -27,6 +27,12 @@ public class MainViewModel : ViewModelBase
     private string _sessionTimeString = "00:00:00";
     private string _todayTotalString = "0 ч 00 мин";
     private string _mostActiveAppName = "—";
+    private string _totalTrackedTimeText = "00:00:00";
+    private string _activeTimeText = "00:00:00";
+    private string _idleTimeText = "00:00:00";
+    private string _productiveTimeText = "00:00:00";
+    private string _topApplicationText = "Нет данных";
+    private string _topCategoryText = "Нет данных";
 
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
@@ -92,6 +98,42 @@ public class MainViewModel : ViewModelBase
     {
         get => _mostActiveAppName;
         set => SetProperty(ref _mostActiveAppName, value);
+    }
+
+    public string TotalTrackedTimeText
+    {
+        get => _totalTrackedTimeText;
+        set => SetProperty(ref _totalTrackedTimeText, value);
+    }
+
+    public string ActiveTimeText
+    {
+        get => _activeTimeText;
+        set => SetProperty(ref _activeTimeText, value);
+    }
+
+    public string IdleTimeText
+    {
+        get => _idleTimeText;
+        set => SetProperty(ref _idleTimeText, value);
+    }
+
+    public string ProductiveTimeText
+    {
+        get => _productiveTimeText;
+        set => SetProperty(ref _productiveTimeText, value);
+    }
+
+    public string TopApplicationText
+    {
+        get => _topApplicationText;
+        set => SetProperty(ref _topApplicationText, value);
+    }
+
+    public string TopCategoryText
+    {
+        get => _topCategoryText;
+        set => SetProperty(ref _topCategoryText, value);
     }
 
     public ICommand ToggleTrackingCommand { get; }
@@ -251,12 +293,48 @@ public class MainViewModel : ViewModelBase
 
         TodayTotalString = "0 ч 00 мин";
         MostActiveAppName = "—";
+        TotalTrackedTimeText = "00:00:00";
+        ActiveTimeText = "00:00:00";
+        IdleTimeText = "00:00:00";
+        ProductiveTimeText = "00:00:00";
+        TopApplicationText = "Нет данных";
+        TopCategoryText = "Нет данных";
     }
 
     private void ApplySummary(ActivitySummary summary)
     {
         TodayTotalString = summary.TodayTotalString;
         MostActiveAppName = summary.MostActiveAppName;
+        TotalTrackedTimeText = FormatDuration(summary.Metrics.TotalTrackedSeconds);
+        ActiveTimeText = FormatDuration(summary.Metrics.ActiveSeconds);
+        IdleTimeText = FormatDuration(summary.Metrics.IdleSeconds);
+        ProductiveTimeText = FormatDuration(summary.Metrics.ProductiveSeconds);
+        TopApplicationText = string.IsNullOrWhiteSpace(summary.Metrics.TopApplicationName) ||
+            summary.Metrics.TopApplicationName == "—"
+                ? "Нет данных"
+                : summary.Metrics.TopApplicationName;
+        TopCategoryText = ToCategoryDisplayName(summary.Metrics.TopCategory);
+    }
+
+    private static string FormatDuration(int totalSeconds)
+    {
+        var safeSeconds = Math.Max(0, totalSeconds);
+        var duration = TimeSpan.FromSeconds(safeSeconds);
+        var totalHours = (int)duration.TotalHours;
+        return $"{totalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+    }
+
+    private static string ToCategoryDisplayName(ActivityCategory category)
+    {
+        return category switch
+        {
+            ActivityCategory.Work => "Работа",
+            ActivityCategory.Communication => "Коммуникация",
+            ActivityCategory.ConditionalWork => "Условно рабочее",
+            ActivityCategory.Entertainment => "Развлечения",
+            ActivityCategory.System => "Система",
+            _ => "Нет данных"
+        };
     }
 
     public void OnClosing()
