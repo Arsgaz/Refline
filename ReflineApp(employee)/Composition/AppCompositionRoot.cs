@@ -15,6 +15,9 @@ namespace Refline.Composition;
 
 public sealed class AppCompositionRoot
 {
+    private readonly ILocalActivationStateStore _localActivationStateStore;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
+
     public IActivityBusinessServer ActivityBusinessServer { get; }
     public ISettingsBusinessServer SettingsBusinessServer { get; }
     public IReportBusinessServer ReportBusinessServer { get; }
@@ -35,29 +38,29 @@ public sealed class AppCompositionRoot
         var activityDataService = new ActivityDataService();
         var settingsDataService = new SettingsDataService();
         var reportDataService = new ReportDataService();
-        var localActivationStateStore = new LocalActivationStateStore();
+        _localActivationStateStore = new LocalActivationStateStore();
         var currentUserSessionStateStore = new LocalCurrentUserSessionStateStore();
         var deviceIdentityProvider = new LocalDeviceIdentityProvider();
 
         CurrentUserContext = new CurrentUserContext();
-        var currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
+        _currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
 
         WindowTracker = new WindowTracker();
 
         AuthenticationService = new ApiAuthenticationService(
             apiHttpClient,
             CurrentUserContext,
-            currentUserSessionStore);
+            _currentUserSessionStore);
         LicenseActivationService = new ApiLicenseActivationService(
             apiHttpClient,
-            localActivationStateStore,
+            _localActivationStateStore,
             deviceIdentityProvider,
             CurrentUserContext);
 
         ActivationBootstrapService = new ActivationBootstrapService(
-            localActivationStateStore,
+            _localActivationStateStore,
             CurrentUserContext,
-            currentUserSessionStore);
+            _currentUserSessionStore);
 
         ActivityBusinessServer = new ActivityBusinessServer(
             activityDataService,
@@ -85,7 +88,11 @@ public sealed class AppCompositionRoot
 
     public SettingsViewModel CreateSettingsViewModel()
     {
-        return new SettingsViewModel(SettingsBusinessServer);
+        return new SettingsViewModel(
+            SettingsBusinessServer,
+            _currentUserSessionStore,
+            _localActivationStateStore,
+            CurrentUserContext);
     }
 
     public LoginActivationViewModel CreateLoginActivationViewModel()
