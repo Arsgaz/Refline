@@ -18,38 +18,47 @@ namespace Refline.Views
         {
             ShowReportButton.Visibility = Visibility.Collapsed;
             ReportArea.Visibility = Visibility.Visible;
-            RefreshChartsAfterLayout();
 
             var fade = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(350)));
             ReportArea.BeginAnimation(UIElement.OpacityProperty, fade);
+
+            ScheduleChartsRefresh();
         }
 
         private void ReportsPage_Loaded(object sender, RoutedEventArgs e)
         {
             if (ReportArea.Visibility == Visibility.Visible)
             {
-                RefreshChartsAfterLayout();
+                ScheduleChartsRefresh();
             }
+        }
+
+        private void ScheduleChartsRefresh()
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            {
+                RefreshChartsAfterLayout();
+            }));
         }
 
         private void RefreshChartsAfterLayout()
         {
-            ReportArea.UpdateLayout();
-
             if (DataContext is MainViewModel mainViewModel)
             {
                 mainViewModel.RefreshReportData();
             }
 
-            Dispatcher.BeginInvoke(
-                DispatcherPriority.Render,
-                new Action(() =>
-                {
-                    CategoryPieChart.UpdateLayout();
-                    TopApplicationsChart.UpdateLayout();
-                    CategoryPieChart.InvalidateVisual();
-                    TopApplicationsChart.InvalidateVisual();
-                }));
+            ReportArea.UpdateLayout();
+            CategoryPieChart.UpdateLayout();
+            TopApplicationsChart.UpdateLayout();
+
+            CategoryPieChart.InvalidateMeasure();
+            CategoryPieChart.InvalidateArrange();
+            CategoryPieChart.InvalidateVisual();
+
+            TopApplicationsChart.InvalidateMeasure();
+            TopApplicationsChart.InvalidateArrange();
+            TopApplicationsChart.InvalidateVisual();
         }
     }
 }
