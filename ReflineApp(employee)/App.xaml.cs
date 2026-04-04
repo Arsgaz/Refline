@@ -11,12 +11,60 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _composition = new AppCompositionRoot();
         var bootstrapResult = _composition.BootstrapIdentityAsync().GetAwaiter().GetResult();
         if (!bootstrapResult.IsSuccess)
         {
             AppLogger.Log($"Identity bootstrap warning: {bootstrapResult.Message}");
+        }
+
+        if (ShouldOpenMainWindow())
+        {
+            OpenMainWindow();
+            AppLogger.Log("Application started.");
+            return;
+        }
+
+        var loginViewModel = _composition.CreateLoginActivationViewModel();
+        var loginWindow = new LoginActivationWindow(loginViewModel);
+        var loginResult = loginWindow.ShowDialog();
+
+        if (loginResult == true && ShouldOpenMainWindow())
+        {
+            OpenMainWindow();
+            AppLogger.Log("Application started after login activation.");
+            return;
+        }
+
+        AppLogger.Log("Application startup cancelled: login activation was not completed.");
+        Shutdown();
+    }
+
+    private bool ShouldOpenMainWindow()
+    {
+        if (_composition == null)
+        {
+            return false;
+        }
+
+        var activationResult = _composition.LicenseActivationService.IsActivatedAsync().GetAwaiter().GetResult();
+        if (!activationResult.IsSuccess || !activationResult.Value)
+        {
+            return false;
+        }
+
+        var currentUserResult = _composition.AuthenticationService.GetCurrentUserAsync().GetAwaiter().GetResult();
+        return currentUserResult.IsSuccess && currentUserResult.Value != null;
+    }
+
+    private void OpenMainWindow()
+    {
+        if (_composition == null)
+        {
+            Shutdown();
+            return;
         }
 
         var mainWindow = new MainWindow(
@@ -26,7 +74,5 @@ public partial class App : Application
 
         MainWindow = mainWindow;
         mainWindow.Show();
-
-        AppLogger.Log("Application started.");
     }
 }

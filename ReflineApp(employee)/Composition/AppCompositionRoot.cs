@@ -79,6 +79,11 @@ public sealed class AppCompositionRoot
         return new SettingsViewModel(SettingsBusinessServer);
     }
 
+    public LoginActivationViewModel CreateLoginActivationViewModel()
+    {
+        return new LoginActivationViewModel(AuthenticationService, LicenseActivationService);
+    }
+
     public Task<OperationResult> BootstrapIdentityAsync()
     {
         return BootstrapIdentityInternalAsync();
