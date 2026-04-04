@@ -83,8 +83,9 @@
 
 			<!-- ▼▼▼ ОТЧЁТ ▼▼▼ -->
 			<Grid x:Name="ReportArea"
-                  Visibility="Collapsed"
-                  Opacity="0">
+                  Visibility="Visible"
+                  Opacity="0"
+				  IsHitTestVisible="False">
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto"/>
 					<RowDefinition Height="Auto"/>

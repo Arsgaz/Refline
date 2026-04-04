@@ -18,7 +18,7 @@ namespace Refline.Views
         private void ShowReport_Click(object sender, RoutedEventArgs e)
         {
             ShowReportButton.Visibility = Visibility.Collapsed;
-            ReportArea.Visibility = Visibility.Visible;
+            ReportArea.IsHitTestVisible = true;
 
             var fade = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(350)));
             ReportArea.BeginAnimation(UIElement.OpacityProperty, fade);
@@ -28,10 +28,7 @@ namespace Refline.Views
 
         private void ReportsPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (ReportArea.Visibility == Visibility.Visible)
-            {
-                ScheduleChartsRefresh();
-            }
+            ScheduleChartsRefresh();
         }
 
         private void ScheduleChartsRefresh()
