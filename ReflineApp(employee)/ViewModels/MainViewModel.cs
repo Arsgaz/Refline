@@ -224,6 +224,10 @@ public class MainViewModel : ViewModelBase
             {
                 existing.TimeSpentSeconds = updatedActivity.TimeSpentSeconds;
                 existing.LastActive = updatedActivity.LastActive;
+                existing.WindowTitle = updatedActivity.WindowTitle;
+                existing.Category = updatedActivity.Category;
+                existing.IsIdle = updatedActivity.IsIdle;
+                existing.IsProductive = updatedActivity.IsProductive;
                 existing.Version = updatedActivity.Version;
             }
             else

@@ -9,6 +9,8 @@ public class ActivityBusinessServer : IActivityBusinessServer
     private readonly IActivityDataService _activityDataService;
     private readonly ActivityValidationService _validationService;
     private readonly ActivityLockService _lockService;
+    private readonly IActivityClassificationService _classificationService;
+    private readonly IActivityMetricsService _metricsService;
     private readonly List<AppActivity> _todayActivities = new();
 
     public bool IsTracking { get; private set; }
@@ -16,11 +18,15 @@ public class ActivityBusinessServer : IActivityBusinessServer
     public ActivityBusinessServer(
         IActivityDataService activityDataService,
         ActivityValidationService validationService,
-        ActivityLockService lockService)
+        ActivityLockService lockService,
+        IActivityClassificationService classificationService,
+        IActivityMetricsService metricsService)
     {
         _activityDataService = activityDataService;
         _validationService = validationService;
         _lockService = lockService;
+        _classificationService = classificationService;
+        _metricsService = metricsService;
     }
 
     public OperationResult<IReadOnlyList<AppActivity>> LoadTodayActivities()
@@ -35,6 +41,11 @@ public class ActivityBusinessServer : IActivityBusinessServer
 
             _todayActivities.Clear();
             _todayActivities.AddRange(loadResult.Value.Select(Clone));
+
+            foreach (var activity in _todayActivities)
+            {
+                EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+            }
 
             return OperationResult<IReadOnlyList<AppActivity>>.Success(_todayActivities.Select(Clone).ToList());
         });
@@ -65,16 +76,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
                 });
             }
 
-            if (isIdle)
-            {
-                return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
-                {
-                    StatusText = "Status: User is Idle (Paused)",
-                    Summary = BuildSummary()
-                });
-            }
+            var appName = _classificationService.NormalizeApplicationName(windowTitle, isIdle);
 
-            var titleValidation = _validationService.ValidateWindowTitle(windowTitle);
+            var titleValidation = _validationService.ValidateWindowTitle(appName);
             if (!titleValidation.IsSuccess)
             {
                 return OperationResult<ActivityTickResult>.Failure(titleValidation.Message, titleValidation.ErrorCode);
@@ -82,7 +86,7 @@ public class ActivityBusinessServer : IActivityBusinessServer
 
             var activityDate = timestamp.Date;
             var existing = _todayActivities.FirstOrDefault(a =>
-                string.Equals(a.AppName, windowTitle, StringComparison.Ordinal) &&
+                string.Equals(a.AppName, appName, StringComparison.Ordinal) &&
                 a.ActivityDate.Date == activityDate);
 
             var isNew = false;
@@ -90,7 +94,8 @@ public class ActivityBusinessServer : IActivityBusinessServer
             {
                 existing = new AppActivity
                 {
-                    AppName = windowTitle,
+                    AppName = appName,
+                    WindowTitle = windowTitle ?? string.Empty,
                     TimeSpentSeconds = 1,
                     LastActive = timestamp,
                     ActivityDate = activityDate,
@@ -103,7 +108,10 @@ public class ActivityBusinessServer : IActivityBusinessServer
             {
                 existing.TimeSpentSeconds++;
                 existing.LastActive = timestamp;
+                existing.WindowTitle = windowTitle ?? string.Empty;
             }
+
+            EnrichActivity(existing, windowTitle, isIdle);
 
             var entityValidation = _validationService.ValidateEntity(existing);
             if (!entityValidation.IsSuccess)
@@ -120,7 +128,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
             var summary = BuildSummary();
             return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
             {
-                StatusText = $"Status: Tracking ({windowTitle})",
+                StatusText = isIdle
+                    ? "Статус: простой"
+                    : $"Статус: отслеживание ({appName})",
                 UpdatedActivity = Clone(existing),
                 IsNewActivity = isNew,
                 Summary = summary
@@ -156,19 +166,33 @@ public class ActivityBusinessServer : IActivityBusinessServer
             return new ActivitySummary();
         }
 
-        var totalSeconds = _todayActivities.Sum(a => a.TimeSpentSeconds);
-        var totalTs = TimeSpan.FromSeconds(totalSeconds);
-        var mostActive = _todayActivities.OrderByDescending(a => a.TimeSpentSeconds).First();
-        var mostActiveTitle = mostActive.AppName.Length > 25
-            ? mostActive.AppName[..25] + "..."
-            : mostActive.AppName;
+        var metrics = _metricsService.Calculate(_todayActivities.Select(Clone).ToList());
+        var totalTs = TimeSpan.FromSeconds(metrics.TotalTrackedSeconds);
+        var mostActiveTitle = metrics.TopApplicationName.Length > 25
+            ? metrics.TopApplicationName[..25] + "..."
+            : metrics.TopApplicationName;
 
         return new ActivitySummary
         {
-            TotalSeconds = totalSeconds,
+            TotalSeconds = metrics.TotalTrackedSeconds,
             TodayTotalString = $"{(int)totalTs.TotalHours} ч {totalTs.Minutes:D2} мин",
-            MostActiveAppName = mostActiveTitle
+            MostActiveAppName = mostActiveTitle,
+            Metrics = metrics
         };
+    }
+
+    private void EnrichActivity(AppActivity activity, string? windowTitle, bool isIdle)
+    {
+        if (string.IsNullOrWhiteSpace(activity.WindowTitle))
+        {
+            activity.WindowTitle = windowTitle ?? activity.AppName;
+        }
+
+        activity.IsIdle = isIdle ||
+            string.Equals(activity.AppName, "Простой", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(activity.AppName, "Idle", StringComparison.OrdinalIgnoreCase);
+        activity.Category = _classificationService.Classify(activity.AppName, activity.WindowTitle);
+        activity.IsProductive = ActivityProductivityRules.IsProductive(activity);
     }
 
     private static AppActivity Clone(AppActivity source)
@@ -177,6 +201,10 @@ public class ActivityBusinessServer : IActivityBusinessServer
         {
             Id = source.Id,
             AppName = source.AppName,
+            WindowTitle = source.WindowTitle,
+            Category = source.Category,
+            IsIdle = source.IsIdle,
+            IsProductive = source.IsProductive,
             TimeSpentSeconds = source.TimeSpentSeconds,
             LastActive = source.LastActive,
             ActivityDate = source.ActivityDate,

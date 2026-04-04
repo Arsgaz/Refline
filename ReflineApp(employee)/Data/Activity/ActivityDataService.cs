@@ -89,6 +89,10 @@ public class ActivityDataService : IActivityDataService
                     existing.TimeSpentSeconds = activity.TimeSpentSeconds;
                     existing.LastActive = activity.LastActive;
                     existing.ActivityDate = activity.ActivityDate.Date;
+                    existing.WindowTitle = activity.WindowTitle;
+                    existing.Category = activity.Category;
+                    existing.IsIdle = activity.IsIdle;
+                    existing.IsProductive = activity.IsProductive;
                     existing.Version++;
                     activity.Version = existing.Version;
                     activity.Id = existing.Id;
