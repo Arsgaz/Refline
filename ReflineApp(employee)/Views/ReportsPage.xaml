@@ -437,11 +437,19 @@
 
                     <Grid Grid.Row="0" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="1.6*"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="120"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Приложение" Foreground="#9BAEC2" Grid.Column="0"/>
-                        <TextBlock Text="Время" Foreground="#9BAEC2" Grid.Column="1"/>
+                        <TextBlock Text="Окно" Foreground="#9BAEC2" Grid.Column="1"/>
+                        <TextBlock Text="Категория" Foreground="#9BAEC2" Grid.Column="2"/>
+                        <TextBlock Text="Источник" Foreground="#9BAEC2" Grid.Column="3"/>
+                        <TextBlock Text="Совпавшее правило" Foreground="#9BAEC2" Grid.Column="4"/>
+                        <TextBlock Text="Время" Foreground="#9BAEC2" Grid.Column="5"/>
                     </Grid>
 
                     <ItemsControl Grid.Row="1" ItemsSource="{Binding ReportActivities}">
@@ -449,16 +457,40 @@
                             <DataTemplate>
                                 <Grid Margin="0,5,0,5">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="1.2*"/>
+                                        <ColumnDefinition Width="1.6*"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="120"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding AppName}"
                                                Foreground="#DDE6F1"
                                                Grid.Column="0"
                                                TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding WindowTitle}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="1"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding CategoryDisplay}"
+                                               Foreground="#2DC7FF"
+                                               Grid.Column="2"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding CategorySourceDisplay}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="3"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding MatchedRuleDisplay}"
+                                               Foreground="#9BAEC2"
+                                               Grid.Column="4"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding DurationString}"
                                                Foreground="#DDE6F1"
-                                               Grid.Column="1"/>
+                                               Grid.Column="5"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

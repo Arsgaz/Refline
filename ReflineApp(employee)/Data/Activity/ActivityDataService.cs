@@ -117,6 +117,9 @@ public class ActivityDataService : IActivityDataService
                     existing.ActivityDate = activity.ActivityDate.Date;
                     existing.WindowTitle = activity.WindowTitle;
                     existing.Category = activity.Category;
+                    existing.ClassificationSource = activity.ClassificationSource;
+                    existing.MatchedRuleId = activity.MatchedRuleId;
+                    existing.MatchedRuleDescription = activity.MatchedRuleDescription;
                     existing.IsIdle = activity.IsIdle;
                     existing.IsProductive = activity.IsProductive;
                     existing.Version++;

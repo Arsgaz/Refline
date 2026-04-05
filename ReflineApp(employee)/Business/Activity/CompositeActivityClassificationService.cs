@@ -17,16 +17,25 @@ public sealed class CompositeActivityClassificationService : IActivityClassifica
 
     public ActivityCategory Classify(string appName, string? windowTitle)
     {
-        var companyCategory = _companyClassificationService.TryClassify(appName, windowTitle);
-        if (companyCategory.HasValue)
+        return ClassifyDetailed(appName, windowTitle).Category;
+    }
+
+    public ActivityClassificationDecision ClassifyDetailed(string appName, string? windowTitle)
+    {
+        var companyDecision = _companyClassificationService.TryClassifyDetailed(appName, windowTitle);
+        if (companyDecision != null)
         {
-            return companyCategory.Value;
+            return companyDecision;
         }
 
-        var builtInCategory = _builtInClassificationService.Classify(appName, windowTitle);
-        return builtInCategory != ActivityCategory.Unknown
-            ? builtInCategory
-            : ActivityCategory.Unknown;
+        var builtInDecision = _builtInClassificationService.ClassifyDetailed(appName, windowTitle);
+        return builtInDecision.Category != ActivityCategory.Unknown
+            ? builtInDecision
+            : new ActivityClassificationDecision
+            {
+                Category = ActivityCategory.Unknown,
+                Source = ActivityClassificationSource.FallbackUnknown
+            };
     }
 
     public string NormalizeApplicationName(string windowTitle, bool isIdle)

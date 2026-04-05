@@ -43,6 +43,11 @@ public class MainViewModel : ViewModelBase
     private string _productiveTimeText = "00:00:00";
     private string _topApplicationText = "Нет данных";
     private string _topCategoryText = "Нет данных";
+    private string _currentTrackedAppText = "Нет данных";
+    private string _currentTrackedWindowText = "Нет данных";
+    private string _currentTrackedCategoryText = "Нет данных";
+    private string _currentClassificationSourceText = "Нет данных";
+    private string _currentMatchedRuleText = "—";
 
     private ReportPeriod _selectedPeriod = ReportPeriod.Day;
     private DateTime _selectedDate = DateTime.Today;
@@ -185,6 +190,36 @@ public class MainViewModel : ViewModelBase
     {
         get => _topCategoryText;
         set => SetProperty(ref _topCategoryText, value);
+    }
+
+    public string CurrentTrackedAppText
+    {
+        get => _currentTrackedAppText;
+        set => SetProperty(ref _currentTrackedAppText, value);
+    }
+
+    public string CurrentTrackedWindowText
+    {
+        get => _currentTrackedWindowText;
+        set => SetProperty(ref _currentTrackedWindowText, value);
+    }
+
+    public string CurrentTrackedCategoryText
+    {
+        get => _currentTrackedCategoryText;
+        set => SetProperty(ref _currentTrackedCategoryText, value);
+    }
+
+    public string CurrentClassificationSourceText
+    {
+        get => _currentClassificationSourceText;
+        set => SetProperty(ref _currentClassificationSourceText, value);
+    }
+
+    public string CurrentMatchedRuleText
+    {
+        get => _currentMatchedRuleText;
+        set => SetProperty(ref _currentMatchedRuleText, value);
     }
 
     public ReportPeriod SelectedPeriod
@@ -492,11 +527,29 @@ public class MainViewModel : ViewModelBase
         await TriggerSyncAsync("timer");
     }
 
-    private void Tracker_OnWindowTracked(string windowTitle, bool isIdle)
+    private void Tracker_OnWindowTracked(TrackedWindowInfo trackedWindow)
     {
         _uiDispatcher.Invoke(() =>
         {
-            var tickResult = _activityBusinessServer.ProcessWindowActivity(windowTitle, isIdle, DateTime.Now);
+            if (trackedWindow.IsReflineOwnedWindow)
+            {
+                var pausedResult = _activityBusinessServer.PauseTrackingForServiceWindow(
+                    $"Статус: служебное окно Refline не учитывается ({trackedWindow.IgnoreReason})");
+                if (pausedResult.IsSuccess && pausedResult.Value != null)
+                {
+                    StatusText = pausedResult.Value.StatusText;
+                    ApplyDashboardSummary(pausedResult.Value.Summary);
+                }
+
+                CurrentTrackedAppText = string.IsNullOrWhiteSpace(trackedWindow.ProcessName) ? "Refline" : trackedWindow.ProcessName;
+                CurrentTrackedWindowText = trackedWindow.WindowTitle;
+                CurrentTrackedCategoryText = "Не отслеживается";
+                CurrentClassificationSourceText = "Исключено из трекинга";
+                CurrentMatchedRuleText = trackedWindow.IgnoreReason ?? "Служебное окно продукта";
+                return;
+            }
+
+            var tickResult = _activityBusinessServer.ProcessWindowActivity(trackedWindow.WindowTitle, trackedWindow.IsIdle, DateTime.Now);
             if (!tickResult.IsSuccess || tickResult.Value == null)
             {
                 StatusText = "Статус: ошибка обработки активности";
@@ -510,6 +563,8 @@ public class MainViewModel : ViewModelBase
             {
                 UpsertReportActivity(updatedActivity, tickResult.Value.IsNewActivity);
             }
+
+            ApplyCurrentActivityDiagnostics(updatedActivity, trackedWindow);
 
             ApplyDashboardSummary(tickResult.Value.Summary);
 
@@ -655,6 +710,9 @@ public class MainViewModel : ViewModelBase
                 existing.LastActive = updatedActivity.LastActive;
                 existing.WindowTitle = updatedActivity.WindowTitle;
                 existing.Category = updatedActivity.Category;
+                existing.ClassificationSource = updatedActivity.ClassificationSource;
+                existing.MatchedRuleId = updatedActivity.MatchedRuleId;
+                existing.MatchedRuleDescription = updatedActivity.MatchedRuleDescription;
                 existing.IsIdle = updatedActivity.IsIdle;
                 existing.IsProductive = updatedActivity.IsProductive;
                 existing.Version = updatedActivity.Version;
@@ -668,6 +726,35 @@ public class MainViewModel : ViewModelBase
         ReportActivities = new ObservableCollection<AppActivity>(ReportActivities
             .OrderByDescending(activity => activity.TimeSpentSeconds)
             .ThenBy(activity => activity.AppName, StringComparer.OrdinalIgnoreCase));
+    }
+
+    private void ApplyCurrentActivityDiagnostics(AppActivity? updatedActivity, TrackedWindowInfo trackedWindow)
+    {
+        if (trackedWindow.IsIdle)
+        {
+            CurrentTrackedAppText = "Простой";
+            CurrentTrackedWindowText = trackedWindow.WindowTitle;
+            CurrentTrackedCategoryText = "Система";
+            CurrentClassificationSourceText = "Встроенное правило";
+            CurrentMatchedRuleText = "Idle timeout";
+            return;
+        }
+
+        if (updatedActivity == null)
+        {
+            CurrentTrackedAppText = string.IsNullOrWhiteSpace(trackedWindow.ProcessName) ? "Нет данных" : trackedWindow.ProcessName;
+            CurrentTrackedWindowText = trackedWindow.WindowTitle;
+            CurrentTrackedCategoryText = "Нет данных";
+            CurrentClassificationSourceText = "Нет данных";
+            CurrentMatchedRuleText = "—";
+            return;
+        }
+
+        CurrentTrackedAppText = updatedActivity.AppName;
+        CurrentTrackedWindowText = updatedActivity.WindowTitle;
+        CurrentTrackedCategoryText = updatedActivity.CategoryDisplay;
+        CurrentClassificationSourceText = updatedActivity.CategorySourceDisplay;
+        CurrentMatchedRuleText = updatedActivity.MatchedRuleDisplay;
     }
 
     private void ApplyReportCharts(
@@ -792,6 +879,11 @@ public class MainViewModel : ViewModelBase
         ReportProductiveTimeText = "00:00:00";
         ReportTopApplicationText = "Нет данных";
         ReportTopCategoryText = "Нет данных";
+        CurrentTrackedAppText = "Нет данных";
+        CurrentTrackedWindowText = "Нет данных";
+        CurrentTrackedCategoryText = "Нет данных";
+        CurrentClassificationSourceText = "Нет данных";
+        CurrentMatchedRuleText = "—";
         ApplyEmptyCharts();
     }
 

@@ -114,6 +114,11 @@ public sealed class CompanyActivityClassificationService : ICompanyActivityClass
 
     public ActivityCategory? TryClassify(string appName, string? windowTitle)
     {
+        return TryClassifyDetailed(appName, windowTitle)?.Category;
+    }
+
+    public ActivityClassificationDecision? TryClassifyDetailed(string appName, string? windowTitle)
+    {
         if (_currentCompanyId == null || _activeRules.Count == 0)
         {
             return null;
@@ -140,7 +145,13 @@ public sealed class CompanyActivityClassificationService : ICompanyActivityClass
                 continue;
             }
 
-            return rule.Category;
+            return new ActivityClassificationDecision
+            {
+                Category = rule.Category,
+                Source = ActivityClassificationSource.CompanyRule,
+                MatchedRuleId = rule.Id,
+                MatchedRuleDescription = BuildRuleDescription(rule)
+            };
         }
 
         return null;
@@ -168,5 +179,12 @@ public sealed class CompanyActivityClassificationService : ICompanyActivityClass
     private static string Normalize(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static string BuildRuleDescription(ActivityClassificationRule rule)
+    {
+        return string.IsNullOrWhiteSpace(rule.WindowTitlePattern)
+            ? $"Rule #{rule.Id}: App contains \"{rule.AppNamePattern}\""
+            : $"Rule #{rule.Id}: App contains \"{rule.AppNamePattern}\", Window contains \"{rule.WindowTitlePattern}\"";
     }
 }

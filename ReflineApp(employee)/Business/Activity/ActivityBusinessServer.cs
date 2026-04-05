@@ -158,6 +158,31 @@ public class ActivityBusinessServer : IActivityBusinessServer
         });
     }
 
+    public OperationResult<ActivityTickResult> PauseTrackingForServiceWindow(string statusText)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            if (!IsTracking)
+            {
+                return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
+                {
+                    StatusText = "Статус: остановлено",
+                    Summary = BuildSummary(),
+                    IsTrackingSuppressed = true
+                });
+            }
+
+            FinalizeActiveSegment();
+
+            return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
+            {
+                StatusText = statusText,
+                Summary = BuildSummary(),
+                IsTrackingSuppressed = true
+            });
+        });
+    }
+
     public OperationResult<ActivitySummary> GetTodaySummary()
     {
         return _lockService.ExecuteLocked(() => OperationResult<ActivitySummary>.Success(BuildSummary()));
@@ -354,6 +379,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
                     AppName = latestActivity.AppName,
                     WindowTitle = latestActivity.WindowTitle,
                     Category = dominantCategory,
+                    ClassificationSource = latestActivity.ClassificationSource,
+                    MatchedRuleId = latestActivity.MatchedRuleId,
+                    MatchedRuleDescription = latestActivity.MatchedRuleDescription,
                     IsIdle = group.All(activity => activity.IsIdle),
                     IsProductive = group.Any(activity => activity.IsProductive),
                     TimeSpentSeconds = group.Sum(activity => activity.TimeSpentSeconds),
@@ -415,6 +443,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
         var previousWindowTitle = activity.WindowTitle;
         var previousIsIdle = activity.IsIdle;
         var previousCategory = activity.Category;
+        var previousClassificationSource = activity.ClassificationSource;
+        var previousMatchedRuleId = activity.MatchedRuleId;
+        var previousMatchedRuleDescription = activity.MatchedRuleDescription;
         var previousIsProductive = activity.IsProductive;
 
         if (string.IsNullOrWhiteSpace(activity.WindowTitle))
@@ -427,12 +458,19 @@ public class ActivityBusinessServer : IActivityBusinessServer
         activity.IsIdle = isIdle ||
             string.Equals(activity.AppName, "Простой", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(activity.AppName, "Idle", StringComparison.OrdinalIgnoreCase);
-        activity.Category = _classificationService.Classify(activity.AppName, activity.WindowTitle);
+        var classificationDecision = _classificationService.ClassifyDetailed(activity.AppName, activity.WindowTitle);
+        activity.Category = classificationDecision.Category;
+        activity.ClassificationSource = classificationDecision.Source;
+        activity.MatchedRuleId = classificationDecision.MatchedRuleId;
+        activity.MatchedRuleDescription = classificationDecision.MatchedRuleDescription ?? string.Empty;
         activity.IsProductive = ActivityProductivityRules.IsProductive(activity);
 
         return !string.Equals(previousWindowTitle, activity.WindowTitle, StringComparison.Ordinal) ||
             previousIsIdle != activity.IsIdle ||
             previousCategory != activity.Category ||
+            previousClassificationSource != activity.ClassificationSource ||
+            previousMatchedRuleId != activity.MatchedRuleId ||
+            !string.Equals(previousMatchedRuleDescription, activity.MatchedRuleDescription, StringComparison.Ordinal) ||
             previousIsProductive != activity.IsProductive;
     }
 
@@ -607,6 +645,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
             AppName = source.AppName,
             WindowTitle = source.WindowTitle,
             Category = source.Category,
+            ClassificationSource = source.ClassificationSource,
+            MatchedRuleId = source.MatchedRuleId,
+            MatchedRuleDescription = source.MatchedRuleDescription,
             IsIdle = source.IsIdle,
             IsProductive = source.IsProductive,
             TimeSpentSeconds = source.TimeSpentSeconds,

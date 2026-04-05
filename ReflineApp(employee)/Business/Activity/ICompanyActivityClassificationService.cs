@@ -12,4 +12,6 @@ public interface ICompanyActivityClassificationService
     Task<OperationResult> ClearCacheAsync(CancellationToken cancellationToken = default);
 
     ActivityCategory? TryClassify(string appName, string? windowTitle);
+
+    ActivityClassificationDecision? TryClassifyDetailed(string appName, string? windowTitle);
 }
