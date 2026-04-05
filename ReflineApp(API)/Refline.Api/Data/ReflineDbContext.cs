@@ -17,6 +17,8 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
 
     public DbSet<ActivityRecord> ActivityRecords => Set<ActivityRecord>();
 
+    public DbSet<ActivityClassificationRule> ActivityClassificationRules => Set<ActivityClassificationRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReflineDbContext).Assembly);

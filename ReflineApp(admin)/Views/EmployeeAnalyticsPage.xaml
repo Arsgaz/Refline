@@ -1,0 +1,377 @@
+<UserControl x:Class="Refline.Admin.Views.EmployeeAnalyticsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="0,0,4,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel DockPanel.Dock="Left"
+                            MaxWidth="760">
+                    <Button Width="170"
+                            Height="40"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="Назад к списку"
+                            Command="{Binding BackCommand}" />
+                    <TextBlock Text="{Binding EmployeeHeader}"
+                               Margin="0,20,0,0"
+                               FontSize="28"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding EmployeeSubheader}"
+                               Margin="0,8,0,0"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+
+                <Border DockPanel.Dock="Right"
+                        Style="{StaticResource CardBorderStyle}"
+                        Padding="16,12">
+                    <StackPanel>
+                        <TextBlock Text="Статус сотрудника"
+                                   FontSize="12"
+                                   Foreground="{StaticResource AppMutedTextBrush}" />
+                        <TextBlock Text="{Binding EmployeeStatusDisplay}"
+                                   Margin="0,6,0,0"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </DockPanel>
+
+            <Border Grid.Row="1"
+                    Style="{StaticResource SectionCardBorderStyle}"
+                    Margin="0,0,0,18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="Период"
+                                   Style="{StaticResource InputLabelStyle}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Width="90"
+                                    Height="40"
+                                    Margin="0,0,8,0"
+                                    Content="День"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding SetDayPeriodCommand}" />
+                            <Button Width="90"
+                                    Height="40"
+                                    Margin="0,0,8,0"
+                                    Content="Неделя"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding SetWeekPeriodCommand}" />
+                            <Button Width="90"
+                                    Height="40"
+                                    Content="Месяц"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding SetMonthPeriodCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                        <TextBlock Text="Опорная дата"
+                                   Style="{StaticResource InputLabelStyle}" />
+                        <Border Style="{StaticResource CardBorderStyle}"
+                                Background="{StaticResource AppPanelElevatedBrush}"
+                                Padding="14,10">
+                            <TextBlock Text="{Binding ReferenceDateDisplay}" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                        <TextBlock Text="Диапазон"
+                                   Style="{StaticResource InputLabelStyle}" />
+                        <Border Style="{StaticResource CardBorderStyle}"
+                                Background="{StaticResource AppPanelElevatedBrush}"
+                                Padding="14,10">
+                            <TextBlock Text="{Binding PeriodLabel}" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Width="44"
+                                Height="40"
+                                Margin="0,0,8,0"
+                                Content="←"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding PreviousPeriodCommand}" />
+                        <Button Width="44"
+                                Height="40"
+                                Margin="0,0,8,0"
+                                Content="→"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding NextPeriodCommand}" />
+                        <Button Width="110"
+                                Height="40"
+                                Content="Сегодня"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding TodayCommand}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="4"
+                            Width="150"
+                            Height="40"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Content="Обновить"
+                            Command="{Binding LoadCommand}" />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,14,14">
+                        <StackPanel>
+                            <TextBlock Text="Общее время" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding TotalTrackedDisplay}" Margin="0,12,0,0" FontSize="28" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,14,0">
+                        <StackPanel>
+                            <TextBlock Text="Продуктивное время" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding ProductiveDisplay}" Margin="0,12,0,0" FontSize="28" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,14,14">
+                        <StackPanel>
+                            <TextBlock Text="Активное время" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding ActiveDisplay}" Margin="0,12,0,0" FontSize="28" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,14,0">
+                        <StackPanel>
+                            <TextBlock Text="Время бездействия" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding IdleDisplay}" Margin="0,12,0,0" FontSize="28" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Топ приложение" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding TopApplicationName}" Margin="0,12,0,0" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Топ категория" Foreground="{StaticResource AppMutedTextBrush}" />
+                            <TextBlock Text="{Binding TopCategory}" Margin="0,12,0,0" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <Border Grid.Row="3"
+                    Margin="0,0,0,18"
+                    Padding="12,10"
+                    Background="{StaticResource AppPanelElevatedBrush}"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="Загрузка аналитики сотрудника..."
+                           Foreground="{StaticResource AppMutedTextBrush}" />
+            </Border>
+
+            <Border Grid.Row="4"
+                    Margin="0,0,0,18"
+                    Padding="16,14"
+                    Background="#3D1C22"
+                    BorderBrush="{StaticResource AppErrorBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="Не удалось загрузить аналитику"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Margin="0,10,0,0"
+                               TextWrapping="Wrap"
+                               Foreground="#FFD1D1" />
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="5">
+                <Border Style="{StaticResource SectionCardBorderStyle}"
+                        Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                MaxWidth="420">
+                        <TextBlock Text="За выбранный период активности нет"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"
+                                   TextAlignment="Center" />
+                        <TextBlock Text="Попробуйте переключить период или выбрать другую дату. Если API вернул пустую сводку, это нормальный empty state."
+                                   Margin="0,12,0,0"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource AppMutedTextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Grid Visibility="{Binding HasAnyData, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Style="{StaticResource SectionCardBorderStyle}"
+                            Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="Активность по дням"
+                                       FontSize="20"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="Суммарное время активности внутри выбранного периода."
+                                       Margin="0,8,0,18"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+
+                            <ItemsControl ItemsSource="{Binding DailyBuckets}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="1" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="6,0,6,0"
+                                              VerticalAlignment="Bottom">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="130" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0"
+                                                       Text="{Binding TotalDisplay}"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,0,0,10"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                                            <Border Grid.Row="1"
+                                                    Width="34"
+                                                    Height="{Binding BarHeight}"
+                                                    VerticalAlignment="Bottom"
+                                                    HorizontalAlignment="Center"
+                                                    Background="{StaticResource AppAccentBrush}"
+                                                    CornerRadius="8,8,0,0" />
+                                            <TextBlock Grid.Row="2"
+                                                       Text="{Binding Label}"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,10,0,0"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Style="{StaticResource SectionCardBorderStyle}"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="Топ приложений"
+                                           FontSize="20"
+                                           FontWeight="SemiBold" />
+                                <ItemsControl ItemsSource="{Binding Applications}" Margin="0,18,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,10"
+                                                    Padding="12"
+                                                    Background="{StaticResource AppPanelElevatedBrush}"
+                                                    BorderBrush="{StaticResource AppBorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding DurationDisplay}"
+                                                               DockPanel.Dock="Right"
+                                                               Foreground="{StaticResource AppMutedTextBrush}" />
+                                                    <TextBlock Text="{Binding Name}"
+                                                               TextWrapping="Wrap"
+                                                               FontWeight="SemiBold" />
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource SectionCardBorderStyle}"
+                                Margin="12,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Категории"
+                                           FontSize="20"
+                                           FontWeight="SemiBold" />
+                                <ItemsControl ItemsSource="{Binding Categories}" Margin="0,18,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,10"
+                                                    Padding="12"
+                                                    Background="{StaticResource AppPanelElevatedBrush}"
+                                                    BorderBrush="{StaticResource AppBorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding DurationDisplay}"
+                                                               DockPanel.Dock="Right"
+                                                               Foreground="{StaticResource AppMutedTextBrush}" />
+                                                    <TextBlock Text="{Binding Name}"
+                                                               TextWrapping="Wrap"
+                                                               FontWeight="SemiBold" />
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,139 @@
+<Window x:Class="Refline.Admin.Views.ActivityClassificationRuleEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Правило классификации"
+        Width="560"
+        Height="560"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <Border Margin="18"
+            Padding="22"
+            Background="{StaticResource AppPanelBrush}"
+            BorderBrush="{StaticResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0">
+                <TextBlock x:Name="DialogTitleText"
+                           FontSize="22"
+                           FontWeight="SemiBold" />
+                <TextBlock x:Name="DialogSubtitleText"
+                           Margin="0,8,0,0"
+                           Foreground="{StaticResource AppMutedTextBrush}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1"
+                          Margin="0,22,0,22"
+                          VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="AppNamePattern"
+                               Style="{StaticResource InputLabelStyle}" />
+                    <TextBox Grid.Row="1"
+                             x:Name="AppNamePatternTextBox"
+                             MaxLength="200"
+                             MinHeight="44" />
+
+                    <TextBlock Grid.Row="2"
+                               Text="WindowTitlePattern"
+                               Margin="0,18,0,6"
+                               Style="{StaticResource InputLabelStyle}" />
+                    <TextBox Grid.Row="3"
+                             x:Name="WindowTitlePatternTextBox"
+                             MaxLength="500"
+                             MinHeight="44" />
+
+                    <Grid Grid.Row="4"
+                          Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="160" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Категория"
+                                       Style="{StaticResource InputLabelStyle}" />
+                            <ComboBox x:Name="CategoryComboBox"
+                                      MinHeight="44"
+                                      DisplayMemberPath="Text"
+                                      SelectedValuePath="Value" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Приоритет"
+                                       Style="{StaticResource InputLabelStyle}" />
+                            <TextBox x:Name="PriorityTextBox"
+                                     MaxLength="4"
+                                     MinHeight="44" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="5"
+                            Margin="0,18,0,0"
+                            Padding="14"
+                            Background="{StaticResource AppPanelElevatedBrush}"
+                            BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                        <CheckBox x:Name="IsEnabledCheckBox"
+                                  Content="Правило активно и может применяться в дальнейшем"
+                                  IsChecked="True"
+                                  VerticalAlignment="Center" />
+                    </Border>
+
+                    <TextBlock Grid.Row="6"
+                               Margin="0,18,0,0"
+                               Foreground="{StaticResource AppMutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Text="Категория выбирается только из фиксированного системного списка. Пустой WindowTitlePattern означает совпадение по любому заголовку окна." />
+                </Grid>
+            </ScrollViewer>
+
+            <DockPanel Grid.Row="2">
+                <TextBlock x:Name="ValidationMessageText"
+                           DockPanel.Dock="Left"
+                           Margin="0,0,16,0"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource AppErrorBrush}"
+                           TextWrapping="Wrap" />
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button Width="110"
+                            x:Name="CancelButton"
+                            Height="42"
+                            Margin="0,0,12,0"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="Отмена"
+                            IsCancel="True"
+                            Click="CancelButton_Click" />
+                    <Button Width="140"
+                            x:Name="SaveButton"
+                            Height="42"
+                            Content="Сохранить"
+                            IsDefault="True"
+                            Click="SaveButton_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>

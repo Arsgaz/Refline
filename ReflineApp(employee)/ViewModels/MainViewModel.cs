@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -17,6 +18,8 @@ namespace Refline.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
+    private static readonly CultureInfo RussianCulture = new("ru-RU");
+
     private readonly IActivityBusinessServer _activityBusinessServer;
     private readonly IReportBusinessServer _reportBusinessServer;
     private readonly IActivitySyncService _activitySyncService;
@@ -26,7 +29,7 @@ public class MainViewModel : ViewModelBase
     private bool _isTracking;
     private string _statusText = "Статус: остановлено";
     private string _startStopButtonContent = "▶ Старт";
-    private ObservableCollection<AppActivity> _activities = new();
+    private ObservableCollection<AppActivity> _reportActivities = new();
 
     private readonly DispatcherTimer _uiTimer;
     private readonly DispatcherTimer _syncTimer;
@@ -40,12 +43,31 @@ public class MainViewModel : ViewModelBase
     private string _productiveTimeText = "00:00:00";
     private string _topApplicationText = "Нет данных";
     private string _topCategoryText = "Нет данных";
+    private ReportPeriod _selectedPeriod = ReportPeriod.Day;
+    private DateTime _selectedDate = DateTime.Today;
+    private string _selectedPeriodLabel = string.Empty;
+    private string _currentPeriodButtonText = "Сегодня";
+    private string _reportTotalTrackedTimeText = "00:00:00";
+    private string _reportActiveTimeText = "00:00:00";
+    private string _reportIdleTimeText = "00:00:00";
+    private string _reportProductiveTimeText = "00:00:00";
+    private string _reportTopApplicationText = "Нет данных";
+    private string _reportTopCategoryText = "Нет данных";
     private bool _hasCategoryChartData;
     private string _categoryChartPlaceholderText = "Категории пока не определены";
     private ISeries[] _categoryTimeSeries = Array.Empty<ISeries>();
     private ISeries[] _topApplicationsSeries = Array.Empty<ISeries>();
     private Axis[] _topApplicationsXAxes = Array.Empty<Axis>();
     private Axis[] _topApplicationsYAxes = Array.Empty<Axis>();
+    private bool _showDailyTrendChart;
+    private bool _hasDailyTrendChartData;
+    private string _dailyTrendChartPlaceholderText = "График по дням доступен для недели и месяца";
+    private ISeries[] _dailyTrendSeries = Array.Empty<ISeries>();
+    private Axis[] _dailyTrendXAxes = Array.Empty<Axis>();
+    private Axis[] _dailyTrendYAxes = Array.Empty<Axis>();
+
+    private bool _isRefreshingReportData;
+    private bool _hasPendingReportRefresh;
 
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
@@ -76,15 +98,20 @@ public class MainViewModel : ViewModelBase
 
         ToggleTrackingCommand = new RelayCommand(ExecuteToggleTracking);
         ExportCommand = new RelayCommand(ExecuteExport);
+        SetReportPeriodCommand = new RelayCommand(ExecuteSetReportPeriod);
+        PreviousReportPeriodCommand = new RelayCommand(ExecutePreviousReportPeriod);
+        NextReportPeriodCommand = new RelayCommand(ExecuteNextReportPeriod, CanExecuteNextReportPeriod);
+        CurrentReportPeriodCommand = new RelayCommand(ExecuteCurrentReportPeriod, CanExecuteCurrentReportPeriod);
 
+        UpdatePeriodPresentation();
         LoadInitialData();
         _ = TriggerSyncAsync("startup");
     }
 
-    public ObservableCollection<AppActivity> Activities
+    public ObservableCollection<AppActivity> ReportActivities
     {
-        get => _activities;
-        set => SetProperty(ref _activities, value);
+        get => _reportActivities;
+        set => SetProperty(ref _reportActivities, value);
     }
 
     public string StatusText
@@ -159,6 +186,78 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _topCategoryText, value);
     }
 
+    public ReportPeriod SelectedPeriod
+    {
+        get => _selectedPeriod;
+        private set
+        {
+            if (SetProperty(ref _selectedPeriod, value))
+            {
+                OnPropertyChanged(nameof(IsDayPeriodSelected));
+                OnPropertyChanged(nameof(IsWeekPeriodSelected));
+                OnPropertyChanged(nameof(IsMonthPeriodSelected));
+            }
+        }
+    }
+
+    public DateTime SelectedDate
+    {
+        get => _selectedDate;
+        private set => SetProperty(ref _selectedDate, value.Date);
+    }
+
+    public string SelectedPeriodLabel
+    {
+        get => _selectedPeriodLabel;
+        private set => SetProperty(ref _selectedPeriodLabel, value);
+    }
+
+    public string CurrentPeriodButtonText
+    {
+        get => _currentPeriodButtonText;
+        private set => SetProperty(ref _currentPeriodButtonText, value);
+    }
+
+    public bool IsDayPeriodSelected => SelectedPeriod == ReportPeriod.Day;
+    public bool IsWeekPeriodSelected => SelectedPeriod == ReportPeriod.Week;
+    public bool IsMonthPeriodSelected => SelectedPeriod == ReportPeriod.Month;
+
+    public string ReportTotalTrackedTimeText
+    {
+        get => _reportTotalTrackedTimeText;
+        private set => SetProperty(ref _reportTotalTrackedTimeText, value);
+    }
+
+    public string ReportActiveTimeText
+    {
+        get => _reportActiveTimeText;
+        private set => SetProperty(ref _reportActiveTimeText, value);
+    }
+
+    public string ReportIdleTimeText
+    {
+        get => _reportIdleTimeText;
+        private set => SetProperty(ref _reportIdleTimeText, value);
+    }
+
+    public string ReportProductiveTimeText
+    {
+        get => _reportProductiveTimeText;
+        private set => SetProperty(ref _reportProductiveTimeText, value);
+    }
+
+    public string ReportTopApplicationText
+    {
+        get => _reportTopApplicationText;
+        private set => SetProperty(ref _reportTopApplicationText, value);
+    }
+
+    public string ReportTopCategoryText
+    {
+        get => _reportTopCategoryText;
+        private set => SetProperty(ref _reportTopCategoryText, value);
+    }
+
     public bool HasCategoryChartData
     {
         get => _hasCategoryChartData;
@@ -195,32 +294,64 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _topApplicationsYAxes, value);
     }
 
+    public bool ShowDailyTrendChart
+    {
+        get => _showDailyTrendChart;
+        private set => SetProperty(ref _showDailyTrendChart, value);
+    }
+
+    public bool HasDailyTrendChartData
+    {
+        get => _hasDailyTrendChartData;
+        private set => SetProperty(ref _hasDailyTrendChartData, value);
+    }
+
+    public string DailyTrendChartPlaceholderText
+    {
+        get => _dailyTrendChartPlaceholderText;
+        private set => SetProperty(ref _dailyTrendChartPlaceholderText, value);
+    }
+
+    public ISeries[] DailyTrendSeries
+    {
+        get => _dailyTrendSeries;
+        private set => SetProperty(ref _dailyTrendSeries, value);
+    }
+
+    public Axis[] DailyTrendXAxes
+    {
+        get => _dailyTrendXAxes;
+        private set => SetProperty(ref _dailyTrendXAxes, value);
+    }
+
+    public Axis[] DailyTrendYAxes
+    {
+        get => _dailyTrendYAxes;
+        private set => SetProperty(ref _dailyTrendYAxes, value);
+    }
+
     public ICommand ToggleTrackingCommand { get; }
     public ICommand ExportCommand { get; }
+    public ICommand SetReportPeriodCommand { get; }
+    public ICommand PreviousReportPeriodCommand { get; }
+    public ICommand NextReportPeriodCommand { get; }
+    public ICommand CurrentReportPeriodCommand { get; }
 
     private void LoadInitialData()
     {
+        RefreshDashboardSummary();
         RefreshReportData();
     }
 
     public void RefreshReportData()
     {
-        var loadResult = _activityBusinessServer.LoadTodayActivities();
-        if (loadResult.IsSuccess && loadResult.Value != null)
-        {
-            Activities = new ObservableCollection<AppActivity>(loadResult.Value.OrderByDescending(a => a.TimeSpentSeconds));
-        }
-        else
-        {
-            MessageBox.Show(loadResult.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        RefreshSummary();
+        QueueReportRefresh();
     }
 
     private void ExecuteExport()
     {
-        var exportResult = _reportBusinessServer.ExportTodayReport();
+        var range = GetSelectedRange();
+        var exportResult = _reportBusinessServer.ExportReport(range.StartDate, range.EndDate, SelectedPeriodLabel);
         if (exportResult.IsSuccess && !string.IsNullOrWhiteSpace(exportResult.Value))
         {
             MessageBox.Show(
@@ -261,6 +392,7 @@ public class MainViewModel : ViewModelBase
                 _sessionTime = TimeSpan.Zero;
                 SessionTimeString = _sessionTime.ToString(@"hh\:mm\:ss");
                 AppLogger.Log("Tracking stopped.");
+                QueueReportRefresh();
             }
             else
             {
@@ -288,6 +420,66 @@ public class MainViewModel : ViewModelBase
         AppLogger.Log("Tracking started.");
     }
 
+    private void ExecuteSetReportPeriod(object? parameter)
+    {
+        if (!TryParseReportPeriod(parameter, out var period) || period == SelectedPeriod)
+        {
+            return;
+        }
+
+        SelectedPeriod = period;
+        UpdatePeriodPresentation();
+        QueueReportRefresh();
+    }
+
+    private void ExecutePreviousReportPeriod()
+    {
+        SelectedDate = ReportPeriodHelper.Move(SelectedPeriod, SelectedDate, -1);
+        UpdatePeriodPresentation();
+        QueueReportRefresh();
+    }
+
+    private void ExecuteNextReportPeriod()
+    {
+        if (!CanExecuteNextReportPeriod())
+        {
+            return;
+        }
+
+        SelectedDate = ReportPeriodHelper.Move(SelectedPeriod, SelectedDate, 1);
+        UpdatePeriodPresentation();
+        QueueReportRefresh();
+    }
+
+    private bool CanExecuteNextReportPeriod()
+    {
+        var currentRange = ReportPeriodHelper.GetRange(SelectedPeriod, DateTime.Today);
+        var selectedRange = GetSelectedRange();
+        return selectedRange.StartDate < currentRange.StartDate;
+    }
+
+    private void ExecuteCurrentReportPeriod()
+    {
+        SelectedDate = DateTime.Today;
+        UpdatePeriodPresentation();
+        QueueReportRefresh();
+    }
+
+    private bool CanExecuteCurrentReportPeriod()
+    {
+        var currentRange = ReportPeriodHelper.GetRange(SelectedPeriod, DateTime.Today);
+        var selectedRange = GetSelectedRange();
+        return selectedRange.StartDate != currentRange.StartDate || selectedRange.EndDate != currentRange.EndDate;
+    }
+
+    private void UpdatePeriodPresentation()
+    {
+        SelectedPeriodLabel = ReportPeriodHelper.FormatLabel(SelectedPeriod, SelectedDate);
+        CurrentPeriodButtonText = ReportPeriodHelper.FormatNavigationCaption(SelectedPeriod);
+        ShowDailyTrendChart = SelectedPeriod != ReportPeriod.Day;
+        CommandManager.InvalidateRequerySuggested();
+    }
+
     private void UiTimer_Tick(object? sender, EventArgs e)
     {
         _sessionTime = _sessionTime.Add(TimeSpan.FromSeconds(1));
@@ -299,11 +491,23 @@ public class MainViewModel : ViewModelBase
         await TriggerSyncAsync("timer");
     }
 
-    private void Tracker_OnWindowTracked(string windowTitle, bool isIdle)
+    private void Tracker_OnWindowTracked(TrackedWindowInfo trackedWindow)
     {
         _uiDispatcher.Invoke(() =>
         {
-            var tickResult = _activityBusinessServer.ProcessWindowActivity(windowTitle, isIdle, DateTime.Now);
+            if (trackedWindow.IsReflineOwnedWindow)
+            {
+                var pausedResult = _activityBusinessServer.PauseTrackingForServiceWindow(
+                    $"Статус: служебное окно Refline не учитывается ({trackedWindow.IgnoreReason})");
+                if (pausedResult.IsSuccess && pausedResult.Value != null)
+                {
+                    StatusText = pausedResult.Value.StatusText;
+                    ApplyDashboardSummary(pausedResult.Value.Summary);
+                }
+                return;
+            }
+
+            var tickResult = _activityBusinessServer.ProcessWindowActivity(trackedWindow.WindowTitle, trackedWindow.IsIdle, DateTime.Now);
             if (!tickResult.IsSuccess || tickResult.Value == null)
             {
                 StatusText = "Статус: ошибка обработки активности";
@@ -313,50 +517,32 @@ public class MainViewModel : ViewModelBase
             StatusText = tickResult.Value.StatusText;
             var updatedActivity = tickResult.Value.UpdatedActivity;
 
-            if (updatedActivity != null)
+            if (updatedActivity != null && IsTodayDaySelection())
             {
-                UpsertActivity(updatedActivity, tickResult.Value.IsNewActivity);
+                UpsertReportActivity(updatedActivity, tickResult.Value.IsNewActivity);
             }
 
-            ApplySummary(tickResult.Value.Summary);
+            ApplyDashboardSummary(tickResult.Value.Summary);
+
+            if (IsTodayDaySelection())
+            {
+                ApplyReportSummary(tickResult.Value.Summary);
+                return;
+            }
+
+            if (GetSelectedRange().Contains(DateTime.Today))
+            {
+                QueueReportRefresh();
+            }
         });
     }
 
-    private void UpsertActivity(AppActivity updatedActivity, bool isNew)
-    {
-        if (isNew)
-        {
-            Activities.Add(updatedActivity);
-        }
-        else
-        {
-            var existing = Activities.FirstOrDefault(a => a.AppName == updatedActivity.AppName);
-            if (existing != null)
-            {
-                existing.TimeSpentSeconds = updatedActivity.TimeSpentSeconds;
-                existing.LastActive = updatedActivity.LastActive;
-                existing.WindowTitle = updatedActivity.WindowTitle;
-                existing.Category = updatedActivity.Category;
-                existing.IsIdle = updatedActivity.IsIdle;
-                existing.IsProductive = updatedActivity.IsProductive;
-                existing.Version = updatedActivity.Version;
-            }
-            else
-            {
-                Activities.Add(updatedActivity);
-            }
-        }
-
-        var sorted = Activities.OrderByDescending(a => a.TimeSpentSeconds).ToList();
-        Activities = new ObservableCollection<AppActivity>(sorted);
-    }
-
-    private void RefreshSummary()
+    private void RefreshDashboardSummary()
     {
         var summaryResult = _activityBusinessServer.GetTodaySummary();
         if (summaryResult.IsSuccess && summaryResult.Value != null)
         {
-            ApplySummary(summaryResult.Value);
+            ApplyDashboardSummary(summaryResult.Value);
             return;
         }
 
@@ -368,12 +554,9 @@ public class MainViewModel : ViewModelBase
         ProductiveTimeText = "00:00:00";
         TopApplicationText = "Нет данных";
         TopCategoryText = "Нет данных";
-        HasCategoryChartData = false;
-        CategoryChartPlaceholderText = "Категории пока не определены";
-        ApplyEmptyCharts();
     }
 
-    private void ApplySummary(ActivitySummary summary)
+    private void ApplyDashboardSummary(ActivitySummary summary)
     {
         TodayTotalString = summary.TodayTotalString;
         MostActiveAppName = summary.MostActiveAppName;
@@ -381,12 +564,295 @@ public class MainViewModel : ViewModelBase
         ActiveTimeText = FormatDuration(summary.Metrics.ActiveSeconds);
         IdleTimeText = FormatDuration(summary.Metrics.IdleSeconds);
         ProductiveTimeText = FormatDuration(summary.Metrics.ProductiveSeconds);
-        TopApplicationText = string.IsNullOrWhiteSpace(summary.Metrics.TopApplicationName) ||
-            summary.Metrics.TopApplicationName == "—"
-                ? "Нет данных"
-                : summary.Metrics.TopApplicationName;
+        TopApplicationText = FormatTopApplication(summary.Metrics.TopApplicationName);
         TopCategoryText = ToCategoryDisplayName(summary.Metrics.TopCategory);
-        ApplyCharts(summary.Metrics);
+    }
+
+    private async void QueueReportRefresh()
+    {
+        if (_isRefreshingReportData)
+        {
+            _hasPendingReportRefresh = true;
+            return;
+        }
+
+        _isRefreshingReportData = true;
+
+        try
+        {
+            do
+            {
+                _hasPendingReportRefresh = false;
+                var period = SelectedPeriod;
+                var selectedDate = SelectedDate;
+
+                var snapshot = await Task.Run(() => BuildReportSnapshot(period, selectedDate));
+                if (snapshot == null)
+                {
+                    continue;
+                }
+
+                if (SelectedPeriod != period || SelectedDate.Date != selectedDate.Date)
+                {
+                    _hasPendingReportRefresh = true;
+                    continue;
+                }
+
+                ApplyReportSnapshot(snapshot);
+            }
+            while (_hasPendingReportRefresh);
+        }
+        finally
+        {
+            _isRefreshingReportData = false;
+        }
+    }
+
+    private ReportSnapshot? BuildReportSnapshot(ReportPeriod period, DateTime selectedDate)
+    {
+        var range = ReportPeriodHelper.GetRange(period, selectedDate);
+        var reportDataResult = _activityBusinessServer.GetReportData(range.StartDate, range.EndDate);
+
+        if (!reportDataResult.IsSuccess || reportDataResult.Value == null)
+        {
+            _uiDispatcher.Invoke(() =>
+            {
+                ClearReportState();
+                MessageBox.Show(reportDataResult.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            });
+            return null;
+        }
+
+        return new ReportSnapshot(
+            period,
+            selectedDate.Date,
+            range,
+            reportDataResult.Value.Activities,
+            reportDataResult.Value.Summary,
+            reportDataResult.Value.DailyBuckets);
+    }
+
+    private void ApplyReportSnapshot(ReportSnapshot snapshot)
+    {
+        ReportActivities = new ObservableCollection<AppActivity>(snapshot.Activities);
+        ApplyReportSummary(snapshot.Summary);
+        ApplyReportCharts(snapshot.Period, snapshot.Summary.Metrics, snapshot.DailyBuckets);
+    }
+
+    private void ApplyReportSummary(ActivitySummary summary)
+    {
+        ReportTotalTrackedTimeText = FormatDuration(summary.Metrics.TotalTrackedSeconds);
+        ReportActiveTimeText = FormatDuration(summary.Metrics.ActiveSeconds);
+        ReportIdleTimeText = FormatDuration(summary.Metrics.IdleSeconds);
+        ReportProductiveTimeText = FormatDuration(summary.Metrics.ProductiveSeconds);
+        ReportTopApplicationText = FormatTopApplication(summary.Metrics.TopApplicationName);
+        ReportTopCategoryText = ToCategoryDisplayName(summary.Metrics.TopCategory);
+    }
+
+    private void UpsertReportActivity(AppActivity updatedActivity, bool isNew)
+    {
+        if (isNew)
+        {
+            ReportActivities.Add(updatedActivity);
+        }
+        else
+        {
+            var existing = ReportActivities.FirstOrDefault(activity =>
+                string.Equals(activity.AppName, updatedActivity.AppName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
+            {
+                existing.TimeSpentSeconds = updatedActivity.TimeSpentSeconds;
+                existing.LastActive = updatedActivity.LastActive;
+                existing.WindowTitle = updatedActivity.WindowTitle;
+                existing.Category = updatedActivity.Category;
+                existing.ClassificationSource = updatedActivity.ClassificationSource;
+                existing.MatchedRuleId = updatedActivity.MatchedRuleId;
+                existing.MatchedRuleDescription = updatedActivity.MatchedRuleDescription;
+                existing.IsIdle = updatedActivity.IsIdle;
+                existing.IsProductive = updatedActivity.IsProductive;
+                existing.Version = updatedActivity.Version;
+            }
+            else
+            {
+                ReportActivities.Add(updatedActivity);
+            }
+        }
+
+        ReportActivities = new ObservableCollection<AppActivity>(ReportActivities
+            .OrderByDescending(activity => activity.TimeSpentSeconds)
+            .ThenBy(activity => activity.AppName, StringComparer.OrdinalIgnoreCase));
+    }
+
+    private void ApplyReportCharts(
+        ReportPeriod period,
+        ActivityMetricsSummary metrics,
+        IReadOnlyList<ActivityDailyBucket> dailyBuckets)
+    {
+        var pieSeries = metrics.CategorySeconds
+            .Where(item => item.Value > 0)
+            .OrderByDescending(item => item.Value)
+            .Select(item => new PieSeries<int>
+            {
+                Name = ToCategoryDisplayName(item.Key),
+                Values = new[] { item.Value },
+                Fill = new SolidColorPaint(GetCategoryColor(item.Key)),
+                Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
+                DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
+                DataLabelsSize = 13,
+                ToolTipLabelFormatter = point => FormatDuration((int)point.Coordinate.PrimaryValue)
+            })
+            .Cast<ISeries>()
+            .ToArray();
+
+        HasCategoryChartData = pieSeries.Length > 0;
+        CategoryChartPlaceholderText = "Категории пока не определены";
+
+        var topApps = metrics.TopApplications
+            .Where(item => item.TotalSeconds > 0)
+            .Take(7)
+            .ToList();
+
+        var appLabels = topApps.Count == 0
+            ? new[] { "Нет данных" }
+            : topApps.Select(item => TrimChartLabel(item.ApplicationName)).ToArray();
+
+        var appValues = topApps.Count == 0
+            ? new[] { 0 }
+            : topApps.Select(item => item.TotalSeconds).ToArray();
+
+        CategoryTimeSeries = pieSeries;
+        TopApplicationsSeries = new ISeries[]
+        {
+            new ColumnSeries<int>
+            {
+                Name = "Время",
+                Values = appValues,
+                Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
+                Stroke = null,
+                MaxBarWidth = 42
+            }
+        };
+        TopApplicationsXAxes = new[]
+        {
+            new Axis
+            {
+                Labels = appLabels,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
+        TopApplicationsYAxes = CreateDurationAxes();
+
+        ApplyDailyTrendChart(period, dailyBuckets);
+    }
+
+    private void ApplyDailyTrendChart(ReportPeriod period, IReadOnlyList<ActivityDailyBucket> dailyBuckets)
+    {
+        ShowDailyTrendChart = period != ReportPeriod.Day;
+        if (!ShowDailyTrendChart)
+        {
+            HasDailyTrendChartData = false;
+            DailyTrendChartPlaceholderText = "График по дням доступен для недели и месяца";
+            DailyTrendSeries = Array.Empty<ISeries>();
+            DailyTrendXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
+            DailyTrendYAxes = CreateDurationAxes();
+            return;
+        }
+
+        var labels = dailyBuckets.Select(bucket => FormatBucketLabel(period, bucket.Date)).ToArray();
+        var totalValues = dailyBuckets.Select(bucket => bucket.TotalTrackedSeconds).ToArray();
+        var productiveValues = dailyBuckets.Select(bucket => bucket.ProductiveSeconds).ToArray();
+        var hasValues = totalValues.Any(value => value > 0) || productiveValues.Any(value => value > 0);
+
+        HasDailyTrendChartData = hasValues;
+        DailyTrendChartPlaceholderText = "Нет данных за выбранный период";
+
+        DailyTrendSeries = hasValues
+            ? new ISeries[]
+            {
+                new ColumnSeries<int>
+                {
+                    Name = "Общее время",
+                    Values = totalValues,
+                    Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
+                    Stroke = null,
+                    MaxBarWidth = 32
+                },
+                new LineSeries<int>
+                {
+                    Name = "Продуктивное время",
+                    Values = productiveValues,
+                    Stroke = new SolidColorPaint(new SKColor(0, 255, 200)) { StrokeThickness = 3 },
+                    Fill = null,
+                    GeometrySize = 10,
+                    GeometryFill = new SolidColorPaint(new SKColor(0, 255, 200)),
+                    GeometryStroke = null
+                }
+            }
+            : Array.Empty<ISeries>();
+
+        DailyTrendXAxes = CreateChartLabelAxis(labels.Length == 0 ? new[] { "Нет данных" } : labels);
+        DailyTrendYAxes = CreateDurationAxes();
+    }
+
+    private void ClearReportState()
+    {
+        ReportActivities = new ObservableCollection<AppActivity>();
+        ReportTotalTrackedTimeText = "00:00:00";
+        ReportActiveTimeText = "00:00:00";
+        ReportIdleTimeText = "00:00:00";
+        ReportProductiveTimeText = "00:00:00";
+        ReportTopApplicationText = "Нет данных";
+        ReportTopCategoryText = "Нет данных";
+        ApplyEmptyCharts();
+    }
+
+    private void ApplyEmptyCharts()
+    {
+        HasCategoryChartData = false;
+        CategoryChartPlaceholderText = "Категории пока не определены";
+        CategoryTimeSeries = Array.Empty<ISeries>();
+        TopApplicationsSeries = Array.Empty<ISeries>();
+        TopApplicationsXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
+        TopApplicationsYAxes = CreateDurationAxes();
+
+        HasDailyTrendChartData = false;
+        DailyTrendChartPlaceholderText = ShowDailyTrendChart
+            ? "Нет данных за выбранный период"
+            : "График по дням доступен для недели и месяца";
+        DailyTrendSeries = Array.Empty<ISeries>();
+        DailyTrendXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
+        DailyTrendYAxes = CreateDurationAxes();
+    }
+
+    private bool IsTodayDaySelection()
+    {
+        return SelectedPeriod == ReportPeriod.Day && SelectedDate.Date == DateTime.Today;
+    }
+
+    private ReportPeriodRange GetSelectedRange()
+    {
+        return ReportPeriodHelper.GetRange(SelectedPeriod, SelectedDate);
+    }
+
+    private static bool TryParseReportPeriod(object? parameter, out ReportPeriod period)
+    {
+        if (parameter is ReportPeriod directPeriod)
+        {
+            period = directPeriod;
+            return true;
+        }
+
+        return Enum.TryParse(parameter?.ToString(), true, out period);
+    }
+
+    private static string FormatTopApplication(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) || value == "—"
+            ? "Нет данных"
+            : value;
     }
 
     private static string FormatDuration(int totalSeconds)
@@ -410,104 +876,6 @@ public class MainViewModel : ViewModelBase
         };
     }
 
-    private void ApplyCharts(ActivityMetricsSummary metrics)
-    {
-        var pieSeries = metrics.CategorySeconds
-            .Where(item => item.Value > 0)
-            .OrderByDescending(item => item.Value)
-            .Select(item => new PieSeries<int>
-            {
-                Name = ToCategoryDisplayName(item.Key),
-                Values = new[] { item.Value },
-                Fill = new SolidColorPaint(GetCategoryColor(item.Key)),
-                Stroke = new SolidColorPaint(new SKColor(17, 24, 39)) { StrokeThickness = 2 },
-                DataLabelsPaint = new SolidColorPaint(new SKColor(221, 230, 241)),
-                DataLabelsSize = 13,
-                ToolTipLabelFormatter = point => FormatDuration((int)point.Coordinate.PrimaryValue)
-            })
-            .Cast<ISeries>()
-            .ToArray();
-
-        HasCategoryChartData = pieSeries.Length > 0;
-        CategoryChartPlaceholderText = "Категории пока не определены";
-
-        var topApps = metrics.TopApplications
-            .Where(item => item.TotalSeconds > 0)
-            .Take(5)
-            .ToList();
-
-        var appLabels = topApps.Count == 0
-            ? new[] { "Нет данных" }
-            : topApps.Select(item => TrimChartLabel(item.ApplicationName)).ToArray();
-
-        var appValues = topApps.Count == 0
-            ? new[] { 0 }
-            : topApps.Select(item => item.TotalSeconds).ToArray();
-
-        CategoryTimeSeries = pieSeries;
-        TopApplicationsSeries = new ISeries[]
-        {
-            new ColumnSeries<int>
-            {
-                Name = "Время",
-                Values = appValues,
-                Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
-                Stroke = null,
-                MaxBarWidth = 42,
-            }
-        };
-        TopApplicationsXAxes = new[]
-        {
-            new Axis
-            {
-                Labels = appLabels,
-                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
-                TextSize = 12,
-                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
-            }
-        };
-        TopApplicationsYAxes = new[]
-        {
-            new Axis
-            {
-                MinLimit = 0,
-                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
-                TextSize = 12,
-                Labeler = value => FormatDuration((int)value),
-                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
-            }
-        };
-    }
-
-    private void ApplyEmptyCharts()
-    {
-        HasCategoryChartData = false;
-        CategoryChartPlaceholderText = "Категории пока не определены";
-        CategoryTimeSeries = Array.Empty<ISeries>();
-        TopApplicationsSeries = Array.Empty<ISeries>();
-        TopApplicationsXAxes = new[]
-        {
-            new Axis
-            {
-                Labels = new[] { "Нет данных" },
-                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
-                TextSize = 12,
-                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
-            }
-        };
-        TopApplicationsYAxes = new[]
-        {
-            new Axis
-            {
-                MinLimit = 0,
-                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
-                TextSize = 12,
-                Labeler = value => FormatDuration((int)value),
-                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
-            }
-        };
-    }
-
     private static string TrimChartLabel(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -517,6 +885,42 @@ public class MainViewModel : ViewModelBase
 
         var trimmed = value.Trim();
         return trimmed.Length > 18 ? trimmed[..18] + "..." : trimmed;
+    }
+
+    private static string FormatBucketLabel(ReportPeriod period, DateTime date)
+    {
+        return period == ReportPeriod.Week
+            ? $"{RussianCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)} {date:dd.MM}"
+            : date.ToString("dd.MM", RussianCulture);
+    }
+
+    private static Axis[] CreateChartLabelAxis(string[] labels)
+    {
+        return new[]
+        {
+            new Axis
+            {
+                Labels = labels,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
+    }
+
+    private static Axis[] CreateDurationAxes()
+    {
+        return new[]
+        {
+            new Axis
+            {
+                MinLimit = 0,
+                LabelsPaint = new SolidColorPaint(new SKColor(155, 174, 194)),
+                TextSize = 12,
+                Labeler = value => FormatDuration((int)value),
+                SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
+            }
+        };
     }
 
     private static SKColor GetCategoryColor(ActivityCategory category)
@@ -583,4 +987,12 @@ public class MainViewModel : ViewModelBase
             AppLogger.Log($"Ошибка activity sync trigger '{trigger}': {ex.Message}", "ERROR");
         }
     }
+
+    private sealed record ReportSnapshot(
+        ReportPeriod Period,
+        DateTime SelectedDate,
+        ReportPeriodRange Range,
+        IReadOnlyList<AppActivity> Activities,
+        ActivitySummary Summary,
+        IReadOnlyList<ActivityDailyBucket> DailyBuckets);
 }

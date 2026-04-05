@@ -46,33 +46,27 @@ public class ActivityBusinessServer : IActivityBusinessServer
     {
         return _lockService.ExecuteLocked(() =>
         {
-            var loadResult = _activityDataService.LoadByDate(DateTime.Today);
+            var loadResult = LoadTodayActivitiesInternal();
             if (!loadResult.IsSuccess || loadResult.Value == null)
             {
                 return OperationResult<IReadOnlyList<AppActivity>>.Failure(loadResult.Message, loadResult.ErrorCode);
             }
 
-            _todayActivities.Clear();
-            _todayActivities.AddRange(loadResult.Value.Select(Clone));
+            return OperationResult<IReadOnlyList<AppActivity>>.Success(loadResult.Value);
+        });
+    }
 
-            var hasMetadataChanges = false;
-            foreach (var activity in _todayActivities)
+    public OperationResult<IReadOnlyList<AppActivity>> LoadActivitiesByRange(DateTime startDate, DateTime endDate)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            var sourceResult = LoadRawActivitiesByRange(startDate, endDate);
+            if (!sourceResult.IsSuccess || sourceResult.Value == null)
             {
-                hasMetadataChanges |= EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+                return OperationResult<IReadOnlyList<AppActivity>>.Failure(sourceResult.Message, sourceResult.ErrorCode);
             }
 
-            if (hasMetadataChanges)
-            {
-                var saveResult = _activityDataService.SaveAll(_todayActivities.Select(Clone), DateTime.Today);
-                if (!saveResult.IsSuccess)
-                {
-                    return OperationResult<IReadOnlyList<AppActivity>>.Failure(
-                        saveResult.Message,
-                        saveResult.ErrorCode);
-                }
-            }
-
-            return OperationResult<IReadOnlyList<AppActivity>>.Success(_todayActivities.Select(Clone).ToList());
+            return OperationResult<IReadOnlyList<AppActivity>>.Success(AggregateActivitiesByApplication(sourceResult.Value));
         });
     }
 
@@ -164,9 +158,86 @@ public class ActivityBusinessServer : IActivityBusinessServer
         });
     }
 
+    public OperationResult<ActivityTickResult> PauseTrackingForServiceWindow(string statusText)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            if (!IsTracking)
+            {
+                return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
+                {
+                    StatusText = "Статус: остановлено",
+                    Summary = BuildSummary(),
+                    IsTrackingSuppressed = true
+                });
+            }
+
+            FinalizeActiveSegment();
+
+            return OperationResult<ActivityTickResult>.Success(new ActivityTickResult
+            {
+                StatusText = statusText,
+                Summary = BuildSummary(),
+                IsTrackingSuppressed = true
+            });
+        });
+    }
+
     public OperationResult<ActivitySummary> GetTodaySummary()
     {
         return _lockService.ExecuteLocked(() => OperationResult<ActivitySummary>.Success(BuildSummary()));
+    }
+
+    public OperationResult<ActivitySummary> GetSummary(DateTime startDate, DateTime endDate)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            var sourceResult = LoadRawActivitiesByRange(startDate, endDate);
+            if (!sourceResult.IsSuccess || sourceResult.Value == null)
+            {
+                return OperationResult<ActivitySummary>.Failure(sourceResult.Message, sourceResult.ErrorCode);
+            }
+
+            return OperationResult<ActivitySummary>.Success(BuildSummary(sourceResult.Value));
+        });
+    }
+
+    public OperationResult<IReadOnlyList<ActivityDailyBucket>> GetDailyBuckets(DateTime startDate, DateTime endDate)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            var sourceResult = LoadRawActivitiesByRange(startDate, endDate);
+            if (!sourceResult.IsSuccess || sourceResult.Value == null)
+            {
+                return OperationResult<IReadOnlyList<ActivityDailyBucket>>.Failure(sourceResult.Message, sourceResult.ErrorCode);
+            }
+
+            return OperationResult<IReadOnlyList<ActivityDailyBucket>>.Success(BuildDailyBuckets(startDate, endDate, sourceResult.Value));
+        });
+    }
+
+    public OperationResult<ActivityReportData> GetReportData(DateTime startDate, DateTime endDate)
+    {
+        return _lockService.ExecuteLocked(() =>
+        {
+            var sourceResult = LoadRawActivitiesByRange(startDate, endDate);
+            if (!sourceResult.IsSuccess || sourceResult.Value == null)
+            {
+                return OperationResult<ActivityReportData>.Failure(sourceResult.Message, sourceResult.ErrorCode);
+            }
+
+            var normalizedStartDate = startDate.Date;
+            var normalizedEndDate = endDate.Date;
+            var rawActivities = sourceResult.Value;
+
+            return OperationResult<ActivityReportData>.Success(new ActivityReportData
+            {
+                Range = new(normalizedStartDate, normalizedEndDate),
+                Activities = AggregateActivitiesByApplication(rawActivities),
+                Summary = BuildSummary(rawActivities),
+                DailyBuckets = BuildDailyBuckets(normalizedStartDate, normalizedEndDate, rawActivities)
+            });
+        });
     }
 
     public OperationResult SaveCurrentSession()
@@ -190,14 +261,18 @@ public class ActivityBusinessServer : IActivityBusinessServer
 
     private ActivitySummary BuildSummary()
     {
-        if (_todayActivities.Count == 0)
+        EnsureActivitiesEnriched();
+        return BuildSummary(_todayActivities.Select(Clone).ToList());
+    }
+
+    private ActivitySummary BuildSummary(IReadOnlyList<AppActivity> activities)
+    {
+        if (activities.Count == 0)
         {
             return new ActivitySummary();
         }
 
-        EnsureActivitiesEnriched();
-
-        var metrics = _metricsService.Calculate(_todayActivities.Select(Clone).ToList());
+        var metrics = _metricsService.Calculate(activities);
         var totalTs = TimeSpan.FromSeconds(metrics.TotalTrackedSeconds);
         var mostActiveTitle = metrics.TopApplicationName.Length > 25
             ? metrics.TopApplicationName[..25] + "..."
@@ -210,6 +285,149 @@ public class ActivityBusinessServer : IActivityBusinessServer
             MostActiveAppName = mostActiveTitle,
             Metrics = metrics
         };
+    }
+
+    private OperationResult<IReadOnlyList<AppActivity>> LoadTodayActivitiesInternal()
+    {
+        var loadResult = _activityDataService.LoadByDate(DateTime.Today);
+        if (!loadResult.IsSuccess || loadResult.Value == null)
+        {
+            return OperationResult<IReadOnlyList<AppActivity>>.Failure(loadResult.Message, loadResult.ErrorCode);
+        }
+
+        _todayActivities.Clear();
+        _todayActivities.AddRange(loadResult.Value.Select(Clone));
+
+        var hasMetadataChanges = false;
+        foreach (var activity in _todayActivities)
+        {
+            hasMetadataChanges |= EnrichActivity(activity, activity.WindowTitle, activity.IsIdle);
+        }
+
+        if (hasMetadataChanges)
+        {
+            var saveResult = _activityDataService.SaveAll(_todayActivities.Select(Clone), DateTime.Today);
+            if (!saveResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<AppActivity>>.Failure(saveResult.Message, saveResult.ErrorCode);
+            }
+        }
+
+        return OperationResult<IReadOnlyList<AppActivity>>.Success(_todayActivities.Select(Clone).ToList());
+    }
+
+    private OperationResult<IReadOnlyList<AppActivity>> LoadRawActivitiesByRange(DateTime startDate, DateTime endDate)
+    {
+        var normalizedStartDate = startDate.Date;
+        var normalizedEndDate = endDate.Date;
+
+        if (normalizedStartDate > normalizedEndDate)
+        {
+            (normalizedStartDate, normalizedEndDate) = (normalizedEndDate, normalizedStartDate);
+        }
+
+        if (_todayActivities.Count == 0)
+        {
+            var todayLoadResult = LoadTodayActivitiesInternal();
+            if (!todayLoadResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<AppActivity>>.Failure(todayLoadResult.Message, todayLoadResult.ErrorCode);
+            }
+        }
+
+        var loadResult = _activityDataService.LoadByDateRange(normalizedStartDate, normalizedEndDate);
+        if (!loadResult.IsSuccess || loadResult.Value == null)
+        {
+            return OperationResult<IReadOnlyList<AppActivity>>.Failure(loadResult.Message, loadResult.ErrorCode);
+        }
+
+        var rawActivities = loadResult.Value.Select(Clone).ToList();
+
+        if (normalizedStartDate <= DateTime.Today && normalizedEndDate >= DateTime.Today)
+        {
+            rawActivities.RemoveAll(activity => activity.ActivityDate.Date == DateTime.Today);
+            rawActivities.AddRange(_todayActivities.Select(Clone));
+        }
+
+        return OperationResult<IReadOnlyList<AppActivity>>.Success(rawActivities
+            .OrderByDescending(activity => activity.ActivityDate)
+            .ThenByDescending(activity => activity.TimeSpentSeconds)
+            .ToList());
+    }
+
+    private static IReadOnlyList<AppActivity> AggregateActivitiesByApplication(IReadOnlyList<AppActivity> activities)
+    {
+        return activities
+            .GroupBy(activity => string.IsNullOrWhiteSpace(activity.AppName)
+                ? "Неизвестное приложение"
+                : activity.AppName.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var orderedGroup = group
+                    .OrderByDescending(activity => activity.LastActive)
+                    .ThenByDescending(activity => activity.TimeSpentSeconds)
+                    .ToList();
+                var latestActivity = orderedGroup[0];
+                var dominantCategory = group
+                    .GroupBy(activity => activity.Category)
+                    .OrderByDescending(categoryGroup => categoryGroup.Sum(activity => activity.TimeSpentSeconds))
+                    .Select(categoryGroup => categoryGroup.Key)
+                    .FirstOrDefault(ActivityCategory.Unknown);
+
+                return new AppActivity
+                {
+                    AppName = latestActivity.AppName,
+                    WindowTitle = latestActivity.WindowTitle,
+                    Category = dominantCategory,
+                    ClassificationSource = latestActivity.ClassificationSource,
+                    MatchedRuleId = latestActivity.MatchedRuleId,
+                    MatchedRuleDescription = latestActivity.MatchedRuleDescription,
+                    IsIdle = group.All(activity => activity.IsIdle),
+                    IsProductive = group.Any(activity => activity.IsProductive),
+                    TimeSpentSeconds = group.Sum(activity => activity.TimeSpentSeconds),
+                    LastActive = group.Max(activity => activity.LastActive),
+                    ActivityDate = group.Max(activity => activity.ActivityDate),
+                    Version = latestActivity.Version
+                };
+            })
+            .OrderByDescending(activity => activity.TimeSpentSeconds)
+            .ThenBy(activity => activity.AppName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static IReadOnlyList<ActivityDailyBucket> BuildDailyBuckets(DateTime startDate, DateTime endDate, IReadOnlyList<AppActivity> activities)
+    {
+        var bucketsByDate = activities
+            .GroupBy(activity => activity.ActivityDate.Date)
+            .ToDictionary(
+                group => group.Key,
+                group => new ActivityDailyBucket
+                {
+                    Date = group.Key,
+                    TotalTrackedSeconds = group.Sum(activity => activity.TimeSpentSeconds),
+                    ProductiveSeconds = group
+                        .Where(activity => activity.IsProductive)
+                        .Sum(activity => activity.TimeSpentSeconds)
+                });
+
+        var buckets = new List<ActivityDailyBucket>();
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            if (bucketsByDate.TryGetValue(date, out var bucket))
+            {
+                buckets.Add(bucket);
+                continue;
+            }
+
+            buckets.Add(new ActivityDailyBucket
+            {
+                Date = date,
+                TotalTrackedSeconds = 0,
+                ProductiveSeconds = 0
+            });
+        }
+
+        return buckets;
     }
 
     private void EnsureActivitiesEnriched()
@@ -225,6 +443,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
         var previousWindowTitle = activity.WindowTitle;
         var previousIsIdle = activity.IsIdle;
         var previousCategory = activity.Category;
+        var previousClassificationSource = activity.ClassificationSource;
+        var previousMatchedRuleId = activity.MatchedRuleId;
+        var previousMatchedRuleDescription = activity.MatchedRuleDescription;
         var previousIsProductive = activity.IsProductive;
 
         if (string.IsNullOrWhiteSpace(activity.WindowTitle))
@@ -237,12 +458,19 @@ public class ActivityBusinessServer : IActivityBusinessServer
         activity.IsIdle = isIdle ||
             string.Equals(activity.AppName, "Простой", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(activity.AppName, "Idle", StringComparison.OrdinalIgnoreCase);
-        activity.Category = _classificationService.Classify(activity.AppName, activity.WindowTitle);
+        var classificationDecision = _classificationService.ClassifyDetailed(activity.AppName, activity.WindowTitle);
+        activity.Category = classificationDecision.Category;
+        activity.ClassificationSource = classificationDecision.Source;
+        activity.MatchedRuleId = classificationDecision.MatchedRuleId;
+        activity.MatchedRuleDescription = classificationDecision.MatchedRuleDescription ?? string.Empty;
         activity.IsProductive = ActivityProductivityRules.IsProductive(activity);
 
         return !string.Equals(previousWindowTitle, activity.WindowTitle, StringComparison.Ordinal) ||
             previousIsIdle != activity.IsIdle ||
             previousCategory != activity.Category ||
+            previousClassificationSource != activity.ClassificationSource ||
+            previousMatchedRuleId != activity.MatchedRuleId ||
+            !string.Equals(previousMatchedRuleDescription, activity.MatchedRuleDescription, StringComparison.Ordinal) ||
             previousIsProductive != activity.IsProductive;
     }
 
@@ -417,6 +645,9 @@ public class ActivityBusinessServer : IActivityBusinessServer
             AppName = source.AppName,
             WindowTitle = source.WindowTitle,
             Category = source.Category,
+            ClassificationSource = source.ClassificationSource,
+            MatchedRuleId = source.MatchedRuleId,
+            MatchedRuleDescription = source.MatchedRuleDescription,
             IsIdle = source.IsIdle,
             IsProductive = source.IsProductive,
             TimeSpentSeconds = source.TimeSpentSeconds,

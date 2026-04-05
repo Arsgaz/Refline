@@ -9,6 +9,9 @@ public class AppActivity : INotifyPropertyChanged
     private string _appName = string.Empty;
     private string _windowTitle = string.Empty;
     private ActivityCategory _category = ActivityCategory.Unknown;
+    private ActivityClassificationSource _classificationSource = ActivityClassificationSource.FallbackUnknown;
+    private long? _matchedRuleId;
+    private string _matchedRuleDescription = string.Empty;
     private bool _isIdle;
     private bool _isProductive;
     private int _timeSpentSeconds;
@@ -64,6 +67,48 @@ public class AppActivity : INotifyPropertyChanged
             {
                 _category = value;
                 OnPropertyChanged();
+            }
+        }
+    }
+
+    public ActivityClassificationSource ClassificationSource
+    {
+        get => _classificationSource;
+        set
+        {
+            if (_classificationSource != value)
+            {
+                _classificationSource = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CategorySourceDisplay));
+            }
+        }
+    }
+
+    public long? MatchedRuleId
+    {
+        get => _matchedRuleId;
+        set
+        {
+            if (_matchedRuleId != value)
+            {
+                _matchedRuleId = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MatchedRuleDisplay));
+            }
+        }
+    }
+
+    public string MatchedRuleDescription
+    {
+        get => _matchedRuleDescription;
+        set
+        {
+            if (_matchedRuleDescription != value)
+            {
+                _matchedRuleDescription = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MatchedRuleDisplay));
             }
         }
     }
@@ -158,6 +203,42 @@ public class AppActivity : INotifyPropertyChanged
             }
 
             return $"{ts.Minutes} мин {ts.Seconds:D2} сек";
+        }
+    }
+
+    public string CategoryDisplay => Category switch
+    {
+        ActivityCategory.Work => "Работа",
+        ActivityCategory.Communication => "Коммуникации",
+        ActivityCategory.ConditionalWork => "Условная работа",
+        ActivityCategory.Entertainment => "Развлечения",
+        ActivityCategory.System => "Система",
+        _ => "Неизвестно"
+    };
+
+    public string CategorySourceDisplay => ClassificationSource switch
+    {
+        ActivityClassificationSource.CompanyRule => "Правило компании",
+        ActivityClassificationSource.BuiltIn => "Встроенное правило",
+        ActivityClassificationSource.FallbackUnknown => "Fallback Unknown",
+        _ => "Не определено"
+    };
+
+    public string MatchedRuleDisplay
+    {
+        get
+        {
+            if (ClassificationSource != ActivityClassificationSource.CompanyRule)
+            {
+                return "—";
+            }
+
+            if (!string.IsNullOrWhiteSpace(MatchedRuleDescription))
+            {
+                return MatchedRuleDescription;
+            }
+
+            return MatchedRuleId.HasValue ? $"Rule #{MatchedRuleId.Value}" : "Company rule";
         }
     }
 

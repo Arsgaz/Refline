@@ -5,345 +5,498 @@
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       Background="#0D1117">
 
-	<Page.Resources>
-
-		<!-- 🔵 Стиль кнопки Refline -->
-		<Style x:Key="ReflineActionButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-			<Setter Property="Foreground" Value="#2DC7FF"/>
-			<Setter Property="FontSize" Value="17"/>
-			<Setter Property="FontWeight" Value="SemiBold"/>
-			<Setter Property="Padding" Value="12 6"/>
-			<Setter Property="Margin" Value="0 0 0 10"/>
-			<Setter Property="BorderBrush" Value="#2DC7FF"/>
-			<Setter Property="BorderThickness" Value="1.4"/>
-			<Setter Property="Cursor" Value="Hand"/>
-			<Setter Property="Background" Value="#0D1117"/>
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="border"
+    <Page.Resources>
+        <Style x:Key="ReflineActionButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="Foreground" Value="#2DC7FF"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12 6"/>
+            <Setter Property="Margin" Value="0 0 0 10"/>
+            <Setter Property="BorderBrush" Value="#2DC7FF"/>
+            <Setter Property="BorderThickness" Value="1.4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#0D1117"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
                                 CornerRadius="6"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
-							<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-						</Border>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
 
-						<ControlTemplate.Triggers>
-							<!-- Hover -->
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="border" Property="BorderBrush" Value="#4DE0FF"/>
-								<Setter Property="Foreground" Value="#4DE0FF"/>
-							</Trigger>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#4DE0FF"/>
+                                <Setter Property="Foreground" Value="#4DE0FF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#1FA1CD"/>
+                                <Setter Property="Foreground" Value="#1FA1CD"/>
+                                <Setter TargetName="border" Property="Background" Value="#111827"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-							<!-- Pressed -->
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="border" Property="BorderBrush" Value="#1FA1CD"/>
-								<Setter Property="Foreground" Value="#1FA1CD"/>
-								<Setter TargetName="border" Property="Background" Value="#111827"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
+        <Style x:Key="PeriodToggleButton" TargetType="Button" BasedOn="{StaticResource ReflineActionButton}">
+            <Setter Property="MinWidth" Value="110"/>
+            <Setter Property="Margin" Value="0 0 10 0"/>
+            <Setter Property="Padding" Value="16 8"/>
+        </Style>
 
-		<!-- 🔵 Анимация появления -->
-		<Style x:Key="AppearScale" TargetType="FrameworkElement">
-			<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-			<Setter Property="RenderTransform">
-				<Setter.Value>
-					<ScaleTransform ScaleX="0.82" ScaleY="0.82"/>
-				</Setter.Value>
-			</Setter>
-		</Style>
+        <Style x:Key="SelectedDayButton" TargetType="Button" BasedOn="{StaticResource PeriodToggleButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDayPeriodSelected}" Value="True">
+                    <Setter Property="Background" Value="#11263A"/>
+                    <Setter Property="Foreground" Value="#8BE9FF"/>
+                    <Setter Property="BorderBrush" Value="#8BE9FF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
-	</Page.Resources>
+        <Style x:Key="SelectedWeekButton" TargetType="Button" BasedOn="{StaticResource PeriodToggleButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsWeekPeriodSelected}" Value="True">
+                    <Setter Property="Background" Value="#11263A"/>
+                    <Setter Property="Foreground" Value="#8BE9FF"/>
+                    <Setter Property="BorderBrush" Value="#8BE9FF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
+        <Style x:Key="SelectedMonthButton" TargetType="Button" BasedOn="{StaticResource PeriodToggleButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMonthPeriodSelected}" Value="True">
+                    <Setter Property="Background" Value="#11263A"/>
+                    <Setter Property="Foreground" Value="#8BE9FF"/>
+                    <Setter Property="BorderBrush" Value="#8BE9FF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
 
-	<ScrollViewer VerticalScrollBarVisibility="Auto">
-		<StackPanel Margin="40">
-
-			<!-- Заголовок -->
-			<TextBlock Text="Отчёты и статистика"
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="40">
+            <TextBlock Text="Отчёты и статистика"
                        FontSize="32"
                        FontWeight="Bold"
                        Foreground="#2DC7FF"
-                       Margin="0,0,0,16"/>
+                       Margin="0,0,0,10"/>
 
-			
-			<!-- Кнопка -->
-			<Button x:Name="ShowReportButton"
-                    Content="📊 Сформировать отчёт"
-                    Width="260" Height="55"
-                    Style="{StaticResource ReflineActionButton}"
-                    Click="ShowReport_Click"
-                    Margin="0,0,0,40"/>
+            <TextBlock Text="Выбирайте день, неделю или месяц, чтобы пересчитать метрики, графики и активность."
+                       FontSize="16"
+                       Foreground="#9BAEC2"
+                       Margin="0,0,0,24"
+                       TextWrapping="Wrap"/>
 
+            <Border Background="#111827"
+                    CornerRadius="12"
+                    Padding="20"
+                    Margin="0,0,0,28">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-			<!-- ▼▼▼ ОТЧЁТ ▼▼▼ -->
-			<Grid x:Name="ReportArea"
-                  Visibility="Visible"
-                  Opacity="0"
-				  IsHitTestVisible="False">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="*"/>
-				</Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,16">
+                        <Button Content="День"
+                                Command="{Binding SetReportPeriodCommand}"
+                                CommandParameter="Day"
+                                Style="{StaticResource SelectedDayButton}"/>
+                        <Button Content="Неделя"
+                                Command="{Binding SetReportPeriodCommand}"
+                                CommandParameter="Week"
+                                Style="{StaticResource SelectedWeekButton}"/>
+                        <Button Content="Месяц"
+                                Command="{Binding SetReportPeriodCommand}"
+                                CommandParameter="Month"
+                                Style="{StaticResource SelectedMonthButton}"/>
+                    </WrapPanel>
 
-				<!-- Метрики -->
-				<WrapPanel Grid.Row="0" Margin="0,0,0,30">
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-					<!-- Метрика 1 -->
-					<Border x:Name="Card1"
-                            Style="{StaticResource AppearScale}"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Width="260"
-                            Margin="0,0,20,20">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Button Content="←"
+                                    Width="48"
+                                    Height="40"
+                                    Command="{Binding PreviousReportPeriodCommand}"
+                                    Style="{StaticResource ReflineActionButton}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="→"
+                                    Width="48"
+                                    Height="40"
+                                    Command="{Binding NextReportPeriodCommand}"
+                                    Style="{StaticResource ReflineActionButton}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="{Binding CurrentPeriodButtonText}"
+                                    Height="40"
+                                    Padding="18 6"
+                                    Command="{Binding CurrentReportPeriodCommand}"
+                                    Style="{StaticResource ReflineActionButton}"
+                                    Margin="0"/>
+                        </StackPanel>
 
-						<StackPanel>
-							<TextBlock Text="Общее время"
+                        <StackPanel Grid.Column="1"
+                                    Margin="24,0"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Выбранный период"
                                        Foreground="#9BAEC2"
-                                       FontSize="15"/>
-							<TextBlock Text="{Binding TotalTrackedTimeText}"
-                                       Foreground="#2DC7FF"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Margin="0,5,0,0"/>
-						</StackPanel>
-					</Border>
-
-
-					<!-- Метрика 2 -->
-					<Border x:Name="Card2"
-                            Style="{StaticResource AppearScale}"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Width="260"
-                            Margin="0,0,20,20">
-
-						<StackPanel>
-							<TextBlock Text="Активное время"
-                                       Foreground="#9BAEC2"
-                                       FontSize="15"/>
-							<TextBlock Text="{Binding ActiveTimeText}"
-                                       Foreground="#2DC7FF"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Margin="0,5,0,0"/>
-						</StackPanel>
-					</Border>
-
-					<Border Style="{StaticResource AppearScale}"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Width="260"
-                            Margin="0,0,20,20">
-
-						<StackPanel>
-							<TextBlock Text="Время бездействия"
-                                       Foreground="#9BAEC2"
-                                       FontSize="15"/>
-							<TextBlock Text="{Binding IdleTimeText}"
-                                       Foreground="#2DC7FF"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Margin="0,5,0,0"/>
-						</StackPanel>
-					</Border>
-
-					<Border Style="{StaticResource AppearScale}"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Width="260"
-                            Margin="0,0,20,20">
-
-						<StackPanel>
-							<TextBlock Text="Продуктивное время"
-                                       Foreground="#9BAEC2"
-                                       FontSize="15"/>
-							<TextBlock Text="{Binding ProductiveTimeText}"
-                                       Foreground="#2DC7FF"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Margin="0,5,0,0"/>
-						</StackPanel>
-					</Border>
-
-					<Border Style="{StaticResource AppearScale}"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Width="260"
-                            Margin="0,0,20,20">
-
-						<StackPanel>
-							<TextBlock Text="Топ приложение"
-                                       Foreground="#9BAEC2"
-                                       FontSize="15"
-                                       TextWrapping="Wrap"/>
-							<TextBlock Text="{Binding TopApplicationText}"
-                                       Foreground="#2DC7FF"
-                                       FontSize="26"
-                                       FontWeight="Bold"
-                                       Margin="0,5,0,0"
-                                       TextTrimming="CharacterEllipsis"/>
-						</StackPanel>
-					</Border>
-
-				</WrapPanel>
-
-				<!-- Графики -->
-				<Grid Grid.Row="1" Margin="0,0,0,30">
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="*"/>
-					</Grid.ColumnDefinitions>
-
-					<Border Grid.Column="0"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Margin="0,0,10,0">
-						<StackPanel>
-							<TextBlock Text="Распределение времени по категориям"
-                                       Foreground="#2DC7FF"
-                                       FontSize="18"
+                                       FontSize="14"/>
+                            <TextBlock Text="{Binding SelectedPeriodLabel}"
+                                       Foreground="#DDE6F1"
+                                       FontSize="24"
                                        FontWeight="SemiBold"
-                                       Margin="0,0,0,16"/>
-							<Grid Height="320">
-								<lvc:PieChart x:Name="CategoryPieChart"
-                                              Series="{Binding CategoryTimeSeries}"
-                                              LegendPosition="Right"
-                                              Background="Transparent">
-									<lvc:PieChart.Style>
-										<Style TargetType="lvc:PieChart">
-											<Setter Property="Visibility" Value="Collapsed"/>
-											<Style.Triggers>
-												<DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
-													<Setter Property="Visibility" Value="Visible"/>
-												</DataTrigger>
-											</Style.Triggers>
-										</Style>
-									</lvc:PieChart.Style>
-								</lvc:PieChart>
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
 
-								<TextBlock Text="{Binding CategoryChartPlaceholderText}"
-                                           Foreground="#9BAEC2"
-                                           FontSize="16"
-                                           TextAlignment="Center"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center">
-									<TextBlock.Style>
-										<Style TargetType="TextBlock">
-											<Setter Property="Visibility" Value="Visible"/>
-											<Style.Triggers>
-												<DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
-													<Setter Property="Visibility" Value="Collapsed"/>
-												</DataTrigger>
-											</Style.Triggers>
-										</Style>
-									</TextBlock.Style>
-								</TextBlock>
-							</Grid>
-						</StackPanel>
-					</Border>
+                        <Button Grid.Column="2"
+                                Content="📄 Экспорт в TXT"
+                                Command="{Binding ExportCommand}"
+                                Style="{StaticResource ReflineActionButton}"
+                                Margin="0"
+                                Padding="20 8"
+                                Height="40"
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Grid>
+            </Border>
 
-					<Border Grid.Column="1"
-                            Background="#111827"
-                            CornerRadius="12"
-                            Padding="20"
-                            Margin="10,0,0,0">
-						<StackPanel>
-							<TextBlock Text="Топ приложений по времени"
-                                       Foreground="#2DC7FF"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,16"/>
-							<lvc:CartesianChart x:Name="TopApplicationsChart"
-                                                Series="{Binding TopApplicationsSeries}"
-                                                XAxes="{Binding TopApplicationsXAxes}"
-                                                YAxes="{Binding TopApplicationsYAxes}"
-                                                Height="320"
-                                                LegendPosition="Hidden"
-                                                Background="Transparent"/>
-						</StackPanel>
-					</Border>
-				</Grid>
+            <WrapPanel Margin="0,0,0,30">
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Общее время" Foreground="#9BAEC2" FontSize="15"/>
+                        <TextBlock Text="{Binding ReportTotalTrackedTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
 
-				<!-- Таблица Заголовок и Действия -->
-				<Grid Grid.Row="2" Margin="0,0,0,10">
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto"/>
-					</Grid.ColumnDefinitions>
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Активное время" Foreground="#9BAEC2" FontSize="15"/>
+                        <TextBlock Text="{Binding ReportActiveTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
 
-					<TextBlock Grid.Column="0"
-                               Text="Активные приложения"
-                               FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="#2DC7FF"
-                               VerticalAlignment="Center"/>
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Время бездействия" Foreground="#9BAEC2" FontSize="15"/>
+                        <TextBlock Text="{Binding ReportIdleTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
 
-					<Button Grid.Column="1"
-                            Content="📄 Экспорт в TXT"
-                            Command="{Binding ExportCommand}"
-                            Style="{StaticResource ReflineActionButton}"
-                            Margin="0"
-                            Padding="20 8"
-                            Height="40"/>
-				</Grid>
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Продуктивное время" Foreground="#9BAEC2" FontSize="15"/>
+                        <TextBlock Text="{Binding ReportProductiveTimeText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
 
-				<!-- Таблица -->
-				<Border Grid.Row="3"
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Топ приложение"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ReportTopApplicationText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="26"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Width="260"
+                        Margin="0,0,20,20">
+                    <StackPanel>
+                        <TextBlock Text="Ведущая категория"
+                                   Foreground="#9BAEC2"
+                                   FontSize="15"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ReportTopCategoryText}"
+                                   Foreground="#2DC7FF"
+                                   FontSize="26"
+                                   FontWeight="Bold"
+                                   Margin="0,5,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <Grid Margin="0,0,0,28">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
                         Background="#111827"
                         CornerRadius="12"
-                        Padding="16"
-                        HorizontalAlignment="Stretch">
+                        Padding="20"
+                        Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="Распределение времени по категориям"
+                                   Foreground="#2DC7FF"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,16"/>
+                        <Grid Height="320">
+                            <lvc:PieChart Series="{Binding CategoryTimeSeries}"
+                                          LegendPosition="Right"
+                                          Background="Transparent">
+                                <lvc:PieChart.Style>
+                                    <Style TargetType="lvc:PieChart">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </lvc:PieChart.Style>
+                            </lvc:PieChart>
 
-					<Grid>
-						<Grid.RowDefinitions>
-							<RowDefinition Height="Auto"/>
-							<RowDefinition Height="*"/>
-						</Grid.RowDefinitions>
+                            <TextBlock Text="{Binding CategoryChartPlaceholderText}"
+                                       Foreground="#9BAEC2"
+                                       FontSize="16"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
-						<Grid Grid.Row="0" Margin="0,0,0,10">
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="*"/>
-								<ColumnDefinition Width="200"/>
-							</Grid.ColumnDefinitions>
-							<TextBlock Text="Приложение" Foreground="#9BAEC2" Grid.Column="0"/>
-							<TextBlock Text="Время" Foreground="#9BAEC2" Grid.Column="1"/>
-						</Grid>
+                <Border Grid.Column="1"
+                        Background="#111827"
+                        CornerRadius="12"
+                        Padding="20"
+                        Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Топ приложений по времени"
+                                   Foreground="#2DC7FF"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,16"/>
+                        <lvc:CartesianChart Series="{Binding TopApplicationsSeries}"
+                                            XAxes="{Binding TopApplicationsXAxes}"
+                                            YAxes="{Binding TopApplicationsYAxes}"
+                                            Height="320"
+                                            LegendPosition="Hidden"
+                                            Background="Transparent"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Activities}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,5,0,5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="200"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding AppName}" Foreground="#DDE6F1" Grid.Column="0" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding DurationString}" Foreground="#DDE6F1" Grid.Column="1"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-					</Grid>
+            <Border Background="#111827"
+                    CornerRadius="12"
+                    Padding="20"
+                    Margin="0,0,0,28">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowDailyTrendChart}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
 
-				</Border>
+                <StackPanel>
+                    <TextBlock Text="Динамика по дням"
+                               Foreground="#2DC7FF"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,16"/>
+                    <Grid Height="320">
+                        <lvc:CartesianChart Series="{Binding DailyTrendSeries}"
+                                            XAxes="{Binding DailyTrendXAxes}"
+                                            YAxes="{Binding DailyTrendYAxes}"
+                                            LegendPosition="Top"
+                                            Background="Transparent">
+                            <lvc:CartesianChart.Style>
+                                <Style TargetType="lvc:CartesianChart">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasDailyTrendChartData}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </lvc:CartesianChart.Style>
+                        </lvc:CartesianChart>
 
-			</Grid>
+                        <TextBlock Text="{Binding DailyTrendChartPlaceholderText}"
+                                   Foreground="#9BAEC2"
+                                   FontSize="16"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasDailyTrendChartData}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
-		</StackPanel>
-	</ScrollViewer>
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
+                <TextBlock Text="Активности за период"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="#2DC7FF"
+                           VerticalAlignment="Center"/>
+            </Grid>
+
+            <Border Background="#111827"
+                    CornerRadius="12"
+                    Padding="16"
+                    HorizontalAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="1.6*"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Приложение" Foreground="#9BAEC2" Grid.Column="0"/>
+                        <TextBlock Text="Окно" Foreground="#9BAEC2" Grid.Column="1"/>
+                        <TextBlock Text="Категория" Foreground="#9BAEC2" Grid.Column="2"/>
+                        <TextBlock Text="Источник" Foreground="#9BAEC2" Grid.Column="3"/>
+                        <TextBlock Text="Совпавшее правило" Foreground="#9BAEC2" Grid.Column="4"/>
+                        <TextBlock Text="Время" Foreground="#9BAEC2" Grid.Column="5"/>
+                    </Grid>
+
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding ReportActivities}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.2*"/>
+                                        <ColumnDefinition Width="1.6*"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding AppName}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding WindowTitle}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="1"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding CategoryDisplay}"
+                                               Foreground="#2DC7FF"
+                                               Grid.Column="2"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding CategorySourceDisplay}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="3"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding MatchedRuleDisplay}"
+                                               Foreground="#9BAEC2"
+                                               Grid.Column="4"
+                                               Margin="12,0,12,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding DurationString}"
+                                               Foreground="#DDE6F1"
+                                               Grid.Column="5"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </Page>
