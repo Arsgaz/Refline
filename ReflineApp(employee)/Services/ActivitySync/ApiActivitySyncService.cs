@@ -122,6 +122,9 @@ public sealed class ApiActivitySyncService : IActivitySyncService
 
     private static ActivitySegmentDto MapToDto(PendingActivitySegment segment)
     {
+        var startedAtUtc = segment.StartedAt.ToUniversalTime();
+        var endedAtUtc = segment.EndedAt.ToUniversalTime();
+
         return new ActivitySegmentDto
         {
             UserId = segment.UserId,
@@ -133,8 +136,8 @@ public sealed class ApiActivitySyncService : IActivitySyncService
             IsProductive = segment.IsProductive,
             DurationSeconds = segment.DurationSeconds,
             ActivityDate = DateOnly.FromDateTime(segment.ActivityDate),
-            StartedAt = segment.StartedAt,
-            EndedAt = segment.EndedAt
+            StartedAt = startedAtUtc,
+            EndedAt = endedAtUtc
         };
     }
 }

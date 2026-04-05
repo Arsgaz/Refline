@@ -35,16 +35,40 @@ public sealed class ActivitiesController(
             return BadRequest(new { message = "Batch size limit is 1000 records." });
         }
 
-        var invalidRecord = request.Records.FirstOrDefault(record =>
-            record.UserId <= 0 ||
-            string.IsNullOrWhiteSpace(record.DeviceId) ||
-            string.IsNullOrWhiteSpace(record.AppName) ||
-            record.DurationSeconds < 0 ||
-            record.EndedAt < record.StartedAt);
+        var normalizedRecords = request.Records
+            .Select(record =>
+            {
+                var startedAtUtc = record.StartedAt.ToUniversalTime();
+                var endedAtUtc = record.EndedAt.ToUniversalTime();
+
+                return new
+                {
+                    Record = record,
+                    StartedAtUtc = startedAtUtc,
+                    EndedAtUtc = endedAtUtc,
+                    WasNormalized = record.StartedAt.Offset != TimeSpan.Zero || record.EndedAt.Offset != TimeSpan.Zero
+                };
+            })
+            .ToList();
+
+        var normalizedCount = normalizedRecords.Count(item => item.WasNormalized);
+        if (normalizedCount > 0)
+        {
+            logger.LogWarning(
+                "Normalized activity batch timestamps to UTC for {NormalizedCount} record(s).",
+                normalizedCount);
+        }
+
+        var invalidRecord = normalizedRecords.FirstOrDefault(item =>
+            item.Record.UserId <= 0 ||
+            string.IsNullOrWhiteSpace(item.Record.DeviceId) ||
+            string.IsNullOrWhiteSpace(item.Record.AppName) ||
+            item.Record.DurationSeconds < 0 ||
+            item.EndedAtUtc < item.StartedAtUtc);
 
         if (invalidRecord is not null)
         {
-            logger.LogWarning("Rejected activity batch: one or more records failed basic validation.");
+            logger.LogWarning("Rejected activity batch: one or more records failed basic validation after UTC normalization.");
             return BadRequest(new
             {
                 message = "One or more records have invalid UserId, DeviceId, AppName, DurationSeconds or time range."
@@ -53,19 +77,19 @@ public sealed class ActivitiesController(
 
         logger.LogInformation("Received activity batch with {RecordCount} records.", request.Records.Count);
 
-        var records = request.Records.Select(record => new ActivityRecord
+        var records = normalizedRecords.Select(item => new ActivityRecord
         {
-            UserId = record.UserId,
-            DeviceId = record.DeviceId,
-            AppName = record.AppName,
-            WindowTitle = record.WindowTitle,
-            Category = ParseCategory(record.Category),
-            IsIdle = record.IsIdle,
-            IsProductive = record.IsProductive,
-            DurationSeconds = record.DurationSeconds,
-            ActivityDate = record.ActivityDate,
-            StartedAt = record.StartedAt,
-            EndedAt = record.EndedAt
+            UserId = item.Record.UserId,
+            DeviceId = item.Record.DeviceId,
+            AppName = item.Record.AppName,
+            WindowTitle = item.Record.WindowTitle,
+            Category = ParseCategory(item.Record.Category),
+            IsIdle = item.Record.IsIdle,
+            IsProductive = item.Record.IsProductive,
+            DurationSeconds = item.Record.DurationSeconds,
+            ActivityDate = item.Record.ActivityDate,
+            StartedAt = item.StartedAtUtc,
+            EndedAt = item.EndedAtUtc
         }).ToList();
 
         dbContext.ActivityRecords.AddRange(records);
