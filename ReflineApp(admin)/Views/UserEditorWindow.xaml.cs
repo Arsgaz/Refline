@@ -15,6 +15,13 @@ public partial class UserEditorWindow : Window
         _isCreateMode = user is null;
         Result = null;
 
+        RoleComboBox.ItemsSource = new[]
+        {
+            new RoleOption(UserRole.Admin, "Администратор"),
+            new RoleOption(UserRole.Manager, "Менеджер"),
+            new RoleOption(UserRole.Employee, "Сотрудник")
+        };
+
         ManagerComboBox.ItemsSource = managerOptions;
 
         if (_isCreateMode)
@@ -22,8 +29,9 @@ public partial class UserEditorWindow : Window
             Title = "Добавить сотрудника";
             DialogTitleText.Text = "Добавление сотрудника";
             DialogSubtitleText.Text = "Создайте пользователя в компании. Пароль задается только на этом шаге.";
+
             RoleComboBox.SelectedValue = UserRole.Employee;
-            ManagerComboBox.SelectedIndex = 0;
+            ManagerComboBox.SelectedIndex = managerOptions.Count > 0 ? 0 : -1;
             return;
         }
 
@@ -82,7 +90,9 @@ public partial class UserEditorWindow : Window
             Login = login,
             Password = password,
             Role = role,
-            ManagerId = ManagerComboBox.SelectedValue is long selectedManagerId ? selectedManagerId : null
+            ManagerId = ManagerComboBox.SelectedValue is long selectedManagerId
+                ? selectedManagerId
+                : null
         };
 
         _isSubmitting = true;
@@ -95,4 +105,6 @@ public partial class UserEditorWindow : Window
     {
         DialogResult = false;
     }
+
+    private sealed record RoleOption(UserRole Value, string Text);
 }
