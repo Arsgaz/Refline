@@ -21,7 +21,6 @@ public class MainViewModel : ViewModelBase
     private static readonly CultureInfo RussianCulture = new("ru-RU");
 
     private readonly IActivityBusinessServer _activityBusinessServer;
-    private readonly ICompanyActivityClassificationService _companyActivityClassificationService;
     private readonly IReportBusinessServer _reportBusinessServer;
     private readonly IActivitySyncService _activitySyncService;
     private readonly WindowTracker _windowTracker;
@@ -49,9 +48,6 @@ public class MainViewModel : ViewModelBase
     private string _currentTrackedCategoryText = "Нет данных";
     private string _currentClassificationSourceText = "Нет данных";
     private string _currentMatchedRuleText = "—";
-    private string _rulesCountsText = "API: 0, кеш: 0, saved: 0, active: 0";
-    private string _rulesStatusText = "Rules diagnostics недоступна.";
-    private string _rulesMatchTraceText = "Нет данных.";
 
     private ReportPeriod _selectedPeriod = ReportPeriod.Day;
     private DateTime _selectedDate = DateTime.Today;
@@ -81,13 +77,11 @@ public class MainViewModel : ViewModelBase
 
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
-        ICompanyActivityClassificationService companyActivityClassificationService,
         IReportBusinessServer reportBusinessServer,
         IActivitySyncService activitySyncService,
         WindowTracker windowTracker)
     {
         _activityBusinessServer = activityBusinessServer;
-        _companyActivityClassificationService = companyActivityClassificationService;
         _reportBusinessServer = reportBusinessServer;
         _activitySyncService = activitySyncService;
         _windowTracker = windowTracker;
@@ -117,7 +111,6 @@ public class MainViewModel : ViewModelBase
 
         UpdatePeriodPresentation();
         LoadInitialData();
-        ApplyRulesDiagnostics();
         _ = TriggerSyncAsync("startup");
     }
 
@@ -227,24 +220,6 @@ public class MainViewModel : ViewModelBase
     {
         get => _currentMatchedRuleText;
         set => SetProperty(ref _currentMatchedRuleText, value);
-    }
-
-    public string RulesCountsText
-    {
-        get => _rulesCountsText;
-        set => SetProperty(ref _rulesCountsText, value);
-    }
-
-    public string RulesStatusText
-    {
-        get => _rulesStatusText;
-        set => SetProperty(ref _rulesStatusText, value);
-    }
-
-    public string RulesMatchTraceText
-    {
-        get => _rulesMatchTraceText;
-        set => SetProperty(ref _rulesMatchTraceText, value);
     }
 
     public ReportPeriod SelectedPeriod
@@ -571,7 +546,6 @@ public class MainViewModel : ViewModelBase
                 CurrentTrackedCategoryText = "Не отслеживается";
                 CurrentClassificationSourceText = "Исключено из трекинга";
                 CurrentMatchedRuleText = trackedWindow.IgnoreReason ?? "Служебное окно продукта";
-                ApplyRulesDiagnostics();
                 return;
             }
 
@@ -591,7 +565,6 @@ public class MainViewModel : ViewModelBase
             }
 
             ApplyCurrentActivityDiagnostics(updatedActivity, trackedWindow);
-            ApplyRulesDiagnostics();
 
             ApplyDashboardSummary(tickResult.Value.Summary);
 
@@ -784,16 +757,6 @@ public class MainViewModel : ViewModelBase
         CurrentMatchedRuleText = updatedActivity.MatchedRuleDisplay;
     }
 
-    private void ApplyRulesDiagnostics()
-    {
-        var snapshot = _companyActivityClassificationService.GetDiagnosticsSnapshot();
-        RulesCountsText =
-            $"API: {snapshot.ApiLoadedRulesCount}, кеш: {snapshot.CachedRulesCount}, saved: {snapshot.SavedRulesCount}, active: {snapshot.ActiveRulesCount}";
-        RulesStatusText =
-            $"{snapshot.LastRefreshStatus}{Environment.NewLine}{snapshot.LastApiStatus}{Environment.NewLine}{snapshot.LastCacheStatus}{Environment.NewLine}{snapshot.LastMatchStatus}";
-        RulesMatchTraceText = snapshot.LastMatchTrace;
-    }
-
     private void ApplyReportCharts(
         ReportPeriod period,
         ActivityMetricsSummary metrics,
@@ -921,9 +884,6 @@ public class MainViewModel : ViewModelBase
         CurrentTrackedCategoryText = "Нет данных";
         CurrentClassificationSourceText = "Нет данных";
         CurrentMatchedRuleText = "—";
-        RulesCountsText = "API: 0, кеш: 0, saved: 0, active: 0";
-        RulesStatusText = "Rules diagnostics недоступна.";
-        RulesMatchTraceText = "Нет данных.";
         ApplyEmptyCharts();
     }
 

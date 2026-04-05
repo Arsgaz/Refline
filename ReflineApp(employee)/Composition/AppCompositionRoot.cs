@@ -104,7 +104,6 @@ public sealed class AppCompositionRoot
     {
         return new MainViewModel(
             ActivityBusinessServer,
-            CompanyActivityClassificationService,
             ReportBusinessServer,
             ActivitySyncService,
             WindowTracker);
