@@ -192,47 +192,6 @@
                 </Border>
             </UniformGrid>
 
-            <Border Background="#111827"
-                    CornerRadius="12"
-                    Padding="20"
-                    Margin="0,28,0,0">
-                <StackPanel>
-                    <TextBlock Text="Диагностика текущей классификации"
-                               Foreground="#2DC7FF"
-                               FontSize="18"
-                               FontWeight="SemiBold" />
-                    <Grid Margin="0,18,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="180" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Приложение" Foreground="#9BAEC2" Margin="0,0,0,10" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentTrackedAppText}" Foreground="#DDE6F1" Margin="0,0,0,10" TextWrapping="Wrap" />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Окно" Foreground="#9BAEC2" Margin="0,0,0,10" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentTrackedWindowText}" Foreground="#DDE6F1" Margin="0,0,0,10" TextWrapping="Wrap" />
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Категория" Foreground="#9BAEC2" Margin="0,0,0,10" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentTrackedCategoryText}" Foreground="#2DC7FF" Margin="0,0,0,10" FontWeight="SemiBold" />
-
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Источник" Foreground="#9BAEC2" Margin="0,0,0,10" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentClassificationSourceText}" Foreground="#DDE6F1" Margin="0,0,0,10" />
-
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Совпавшее правило" Foreground="#9BAEC2" />
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentMatchedRuleText}" Foreground="#DDE6F1" TextWrapping="Wrap" />
-                    </Grid>
-
-                </StackPanel>
-            </Border>
-
         </StackPanel>
     </ScrollViewer>
 </Page>

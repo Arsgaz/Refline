@@ -43,12 +43,6 @@ public class MainViewModel : ViewModelBase
     private string _productiveTimeText = "00:00:00";
     private string _topApplicationText = "Нет данных";
     private string _topCategoryText = "Нет данных";
-    private string _currentTrackedAppText = "Нет данных";
-    private string _currentTrackedWindowText = "Нет данных";
-    private string _currentTrackedCategoryText = "Нет данных";
-    private string _currentClassificationSourceText = "Нет данных";
-    private string _currentMatchedRuleText = "—";
-
     private ReportPeriod _selectedPeriod = ReportPeriod.Day;
     private DateTime _selectedDate = DateTime.Today;
     private string _selectedPeriodLabel = string.Empty;
@@ -190,36 +184,6 @@ public class MainViewModel : ViewModelBase
     {
         get => _topCategoryText;
         set => SetProperty(ref _topCategoryText, value);
-    }
-
-    public string CurrentTrackedAppText
-    {
-        get => _currentTrackedAppText;
-        set => SetProperty(ref _currentTrackedAppText, value);
-    }
-
-    public string CurrentTrackedWindowText
-    {
-        get => _currentTrackedWindowText;
-        set => SetProperty(ref _currentTrackedWindowText, value);
-    }
-
-    public string CurrentTrackedCategoryText
-    {
-        get => _currentTrackedCategoryText;
-        set => SetProperty(ref _currentTrackedCategoryText, value);
-    }
-
-    public string CurrentClassificationSourceText
-    {
-        get => _currentClassificationSourceText;
-        set => SetProperty(ref _currentClassificationSourceText, value);
-    }
-
-    public string CurrentMatchedRuleText
-    {
-        get => _currentMatchedRuleText;
-        set => SetProperty(ref _currentMatchedRuleText, value);
     }
 
     public ReportPeriod SelectedPeriod
@@ -540,12 +504,6 @@ public class MainViewModel : ViewModelBase
                     StatusText = pausedResult.Value.StatusText;
                     ApplyDashboardSummary(pausedResult.Value.Summary);
                 }
-
-                CurrentTrackedAppText = string.IsNullOrWhiteSpace(trackedWindow.ProcessName) ? "Refline" : trackedWindow.ProcessName;
-                CurrentTrackedWindowText = trackedWindow.WindowTitle;
-                CurrentTrackedCategoryText = "Не отслеживается";
-                CurrentClassificationSourceText = "Исключено из трекинга";
-                CurrentMatchedRuleText = trackedWindow.IgnoreReason ?? "Служебное окно продукта";
                 return;
             }
 
@@ -563,8 +521,6 @@ public class MainViewModel : ViewModelBase
             {
                 UpsertReportActivity(updatedActivity, tickResult.Value.IsNewActivity);
             }
-
-            ApplyCurrentActivityDiagnostics(updatedActivity, trackedWindow);
 
             ApplyDashboardSummary(tickResult.Value.Summary);
 
@@ -728,35 +684,6 @@ public class MainViewModel : ViewModelBase
             .ThenBy(activity => activity.AppName, StringComparer.OrdinalIgnoreCase));
     }
 
-    private void ApplyCurrentActivityDiagnostics(AppActivity? updatedActivity, TrackedWindowInfo trackedWindow)
-    {
-        if (trackedWindow.IsIdle)
-        {
-            CurrentTrackedAppText = "Простой";
-            CurrentTrackedWindowText = trackedWindow.WindowTitle;
-            CurrentTrackedCategoryText = "Система";
-            CurrentClassificationSourceText = "Встроенное правило";
-            CurrentMatchedRuleText = "Idle timeout";
-            return;
-        }
-
-        if (updatedActivity == null)
-        {
-            CurrentTrackedAppText = string.IsNullOrWhiteSpace(trackedWindow.ProcessName) ? "Нет данных" : trackedWindow.ProcessName;
-            CurrentTrackedWindowText = trackedWindow.WindowTitle;
-            CurrentTrackedCategoryText = "Нет данных";
-            CurrentClassificationSourceText = "Нет данных";
-            CurrentMatchedRuleText = "—";
-            return;
-        }
-
-        CurrentTrackedAppText = updatedActivity.AppName;
-        CurrentTrackedWindowText = updatedActivity.WindowTitle;
-        CurrentTrackedCategoryText = updatedActivity.CategoryDisplay;
-        CurrentClassificationSourceText = updatedActivity.CategorySourceDisplay;
-        CurrentMatchedRuleText = updatedActivity.MatchedRuleDisplay;
-    }
-
     private void ApplyReportCharts(
         ReportPeriod period,
         ActivityMetricsSummary metrics,
@@ -879,11 +806,6 @@ public class MainViewModel : ViewModelBase
         ReportProductiveTimeText = "00:00:00";
         ReportTopApplicationText = "Нет данных";
         ReportTopCategoryText = "Нет данных";
-        CurrentTrackedAppText = "Нет данных";
-        CurrentTrackedWindowText = "Нет данных";
-        CurrentTrackedCategoryText = "Нет данных";
-        CurrentClassificationSourceText = "Нет данных";
-        CurrentMatchedRuleText = "—";
         ApplyEmptyCharts();
     }
 
