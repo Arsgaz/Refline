@@ -9,6 +9,7 @@ using Refline.Data.Infrastructure;
 using Refline.Data.Reports;
 using Refline.Data.Settings;
 using Refline.Services;
+using Refline.Services.ActivityClassification;
 using Refline.Services.ActivitySync;
 using Refline.ViewModels;
 
@@ -28,6 +29,7 @@ public sealed class AppCompositionRoot
     public IActivationBootstrapService ActivationBootstrapService { get; }
     public WindowTracker WindowTracker { get; }
     public IActivitySyncService ActivitySyncService { get; }
+    public ICompanyActivityClassificationService CompanyActivityClassificationService { get; }
 
     public AppCompositionRoot()
     {
@@ -39,6 +41,7 @@ public sealed class AppCompositionRoot
 
         var activityDataService = new ActivityDataService();
         var pendingActivityStore = new LocalPendingActivityStore();
+        var activityClassificationRuleStore = new LocalActivityClassificationRuleStore();
         var settingsDataService = new SettingsDataService();
         var reportDataService = new ReportDataService();
         _localActivationStateStore = new LocalActivationStateStore();
@@ -47,9 +50,16 @@ public sealed class AppCompositionRoot
 
         CurrentUserContext = new CurrentUserContext();
         _currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
+        CompanyActivityClassificationService = new CompanyActivityClassificationService(
+            activityClassificationRuleStore,
+            new ActivityClassificationRulesApiService(apiHttpClient, _currentUserSessionStore));
 
         WindowTracker = new WindowTracker();
-        ActivitySyncService = new ApiActivitySyncService(apiHttpClient, pendingActivityStore);
+        ActivitySyncService = new ApiActivitySyncService(
+            apiHttpClient,
+            pendingActivityStore,
+            _currentUserSessionStore,
+            CompanyActivityClassificationService);
 
         AuthenticationService = new ApiAuthenticationService(
             apiHttpClient,
@@ -70,7 +80,9 @@ public sealed class AppCompositionRoot
             activityDataService,
             new ActivityValidationService(),
             new ActivityLockService(),
-            new ActivityClassificationService(),
+            new CompositeActivityClassificationService(
+                CompanyActivityClassificationService,
+                new ActivityClassificationService()),
             new ActivityMetricsService(),
             pendingActivityStore,
             CurrentUserContext,
@@ -104,7 +116,11 @@ public sealed class AppCompositionRoot
 
     public LoginActivationViewModel CreateLoginActivationViewModel()
     {
-        return new LoginActivationViewModel(AuthenticationService, LicenseActivationService);
+        return new LoginActivationViewModel(
+            AuthenticationService,
+            LicenseActivationService,
+            _currentUserSessionStore,
+            CompanyActivityClassificationService);
     }
 
     public Task<OperationResult> BootstrapIdentityAsync()
@@ -118,6 +134,16 @@ public sealed class AppCompositionRoot
         if (!bootstrapResult.IsSuccess)
         {
             return OperationResult.Failure(bootstrapResult.Message, bootstrapResult.ErrorCode);
+        }
+
+        var currentUser = _currentUserSessionStore.GetCurrentUser();
+        if (currentUser != null)
+        {
+            var restoreRulesResult = await CompanyActivityClassificationService.RestoreCachedRulesAsync(currentUser.CompanyId);
+            if (!restoreRulesResult.IsSuccess)
+            {
+                Refline.Utils.AppLogger.Log(restoreRulesResult.Message, "ERROR");
+            }
         }
 
         return OperationResult.Success(bootstrapResult.Message);

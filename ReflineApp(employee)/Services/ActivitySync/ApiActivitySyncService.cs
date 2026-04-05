@@ -2,6 +2,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Refline.Contracts.Activities;
+using Refline.Business.Activity;
+using Refline.Business.Identity;
 using Refline.Data.Activity;
 using Refline.Data.Infrastructure;
 using Refline.Models;
@@ -15,13 +17,23 @@ public sealed class ApiActivitySyncService : IActivitySyncService
 
     private readonly HttpClient _httpClient;
     private readonly IPendingActivityStore _pendingActivityStore;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
+    private readonly ICompanyActivityClassificationService _companyClassificationService;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
     private readonly SemaphoreSlim _syncLock = new(1, 1);
+    private DateTimeOffset? _lastRulesRefreshAttemptAtUtc;
+    private static readonly TimeSpan RulesRefreshInterval = TimeSpan.FromMinutes(5);
 
-    public ApiActivitySyncService(HttpClient httpClient, IPendingActivityStore pendingActivityStore)
+    public ApiActivitySyncService(
+        HttpClient httpClient,
+        IPendingActivityStore pendingActivityStore,
+        ICurrentUserSessionStore currentUserSessionStore,
+        ICompanyActivityClassificationService companyClassificationService)
     {
         _httpClient = httpClient;
         _pendingActivityStore = pendingActivityStore;
+        _currentUserSessionStore = currentUserSessionStore;
+        _companyClassificationService = companyClassificationService;
     }
 
     public async Task<OperationResult<int>> TrySyncPendingAsync(CancellationToken cancellationToken = default)
@@ -33,6 +45,8 @@ public sealed class ApiActivitySyncService : IActivitySyncService
 
         try
         {
+            await EnsureCompanyRulesReadyAsync(cancellationToken);
+
             var pendingResult = await _pendingActivityStore.GetPendingAsync();
             if (!pendingResult.IsSuccess || pendingResult.Value == null)
             {
@@ -118,6 +132,36 @@ public sealed class ApiActivitySyncService : IActivitySyncService
         {
             _syncLock.Release();
         }
+    }
+
+    private async Task EnsureCompanyRulesReadyAsync(CancellationToken cancellationToken)
+    {
+        var currentUser = _currentUserSessionStore.GetCurrentUser();
+        if (currentUser == null)
+        {
+            return;
+        }
+
+        var restoreResult = await _companyClassificationService.RestoreCachedRulesAsync(currentUser.CompanyId, cancellationToken);
+        if (!restoreResult.IsSuccess)
+        {
+            AppLogger.Log(restoreResult.Message, "ERROR");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        if (_lastRulesRefreshAttemptAtUtc.HasValue && now - _lastRulesRefreshAttemptAtUtc.Value < RulesRefreshInterval)
+        {
+            return;
+        }
+
+        _lastRulesRefreshAttemptAtUtc = now;
+        var refreshResult = await _companyClassificationService.RefreshRulesAsync(currentUser.CompanyId, cancellationToken);
+        if (refreshResult.IsSuccess)
+        {
+            return;
+        }
+
+        AppLogger.Log($"Company rules refresh skipped: {refreshResult.Message}", "ERROR");
     }
 
     private static ActivitySegmentDto MapToDto(PendingActivitySegment segment)
