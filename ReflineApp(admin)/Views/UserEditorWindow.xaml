@@ -1,6 +1,7 @@
 <Window x:Class="Refline.Admin.Views.UserEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:Refline.Admin.Models"
         Title="Пользователь"
         Width="520"
         Height="520"
@@ -55,15 +56,23 @@
                            Style="{StaticResource InputLabelStyle}" />
                 <ComboBox x:Name="RoleComboBox"
                           Height="44"
-                          SelectedIndex="0"
-                          DisplayMemberPath="DisplayName"
-                          SelectedValuePath="Role" />
+                          MinWidth="220"
+                          SelectedIndex="2"
+                          SelectedValuePath="Tag">
+                    <ComboBoxItem Tag="{x:Static models:UserRole.Admin}"
+                                  Content="Администратор" />
+                    <ComboBoxItem Tag="{x:Static models:UserRole.Manager}"
+                                  Content="Менеджер" />
+                    <ComboBoxItem Tag="{x:Static models:UserRole.Employee}"
+                                  Content="Сотрудник" />
+                </ComboBox>
 
                 <TextBlock Text="Менеджер"
                            Margin="0,18,0,6"
                            Style="{StaticResource InputLabelStyle}" />
                 <ComboBox x:Name="ManagerComboBox"
                           Height="44"
+                          MinWidth="220"
                           DisplayMemberPath="DisplayName"
                           SelectedValuePath="Id" />
             </StackPanel>

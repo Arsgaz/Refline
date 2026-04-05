@@ -15,13 +15,6 @@ public partial class UserEditorWindow : Window
         _isCreateMode = user is null;
         Result = null;
 
-        RoleComboBox.ItemsSource = new[]
-        {
-            new RoleOption(UserRole.Admin, "Администратор"),
-            new RoleOption(UserRole.Manager, "Менеджер"),
-            new RoleOption(UserRole.Employee, "Сотрудник")
-        };
-
         ManagerComboBox.ItemsSource = managerOptions;
 
         if (_isCreateMode)
@@ -102,6 +95,4 @@ public partial class UserEditorWindow : Window
     {
         DialogResult = false;
     }
-
-    private sealed record RoleOption(UserRole Role, string DisplayName);
 }
