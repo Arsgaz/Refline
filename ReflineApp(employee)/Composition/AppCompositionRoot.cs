@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Refline.Business.Activity;
 using Refline.Business.Identity;
 using Refline.Business.Reports;
@@ -14,6 +15,9 @@ namespace Refline.Composition;
 
 public sealed class AppCompositionRoot
 {
+    private readonly ILocalActivationStateStore _localActivationStateStore;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
+
     public IActivityBusinessServer ActivityBusinessServer { get; }
     public ISettingsBusinessServer SettingsBusinessServer { get; }
     public IReportBusinessServer ReportBusinessServer { get; }
@@ -25,32 +29,38 @@ public sealed class AppCompositionRoot
 
     public AppCompositionRoot()
     {
+        var apiHttpClient = new HttpClient
+        {
+            BaseAddress = new Uri("http://localhost:8080"),
+            Timeout = TimeSpan.FromSeconds(15)
+        };
+
         var activityDataService = new ActivityDataService();
         var settingsDataService = new SettingsDataService();
         var reportDataService = new ReportDataService();
-        var userStore = new LocalUserStore();
-        var licenseStore = new LocalLicenseStore();
-        var deviceActivationStore = new LocalDeviceActivationStore();
-        var localActivationStateStore = new LocalActivationStateStore();
+        _localActivationStateStore = new LocalActivationStateStore();
+        var currentUserSessionStateStore = new LocalCurrentUserSessionStateStore();
         var deviceIdentityProvider = new LocalDeviceIdentityProvider();
 
         CurrentUserContext = new CurrentUserContext();
+        _currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
 
         WindowTracker = new WindowTracker();
 
-        AuthenticationService = new LocalAuthenticationService(userStore, CurrentUserContext);
-        LicenseActivationService = new LocalLicenseActivationService(
-            userStore,
-            licenseStore,
-            deviceActivationStore,
-            localActivationStateStore,
+        AuthenticationService = new ApiAuthenticationService(
+            apiHttpClient,
+            CurrentUserContext,
+            _currentUserSessionStore);
+        LicenseActivationService = new ApiLicenseActivationService(
+            apiHttpClient,
+            _localActivationStateStore,
             deviceIdentityProvider,
             CurrentUserContext);
 
         ActivationBootstrapService = new ActivationBootstrapService(
-            localActivationStateStore,
-            userStore,
-            CurrentUserContext);
+            _localActivationStateStore,
+            CurrentUserContext,
+            _currentUserSessionStore);
 
         ActivityBusinessServer = new ActivityBusinessServer(
             activityDataService,
@@ -78,7 +88,11 @@ public sealed class AppCompositionRoot
 
     public SettingsViewModel CreateSettingsViewModel()
     {
-        return new SettingsViewModel(SettingsBusinessServer);
+        return new SettingsViewModel(
+            SettingsBusinessServer,
+            _currentUserSessionStore,
+            _localActivationStateStore,
+            CurrentUserContext);
     }
 
     public LoginActivationViewModel CreateLoginActivationViewModel()

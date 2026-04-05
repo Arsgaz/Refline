@@ -57,7 +57,10 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Property<bool>("IsProductive")
                 .HasColumnType("boolean");
 
-            b.Property<DateTimeOffset>("LastActiveAt")
+            b.Property<DateTimeOffset>("EndedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("StartedAt")
                 .HasColumnType("timestamp with time zone");
 
             b.Property<long>("UserId")
@@ -76,7 +79,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
             b.HasIndex("UserId", "ActivityDate");
 
-            b.HasIndex("UserId", "DeviceId", "LastActiveAt");
+            b.HasIndex("UserId", "DeviceId", "EndedAt");
 
             b.ToTable("activity_records", (string)null);
         });
@@ -201,6 +204,11 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                 .HasMaxLength(128)
                 .HasColumnType("character varying(128)");
 
+            b.Property<string>("LicenseType")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
             b.Property<int>("MaxDevices")
                 .HasColumnType("integer");
 
@@ -209,6 +217,8 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.HasIndex("CompanyId");
 
             b.HasIndex("IsActive");
+
+            b.HasIndex("LicenseType");
 
             b.HasIndex("LicenseKey")
                 .IsUnique();
@@ -223,6 +233,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                 IsActive = true,
                 IssuedAt = new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero),
                 LicenseKey = "REFLINE-DEMO-LICENSE-001",
+                LicenseType = "Corporate",
                 MaxDevices = 100
             });
         });
@@ -291,7 +302,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     FullName = "System Admin",
                     IsActive = true,
                     Login = "admin",
-                    PasswordHash = "seed-admin-password-hash",
+                    PasswordHash = "240BE518FABD2724DDB6F04EEB1DA5967448D7E831C08C8FA822809F74C720A9",
                     Role = "Admin"
                 },
                 new
@@ -303,7 +314,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "manager",
                     ManagerId = 1L,
-                    PasswordHash = "seed-manager-password-hash",
+                    PasswordHash = "866485796CFA8D7C0CF7111640205B83076433547577511D81F8030AE99ECEA5",
                     Role = "Manager"
                 },
                 new
@@ -315,7 +326,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "employee",
                     ManagerId = 2L,
-                    PasswordHash = "seed-employee-password-hash",
+                    PasswordHash = "5B2F8E27E2E5B4081C03CE70B288C87BD1263140CBD1BD9AE078123509B7CAFF",
                     Role = "Employee"
                 });
         });

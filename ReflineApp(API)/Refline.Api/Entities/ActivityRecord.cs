@@ -26,5 +26,7 @@ public sealed class ActivityRecord
 
     public DateOnly ActivityDate { get; set; }
 
-    public DateTimeOffset LastActiveAt { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+
+    public DateTimeOffset EndedAt { get; set; }
 }

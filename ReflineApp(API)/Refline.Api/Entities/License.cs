@@ -1,3 +1,5 @@
+using Refline.Api.Enums;
+
 namespace Refline.Api.Entities;
 
 public sealed class License
@@ -11,6 +13,8 @@ public sealed class License
     public string LicenseKey { get; set; } = string.Empty;
 
     public int MaxDevices { get; set; }
+
+    public LicenseType LicenseType { get; set; } = LicenseType.Basic;
 
     public DateTimeOffset IssuedAt { get; set; } = DateTimeOffset.UtcNow;
 

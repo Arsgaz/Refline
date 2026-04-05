@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Refline.Api.Entities;
+using Refline.Api.Enums;
+using Refline.Api.Security;
 
 namespace Refline.Api.Data;
 
@@ -42,7 +44,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 CompanyId = 1,
                 FullName = "System Admin",
                 Login = "admin",
-                PasswordHash = "seed-admin-password-hash",
+                PasswordHash = PasswordHashHelper.ComputeHash("admin123"),
                 Role = Enums.UserRole.Admin,
                 ManagerId = null,
                 IsActive = true,
@@ -54,7 +56,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 CompanyId = 1,
                 FullName = "Team Manager",
                 Login = "manager",
-                PasswordHash = "seed-manager-password-hash",
+                PasswordHash = PasswordHashHelper.ComputeHash("manager123"),
                 Role = Enums.UserRole.Manager,
                 ManagerId = 1,
                 IsActive = true,
@@ -66,7 +68,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 CompanyId = 1,
                 FullName = "Regular Employee",
                 Login = "employee",
-                PasswordHash = "seed-employee-password-hash",
+                PasswordHash = PasswordHashHelper.ComputeHash("employee123"),
                 Role = Enums.UserRole.Employee,
                 ManagerId = 2,
                 IsActive = true,
@@ -80,6 +82,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 CompanyId = 1,
                 LicenseKey = "REFLINE-DEMO-LICENSE-001",
                 MaxDevices = 100,
+                LicenseType = LicenseType.Corporate,
                 IssuedAt = companyCreatedAt,
                 ExpiresAt = licenseExpiresAt,
                 IsActive = true

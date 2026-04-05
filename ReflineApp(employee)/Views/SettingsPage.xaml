@@ -169,6 +169,14 @@
                         BorderBrush="#2DC7FF"
                         HorizontalAlignment="Center"/>
 
+				<Button Content="Выйти из аккаунта"
+                        Command="{Binding LogoutCommand}"
+                        Width="260"
+                        Height="50"
+                        Style="{StaticResource ReflineButton}"
+                        HorizontalAlignment="Center"
+                        Margin="0,16,0,0"/>
+
 			</StackPanel>
 
 		</StackPanel>

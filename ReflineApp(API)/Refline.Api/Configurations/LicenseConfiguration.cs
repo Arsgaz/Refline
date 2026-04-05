@@ -1,3 +1,4 @@
+using Refline.Api.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Refline.Api.Entities;
@@ -17,6 +18,11 @@ public sealed class LicenseConfiguration : IEntityTypeConfiguration<License>
             .IsRequired();
 
         builder.Property(license => license.MaxDevices)
+            .IsRequired();
+
+        builder.Property(license => license.LicenseType)
+            .HasConversion<string>()
+            .HasMaxLength(32)
             .IsRequired();
 
         builder.Property(license => license.IssuedAt)
@@ -40,5 +46,6 @@ public sealed class LicenseConfiguration : IEntityTypeConfiguration<License>
             .IsUnique();
 
         builder.HasIndex(license => license.IsActive);
+        builder.HasIndex(license => license.LicenseType);
     }
 }

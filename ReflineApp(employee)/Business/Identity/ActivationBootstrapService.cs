@@ -7,17 +7,17 @@ namespace Refline.Business.Identity;
 public class ActivationBootstrapService : IActivationBootstrapService
 {
     private readonly ILocalActivationStateStore _activationStateStore;
-    private readonly IUserStore _userStore;
     private readonly ICurrentUserContext _currentUserContext;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
 
     public ActivationBootstrapService(
         ILocalActivationStateStore activationStateStore,
-        IUserStore userStore,
-        ICurrentUserContext currentUserContext)
+        ICurrentUserContext currentUserContext,
+        ICurrentUserSessionStore currentUserSessionStore)
     {
         _activationStateStore = activationStateStore;
-        _userStore = userStore;
         _currentUserContext = currentUserContext;
+        _currentUserSessionStore = currentUserSessionStore;
     }
 
     public async Task<OperationResult<LocalActivationState>> BootstrapAsync()
@@ -26,6 +26,7 @@ public class ActivationBootstrapService : IActivationBootstrapService
         if (!stateResult.IsSuccess || stateResult.Value == null)
         {
             _currentUserContext.Clear();
+            await _currentUserSessionStore.ClearAsync();
             return OperationResult<LocalActivationState>.Success(LocalActivationState.Empty(), "Локальное состояние активации не задано.");
         }
 
@@ -33,17 +34,25 @@ public class ActivationBootstrapService : IActivationBootstrapService
         if (!state.IsActivated || !state.CurrentUserId.HasValue)
         {
             _currentUserContext.Clear();
+            await _currentUserSessionStore.ClearAsync();
             return OperationResult<LocalActivationState>.Success(state);
         }
 
-        var userResult = await _userStore.GetByIdAsync(state.CurrentUserId.Value);
-        if (!userResult.IsSuccess || userResult.Value == null || !userResult.Value.IsActive)
+        _currentUserContext.SetCurrentUser(state.CurrentUserId.Value);
+
+        var restoreSessionResult = await _currentUserSessionStore.RestoreAsync();
+        if (!restoreSessionResult.IsSuccess)
         {
-            _currentUserContext.Clear();
-            return OperationResult<LocalActivationState>.Success(LocalActivationState.Empty(), "Текущий пользователь не найден или неактивен.");
+            await _currentUserSessionStore.ClearAsync();
+            return OperationResult<LocalActivationState>.Success(state, restoreSessionResult.Message);
         }
 
-        _currentUserContext.SetCurrentUser(userResult.Value.Id);
+        var sessionUser = _currentUserSessionStore.GetCurrentUser();
+        if (sessionUser == null || sessionUser.Id != state.CurrentUserId.Value)
+        {
+            await _currentUserSessionStore.ClearAsync();
+        }
+
         return OperationResult<LocalActivationState>.Success(state);
     }
 }
