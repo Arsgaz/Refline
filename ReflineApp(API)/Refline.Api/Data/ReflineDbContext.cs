@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Refline.Api.Entities;
+using Refline.Api.Enums;
 using Refline.Api.Security;
 
 namespace Refline.Api.Data;
@@ -81,6 +82,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 CompanyId = 1,
                 LicenseKey = "REFLINE-DEMO-LICENSE-001",
                 MaxDevices = 100,
+                LicenseType = LicenseType.Corporate,
                 IssuedAt = companyCreatedAt,
                 ExpiresAt = licenseExpiresAt,
                 IsActive = true
