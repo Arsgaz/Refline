@@ -266,6 +266,55 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
     }
 
+    public async Task<AdminUserManagementResult<AdminManagedUserDto>> ActivateUserAsync(
+        AdminAccessContext accessContext,
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        if (accessContext.Role != UserRole.Admin)
+        {
+            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                AdminUserManagementErrorType.Forbidden,
+                "Only Admin can manage company users.");
+        }
+
+        var user = await dbContext.Users
+            .SingleOrDefaultAsync(
+                existingUser => existingUser.Id == userId && existingUser.CompanyId == accessContext.CompanyId,
+                cancellationToken);
+
+        if (user is null)
+        {
+            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                AdminUserManagementErrorType.NotFound,
+                "User was not found in the current company.");
+        }
+
+        if (user.IsActive)
+        {
+            return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
+        }
+
+        var managerValidation = await ValidateManagerAsync(
+            accessContext.CompanyId,
+            user.ManagerId,
+            user.Id,
+            cancellationToken);
+
+        if (!managerValidation.IsSuccess)
+        {
+            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                managerValidation.ErrorType!.Value,
+                managerValidation.ErrorMessage!);
+        }
+
+        user.IsActive = true;
+        user.ManagerId = managerValidation.ManagerId;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
+    }
+
     private async Task<ManagerValidationResult> ValidateManagerAsync(
         long companyId,
         long? managerId,

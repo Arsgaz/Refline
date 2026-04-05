@@ -6,6 +6,7 @@ namespace Refline.Admin.Views;
 public partial class UserEditorWindow : Window
 {
     private readonly bool _isCreateMode;
+    private bool _isSubmitting;
 
     public UserEditorWindow(IReadOnlyList<ManagerOption> managerOptions, CompanyUserListItem? user)
     {
@@ -48,6 +49,11 @@ public partial class UserEditorWindow : Window
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_isSubmitting)
+        {
+            return;
+        }
+
         ValidationMessageText.Text = string.Empty;
 
         var fullName = FullNameTextBox.Text.Trim();
@@ -86,6 +92,9 @@ public partial class UserEditorWindow : Window
             ManagerId = ManagerComboBox.SelectedValue is long selectedManagerId ? selectedManagerId : null
         };
 
+        _isSubmitting = true;
+        SaveButton.IsEnabled = false;
+        CancelButton.IsEnabled = false;
         DialogResult = true;
     }
 

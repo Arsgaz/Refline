@@ -147,6 +147,35 @@ public sealed class AdminUsersApiService : IAdminUsersService
         }
     }
 
+    public async Task<OperationResult> ActivateUserAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+        {
+            return OperationResult.Failure("Не удалось определить пользователя для активации.");
+        }
+
+        try
+        {
+            using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/activate");
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            return OperationResult.Success("Пользователь активирован.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
     private HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string requestUri)
     {
         var request = new HttpRequestMessage(method, requestUri);

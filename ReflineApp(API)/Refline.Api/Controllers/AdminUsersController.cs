@@ -76,6 +76,27 @@ public sealed class AdminUsersController(
         return ToActionResult(result);
     }
 
+    [HttpPost("{userId:long}/activate")]
+    public async Task<ActionResult<AdminManagedUserDto>> ActivateUser(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin user activate requested for user {UserId}.", userId);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin user activate request for user {UserId}: {Reason}",
+                userId,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var result = await adminUserManagementService.ActivateUserAsync(accessContextResult.Context!, userId, cancellationToken);
+        return ToActionResult(result);
+    }
+
     [HttpGet("{userId:long}/summary")]
     public async Task<ActionResult<UserSummaryDto>> GetUserSummary(
         long userId,

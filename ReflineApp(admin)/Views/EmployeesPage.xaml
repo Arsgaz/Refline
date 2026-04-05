@@ -42,7 +42,6 @@
               Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="220" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -60,8 +59,7 @@
             </Border>
 
             <Border Grid.Column="1"
-                    Style="{StaticResource CardBorderStyle}"
-                    Margin="0,0,14,0">
+                    Style="{StaticResource CardBorderStyle}">
                 <StackPanel>
                     <TextBlock Text="Статус загрузки"
                                Foreground="{StaticResource AppMutedTextBrush}" />
@@ -70,19 +68,10 @@
                                FontSize="18"
                                FontWeight="SemiBold"
                                TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="2"
-                    Style="{StaticResource CardBorderStyle}">
-                <StackPanel>
-                    <TextBlock Text="Источник данных"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
-                    <TextBlock Text="GET /api/admin/companies/{companyId}/users · POST /api/admin/users · PUT /api/admin/users/{id}"
+                    <TextBlock Text="Список обновляется после создания, редактирования и деактивации пользователя."
                                Margin="0,10,0,0"
-                               FontFamily="Consolas"
-                               TextWrapping="Wrap"
-                               FontSize="15" />
+                               Foreground="{StaticResource AppMutedTextBrush}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -152,32 +141,40 @@
                                                 Binding="{Binding CreatedAtDisplay}"
                                                 Width="1.4*" />
                             <DataGridTemplateColumn Header="Действия"
-                                                    Width="260">
+                                                    Width="340">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Width="92"
+                                        <Grid HorizontalAlignment="Left">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0"
                                                     Height="34"
                                                     Margin="0,0,8,0"
                                                     Content="Открыть"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
                                                     Command="{Binding DataContext.OpenEmployeeAnalyticsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Width="96"
+                                            <Button Grid.Column="1"
                                                     Height="34"
                                                     Margin="0,0,8,0"
                                                     Content="Изменить"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
                                                     Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                     Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Width="112"
+                                            <Button Grid.Column="2"
                                                     Height="34"
-                                                    Content="Деактивировать"
+                                                    MinWidth="126"
+                                                    Content="{Binding ActivationActionDisplay}"
+                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
                                                     Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Command="{Binding DataContext.DeactivateUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    Command="{Binding DataContext.ToggleUserActivationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
-                                        </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>

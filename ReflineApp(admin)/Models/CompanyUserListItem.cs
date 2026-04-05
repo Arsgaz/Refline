@@ -27,5 +27,7 @@ public sealed class CompanyUserListItem
 
     public string StatusDisplay => IsActive ? "Активен" : "Отключен";
 
+    public string ActivationActionDisplay => IsActive ? "Деактивировать" : "Активировать";
+
     public string CreatedAtDisplay => CreatedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm");
 }

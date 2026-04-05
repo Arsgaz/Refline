@@ -70,6 +70,21 @@
             <Setter Property="FontSize" Value="14" />
         </Style>
 
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource AppPanelElevatedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="{StaticResource AppPanelElevatedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource AppAccentBrush}" />
             <Setter Property="Foreground" Value="#F8FBFF" />
@@ -113,6 +128,12 @@
             <Setter Property="Background" Value="{StaticResource AppPanelElevatedBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
             <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+        </Style>
+
+        <Style x:Key="CompactSecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinWidth" Value="92" />
         </Style>
 
         <Style x:Key="NavButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">

@@ -34,12 +34,12 @@ public sealed class EmployeesViewModel : ViewModelBase
         EditUserCommand = new RelayCommand(
             async parameter => await EditUserAsync(parameter as CompanyUserListItem ?? SelectedUser),
             parameter => !IsLoading && CanManageUsers && (parameter as CompanyUserListItem ?? SelectedUser) is not null);
-        DeactivateUserCommand = new RelayCommand(
-            async parameter => await DeactivateUserAsync(parameter as CompanyUserListItem ?? SelectedUser),
+        ToggleUserActivationCommand = new RelayCommand(
+            async parameter => await ToggleUserActivationAsync(parameter as CompanyUserListItem ?? SelectedUser),
             parameter =>
             {
                 var user = parameter as CompanyUserListItem ?? SelectedUser;
-                return !IsLoading && CanManageUsers && user is { IsActive: true };
+                return !IsLoading && CanManageUsers && user is not null;
             });
         OpenEmployeeAnalyticsCommand = new RelayCommand(
             async parameter => await OpenEmployeeAnalyticsAsync(parameter as CompanyUserListItem ?? SelectedUser),
@@ -54,7 +54,7 @@ public sealed class EmployeesViewModel : ViewModelBase
 
     public ICommand EditUserCommand { get; }
 
-    public ICommand DeactivateUserCommand { get; }
+    public ICommand ToggleUserActivationCommand { get; }
 
     public ICommand OpenEmployeeAnalyticsCommand { get; }
 
@@ -177,6 +177,17 @@ public sealed class EmployeesViewModel : ViewModelBase
             return;
         }
 
+        var normalizedLogin = dialogResult.Login.Trim();
+        if (Users.Any(user => string.Equals(user.Login.Trim(), normalizedLogin, StringComparison.OrdinalIgnoreCase)))
+        {
+            MessageBox.Show(
+                "Пользователь с таким логином уже есть в текущем списке компании.",
+                "Логин уже занят",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
         IsLoading = true;
         ErrorMessage = string.Empty;
 
@@ -185,7 +196,7 @@ public sealed class EmployeesViewModel : ViewModelBase
             var result = await _adminUsersService.CreateUserAsync(new AdminUserCreateRequest
             {
                 FullName = dialogResult.FullName,
-                Login = dialogResult.Login,
+                Login = normalizedLogin,
                 Password = dialogResult.Password,
                 Role = dialogResult.Role,
                 ManagerId = dialogResult.ManagerId
@@ -228,6 +239,19 @@ public sealed class EmployeesViewModel : ViewModelBase
             return;
         }
 
+        var normalizedLogin = dialogResult.Login.Trim();
+        if (Users.Any(existingUser =>
+                existingUser.Id != user.Id &&
+                string.Equals(existingUser.Login.Trim(), normalizedLogin, StringComparison.OrdinalIgnoreCase)))
+        {
+            MessageBox.Show(
+                "Пользователь с таким логином уже есть в текущем списке компании.",
+                "Логин уже занят",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
         IsLoading = true;
         ErrorMessage = string.Empty;
 
@@ -236,7 +260,7 @@ public sealed class EmployeesViewModel : ViewModelBase
             var result = await _adminUsersService.UpdateUserAsync(user.Id, new AdminUserUpdateRequest
             {
                 FullName = dialogResult.FullName,
-                Login = dialogResult.Login,
+                Login = normalizedLogin,
                 Role = dialogResult.Role,
                 ManagerId = dialogResult.ManagerId
             });
@@ -265,18 +289,21 @@ public sealed class EmployeesViewModel : ViewModelBase
         }
     }
 
-    private async Task DeactivateUserAsync(CompanyUserListItem? user)
+    private async Task ToggleUserActivationAsync(CompanyUserListItem? user)
     {
-        if (user is null || !user.IsActive)
+        if (user is null)
         {
             return;
         }
 
+        var isActivation = !user.IsActive;
         var confirmation = MessageBox.Show(
-            $"Деактивировать пользователя \"{user.FullName}\"?\n\nПользователь останется в базе, но потеряет доступ к системе.",
-            "Подтверждение деактивации",
+            isActivation
+                ? $"Активировать пользователя \"{user.FullName}\"?\n\nПользователь снова получит доступ к системе."
+                : $"Деактивировать пользователя \"{user.FullName}\"?\n\nПользователь останется в базе, но потеряет доступ к системе.",
+            isActivation ? "Подтверждение активации" : "Подтверждение деактивации",
             MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
+            isActivation ? MessageBoxImage.Question : MessageBoxImage.Warning);
 
         if (confirmation != MessageBoxResult.Yes)
         {
@@ -288,12 +315,16 @@ public sealed class EmployeesViewModel : ViewModelBase
 
         try
         {
-            var result = await _adminUsersService.DeactivateUserAsync(user.Id);
+            var result = isActivation
+                ? await _adminUsersService.ActivateUserAsync(user.Id)
+                : await _adminUsersService.DeactivateUserAsync(user.Id);
             if (!result.IsSuccess)
             {
                 MessageBox.Show(
-                    string.IsNullOrWhiteSpace(result.Message) ? "Не удалось деактивировать пользователя." : result.Message,
-                    "Ошибка деактивации",
+                    string.IsNullOrWhiteSpace(result.Message)
+                        ? (isActivation ? "Не удалось активировать пользователя." : "Не удалось деактивировать пользователя.")
+                        : result.Message,
+                    isActivation ? "Ошибка активации" : "Ошибка деактивации",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 return;
@@ -302,8 +333,10 @@ public sealed class EmployeesViewModel : ViewModelBase
             IsLoading = false;
             await LoadAsync(forceReload: true);
             MessageBox.Show(
-                $"Пользователь \"{user.FullName}\" деактивирован.",
-                "Пользователь деактивирован",
+                isActivation
+                    ? $"Пользователь \"{user.FullName}\" активирован."
+                    : $"Пользователь \"{user.FullName}\" деактивирован.",
+                isActivation ? "Пользователь активирован" : "Пользователь деактивирован",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }

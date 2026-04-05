@@ -55,6 +55,7 @@
                            Style="{StaticResource InputLabelStyle}" />
                 <ComboBox x:Name="RoleComboBox"
                           Height="44"
+                          SelectedIndex="0"
                           DisplayMemberPath="DisplayName"
                           SelectedValuePath="Role" />
 
@@ -78,14 +79,18 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right">
                     <Button Width="110"
+                            x:Name="CancelButton"
                             Height="42"
                             Margin="0,0,12,0"
                             Style="{StaticResource SecondaryButtonStyle}"
                             Content="Отмена"
+                            IsCancel="True"
                             Click="CancelButton_Click" />
                     <Button Width="140"
+                            x:Name="SaveButton"
                             Height="42"
                             Content="Сохранить"
+                            IsDefault="True"
                             Click="SaveButton_Click" />
                 </StackPanel>
             </DockPanel>
