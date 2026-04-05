@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Refline.Api.Contracts.Activities;
 using Refline.Api.Data;
 using Refline.Api.Entities;
 using Refline.Api.Enums;
+using Refline.Api.Features.Activities;
 
 namespace Refline.Api.Controllers;
 
@@ -91,25 +93,75 @@ public sealed class ActivitiesController(
 
         logger.LogInformation("Received activity batch with {RecordCount} records.", request.Records.Count);
 
-        var records = normalizedRecords.Select(item => new ActivityRecord
-        {
-            UserId = item.Record.UserId,
-            DeviceId = item.Record.DeviceId,
-            AppName = item.Record.AppName,
-            WindowTitle = item.Record.WindowTitle,
-            Category = ParseCategory(item.Record.Category, logger),
-            IsIdle = item.Record.IsIdle,
-            IsProductive = item.Record.IsProductive,
-            DurationSeconds = item.Record.DurationSeconds,
-            ActivityDate = item.Record.ActivityDate,
-            StartedAt = item.StartedAtUtc,
-            EndedAt = item.EndedAtUtc
-        }).ToList();
+        var incomingRecords = normalizedRecords.Select(item => new IncomingActivityRecord(
+            item.Record.UserId,
+            item.Record.DeviceId,
+            item.Record.AppName,
+            item.Record.WindowTitle,
+            ParseCategory(item.Record.Category, logger),
+            item.Record.IsIdle,
+            item.Record.IsProductive,
+            item.Record.DurationSeconds,
+            item.Record.ActivityDate,
+            item.StartedAtUtc,
+            item.EndedAtUtc))
+            .ToList();
 
-        dbContext.ActivityRecords.AddRange(records);
+        var userIds = incomingRecords.Select(item => item.UserId).Distinct().ToArray();
+        var deviceIds = incomingRecords.Select(item => item.DeviceId).Distinct(StringComparer.Ordinal).ToArray();
+        var activityDates = incomingRecords.Select(item => item.ActivityDate).Distinct().ToArray();
+
+        var existingRecords = await dbContext.ActivityRecords
+            .Where(record =>
+                userIds.Contains(record.UserId) &&
+                deviceIds.Contains(record.DeviceId) &&
+                activityDates.Contains(record.ActivityDate))
+            .ToListAsync();
+
+        var recordsByKey = existingRecords
+            .GroupBy(ActivityAggregationKey.FromRecord)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(record => record.EndedAt).First());
+
+        var createdCount = 0;
+        var mergedCount = 0;
+
+        foreach (var incomingRecord in incomingRecords)
+        {
+            var aggregationKey = incomingRecord.GetAggregationKey();
+            if (recordsByKey.TryGetValue(aggregationKey, out var existingRecord))
+            {
+                MergeIncomingRecord(existingRecord, incomingRecord);
+                mergedCount++;
+
+                logger.LogDebug(
+                    "Merged activity record for app '{AppName}' with strategy '{Strategy}'.",
+                    incomingRecord.AppName,
+                    ActivityAggregationPolicy.ShouldUseWindowTitleInAggregation(incomingRecord.AppName)
+                        ? "BrowserLikeWithWindowTitle"
+                        : "DefaultWithoutWindowTitle");
+                continue;
+            }
+
+            var createdRecord = incomingRecord.ToEntity();
+            dbContext.ActivityRecords.Add(createdRecord);
+            recordsByKey[aggregationKey] = createdRecord;
+            createdCount++;
+
+            logger.LogDebug(
+                "Created activity record for app '{AppName}' with strategy '{Strategy}'.",
+                incomingRecord.AppName,
+                ActivityAggregationPolicy.ShouldUseWindowTitleInAggregation(incomingRecord.AppName)
+                    ? "BrowserLikeWithWindowTitle"
+                    : "DefaultWithoutWindowTitle");
+        }
+
         await dbContext.SaveChangesAsync();
 
-        logger.LogInformation("Saved {RecordCount} activity records.", records.Count);
+        logger.LogInformation(
+            "Processed activity batch: received {ReceivedCount}, created {CreatedCount}, merged {MergedCount}.",
+            request.Records.Count,
+            createdCount,
+            mergedCount);
 
         return Ok(new { insertedCount = request.Records.Count, message = "Activity batch saved." });
     }
@@ -137,5 +189,64 @@ public sealed class ActivitiesController(
             string.IsNullOrWhiteSpace(category) ? "<empty>" : category);
 
         return ActivityCategory.Unknown;
+    }
+
+    private static void MergeIncomingRecord(ActivityRecord existingRecord, IncomingActivityRecord incomingRecord)
+    {
+        existingRecord.DurationSeconds += incomingRecord.DurationSeconds;
+        existingRecord.StartedAt = incomingRecord.StartedAt < existingRecord.StartedAt
+            ? incomingRecord.StartedAt
+            : existingRecord.StartedAt;
+        existingRecord.EndedAt = incomingRecord.EndedAt > existingRecord.EndedAt
+            ? incomingRecord.EndedAt
+            : existingRecord.EndedAt;
+        existingRecord.WindowTitle = ActivityAggregationPolicy.SelectStoredWindowTitle(
+            existingRecord.WindowTitle,
+            incomingRecord.WindowTitle);
+    }
+
+    private sealed record IncomingActivityRecord(
+        long UserId,
+        string DeviceId,
+        string AppName,
+        string WindowTitle,
+        ActivityCategory Category,
+        bool IsIdle,
+        bool IsProductive,
+        int DurationSeconds,
+        DateOnly ActivityDate,
+        DateTimeOffset StartedAt,
+        DateTimeOffset EndedAt)
+    {
+        public ActivityAggregationKey GetAggregationKey()
+        {
+            return ActivityAggregationKey.Create(
+                UserId,
+                DeviceId,
+                ActivityDate,
+                AppName,
+                Category,
+                IsIdle,
+                IsProductive,
+                WindowTitle);
+        }
+
+        public ActivityRecord ToEntity()
+        {
+            return new ActivityRecord
+            {
+                UserId = UserId,
+                DeviceId = DeviceId,
+                AppName = AppName,
+                WindowTitle = string.IsNullOrWhiteSpace(WindowTitle) ? AppName : WindowTitle.Trim(),
+                Category = Category,
+                IsIdle = IsIdle,
+                IsProductive = IsProductive,
+                DurationSeconds = DurationSeconds,
+                ActivityDate = ActivityDate,
+                StartedAt = StartedAt,
+                EndedAt = EndedAt
+            };
+        }
     }
 }
