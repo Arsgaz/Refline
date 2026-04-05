@@ -266,6 +266,13 @@ public class ActivityBusinessServer : IActivityBusinessServer
             return;
         }
 
+        AppLogger.Log(
+            $"Activity segment split: {DescribeSplitReason(_activeSegment, activity)}. " +
+            $"PreviousApp='{_activeSegment.AppName}', CurrentApp='{activity.AppName}', " +
+            $"PreviousCategory='{_activeSegment.Category}', CurrentCategory='{activity.Category}', " +
+            $"PreviousIdle={_activeSegment.IsIdle}, CurrentIdle={activity.IsIdle}.",
+            "DEBUG");
+
         FinalizeActiveSegment();
         _activeSegment = CreateTrackedSegment(activity, observedAt);
     }
@@ -356,8 +363,34 @@ public class ActivityBusinessServer : IActivityBusinessServer
         return current.ActivityDate.Date == activity.ActivityDate.Date &&
             string.Equals(current.AppName, activity.AppName, StringComparison.Ordinal) &&
             current.IsIdle == activity.IsIdle &&
-            current.Category == activity.Category &&
-            current.IsProductive == activity.IsProductive;
+            current.Category == activity.Category;
+    }
+
+    private static string DescribeSplitReason(TrackedActivitySegment current, AppActivity activity)
+    {
+        var reasons = new List<string>();
+
+        if (current.ActivityDate.Date != activity.ActivityDate.Date)
+        {
+            reasons.Add("ActivityDate");
+        }
+
+        if (!string.Equals(current.AppName, activity.AppName, StringComparison.Ordinal))
+        {
+            reasons.Add("AppName");
+        }
+
+        if (current.IsIdle != activity.IsIdle)
+        {
+            reasons.Add("IsIdle");
+        }
+
+        if (current.Category != activity.Category)
+        {
+            reasons.Add("Category");
+        }
+
+        return reasons.Count == 0 ? "Other" : string.Join(", ", reasons);
     }
 
     private static TrackedActivitySegment CreateTrackedSegment(AppActivity activity, DateTimeOffset observedAt)

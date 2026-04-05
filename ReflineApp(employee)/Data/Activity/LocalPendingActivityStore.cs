@@ -7,7 +7,7 @@ namespace Refline.Data.Activity;
 
 public sealed class LocalPendingActivityStore : IPendingActivityStore
 {
-    private static readonly TimeSpan MergeGapThreshold = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan MergeGapThreshold = TimeSpan.FromSeconds(15);
     private static readonly object FileSync = new();
     private readonly string _filePath;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
