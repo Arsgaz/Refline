@@ -16,6 +16,8 @@ public sealed class TeamDashboardViewModel : ViewModelBase
     private bool _isLoading;
     private bool _hasAnyData;
     private DateTime _referenceDate;
+    private DateTime _customStartDate;
+    private DateTime _customEndDate;
     private AnalyticsPeriodKind _selectedPeriodKind;
     private string _periodLabel = string.Empty;
     private int _employeesCount;
@@ -33,6 +35,8 @@ public sealed class TeamDashboardViewModel : ViewModelBase
         _dashboardService = dashboardService;
         _currentSessionContext = currentSessionContext;
         _referenceDate = DateTime.Today;
+        _customStartDate = DateTime.Today.AddDays(-7);
+        _customEndDate = DateTime.Today;
         _selectedPeriodKind = AnalyticsPeriodKind.Week;
 
         DailyBuckets = new ObservableCollection<TeamDayBarViewModel>();
@@ -47,6 +51,7 @@ public sealed class TeamDashboardViewModel : ViewModelBase
         SetDayPeriodCommand = new RelayCommand(async () => await ChangePeriodAsync(AnalyticsPeriodKind.Day), () => !IsLoading);
         SetWeekPeriodCommand = new RelayCommand(async () => await ChangePeriodAsync(AnalyticsPeriodKind.Week), () => !IsLoading);
         SetMonthPeriodCommand = new RelayCommand(async () => await ChangePeriodAsync(AnalyticsPeriodKind.Month), () => !IsLoading);
+        SetCustomPeriodCommand = new RelayCommand(async () => await ChangePeriodAsync(AnalyticsPeriodKind.Custom), () => !IsLoading);
     }
 
     public ObservableCollection<TeamDayBarViewModel> DailyBuckets { get; }
@@ -70,6 +75,8 @@ public sealed class TeamDashboardViewModel : ViewModelBase
     public ICommand SetWeekPeriodCommand { get; }
 
     public ICommand SetMonthPeriodCommand { get; }
+
+    public ICommand SetCustomPeriodCommand { get; }
 
     public string ScopeTitle => _currentSessionContext.Role == UserRole.Manager
         ? "Сводка по команде"
@@ -124,16 +131,44 @@ public sealed class TeamDashboardViewModel : ViewModelBase
     public DateTime ReferenceDate
     {
         get => _referenceDate;
-        private set
+        set
         {
             if (SetProperty(ref _referenceDate, value))
             {
                 OnPropertyChanged(nameof(ReferenceDateDisplay));
+                if (SelectedPeriodKind != AnalyticsPeriodKind.Custom) 
+                {
+                    _ = LoadAsync(forceReload: true);
+                }
             }
         }
     }
 
     public string ReferenceDateDisplay => ReferenceDate.ToString("dd.MM.yyyy");
+
+    public DateTime CustomStartDate
+    {
+        get => _customStartDate;
+        set
+        {
+            if (SetProperty(ref _customStartDate, value) && SelectedPeriodKind == AnalyticsPeriodKind.Custom)
+            {
+                _ = LoadAsync(forceReload: true);
+            }
+        }
+    }
+
+    public DateTime CustomEndDate
+    {
+        get => _customEndDate;
+        set
+        {
+            if (SetProperty(ref _customEndDate, value) && SelectedPeriodKind == AnalyticsPeriodKind.Custom)
+            {
+                _ = LoadAsync(forceReload: true);
+            }
+        }
+    }
 
     public AnalyticsPeriodKind SelectedPeriodKind
     {
@@ -145,6 +180,9 @@ public sealed class TeamDashboardViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsDayPeriodSelected));
                 OnPropertyChanged(nameof(IsWeekPeriodSelected));
                 OnPropertyChanged(nameof(IsMonthPeriodSelected));
+                OnPropertyChanged(nameof(IsCustomPeriodSelected));
+                OnPropertyChanged(nameof(IsReferenceDateVisible));
+                OnPropertyChanged(nameof(IsCustomDatesVisible));
             }
         }
     }
@@ -154,6 +192,12 @@ public sealed class TeamDashboardViewModel : ViewModelBase
     public bool IsWeekPeriodSelected => SelectedPeriodKind == AnalyticsPeriodKind.Week;
 
     public bool IsMonthPeriodSelected => SelectedPeriodKind == AnalyticsPeriodKind.Month;
+
+    public bool IsCustomPeriodSelected => SelectedPeriodKind == AnalyticsPeriodKind.Custom;
+
+    public bool IsReferenceDateVisible => SelectedPeriodKind != AnalyticsPeriodKind.Custom;
+
+    public bool IsCustomDatesVisible => SelectedPeriodKind == AnalyticsPeriodKind.Custom;
 
     public string PeriodLabel
     {
@@ -195,19 +239,37 @@ public sealed class TeamDashboardViewModel : ViewModelBase
 
     private async Task ShiftPeriodAsync(int direction)
     {
-        ReferenceDate = SelectedPeriodKind switch
+        if (SelectedPeriodKind == AnalyticsPeriodKind.Custom)
         {
-            AnalyticsPeriodKind.Day => ReferenceDate.AddDays(direction),
-            AnalyticsPeriodKind.Week => ReferenceDate.AddDays(7 * direction),
-            _ => ReferenceDate.AddMonths(direction)
-        };
+            var diff = (CustomEndDate - CustomStartDate).Days + 1;
+            CustomStartDate = CustomStartDate.AddDays(diff * direction);
+            CustomEndDate = CustomEndDate.AddDays(diff * direction);
+        }
+        else
+        {
+            ReferenceDate = SelectedPeriodKind switch
+            {
+                AnalyticsPeriodKind.Day => ReferenceDate.AddDays(direction),
+                AnalyticsPeriodKind.Week => ReferenceDate.AddDays(7 * direction),
+                _ => ReferenceDate.AddMonths(direction)
+            };
+        }
 
         await LoadAsync(forceReload: true);
     }
 
     private async Task MoveToTodayAsync()
     {
-        ReferenceDate = DateTime.Today;
+        if (SelectedPeriodKind == AnalyticsPeriodKind.Custom)
+        {
+            var diff = (CustomEndDate - CustomStartDate).Days;
+            CustomEndDate = DateTime.Today;
+            CustomStartDate = DateTime.Today.AddDays(-diff);
+        }
+        else
+        {
+            ReferenceDate = DateTime.Today;
+        }
         await LoadAsync(forceReload: true);
     }
 
@@ -332,6 +394,13 @@ public sealed class TeamDashboardViewModel : ViewModelBase
 
     private (DateOnly From, DateOnly To) GetRange()
     {
+        if (SelectedPeriodKind == AnalyticsPeriodKind.Custom) 
+        {
+            var customStart = DateOnly.FromDateTime(CustomStartDate);
+            var customEnd = DateOnly.FromDateTime(CustomEndDate);
+            return customStart <= customEnd ? (customStart, customEnd) : (customEnd, customStart);
+        }
+
         var baseDate = DateOnly.FromDateTime(ReferenceDate);
 
         return SelectedPeriodKind switch

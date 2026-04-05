@@ -5,6 +5,7 @@
         Width="520"
         Height="560"
         ResizeMode="NoResize"
+        Background="{StaticResource AppBackgroundBrush}"
         WindowStartupLocation="CenterOwner">
     <Border Margin="18"
             Padding="22"

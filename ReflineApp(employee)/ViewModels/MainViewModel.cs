@@ -69,6 +69,8 @@ public class MainViewModel : ViewModelBase
     private bool _isRefreshingReportData;
     private bool _hasPendingReportRefresh;
 
+    public SolidColorPaint LegendTextPaint { get; } = new SolidColorPaint(new SKColor(221, 230, 241));
+
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
         IReportBusinessServer reportBusinessServer,

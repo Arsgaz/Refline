@@ -298,6 +298,7 @@
                         <Grid Height="320">
                             <lvc:PieChart Series="{Binding CategoryTimeSeries}"
                                           LegendPosition="Right"
+                                          LegendTextPaint="{Binding LegendTextPaint}"
                                           Background="Transparent">
                                 <lvc:PieChart.Style>
                                     <Style TargetType="lvc:PieChart">
@@ -379,6 +380,7 @@
                                             XAxes="{Binding DailyTrendXAxes}"
                                             YAxes="{Binding DailyTrendYAxes}"
                                             LegendPosition="Top"
+                                            LegendTextPaint="{Binding LegendTextPaint}"
                                             Background="Transparent">
                             <lvc:CartesianChart.Style>
                                 <Style TargetType="lvc:CartesianChart">
