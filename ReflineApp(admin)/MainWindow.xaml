@@ -21,6 +21,10 @@
             <views:TeamDashboardPage />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type viewModels:ActivityClassificationRulesViewModel}">
+            <views:ActivityClassificationRulesPage />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
             <views:PlaceholderPage />
         </DataTemplate>

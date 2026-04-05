@@ -13,6 +13,7 @@ public sealed class MainViewModel : ViewModelBase
     private string _currentSectionTitle;
     private readonly EmployeeAnalyticsViewModel _employeeAnalyticsViewModel;
     private readonly TeamDashboardViewModel _teamDashboardViewModel;
+    private readonly ActivityClassificationRulesViewModel _rulesViewModel;
 
     public MainViewModel(
         CurrentSessionContext currentSessionContext,
@@ -20,12 +21,13 @@ public sealed class MainViewModel : ViewModelBase
         EmployeeAnalyticsViewModel employeeAnalyticsViewModel,
         TeamDashboardViewModel teamDashboardViewModel,
         PlaceholderViewModel licensesViewModel,
-        PlaceholderViewModel rulesViewModel)
+        ActivityClassificationRulesViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
         EmployeesViewModel = employeesViewModel;
         _employeeAnalyticsViewModel = employeeAnalyticsViewModel;
         _teamDashboardViewModel = teamDashboardViewModel;
+        _rulesViewModel = rulesViewModel;
         LicensesViewModel = licensesViewModel;
         RulesViewModel = rulesViewModel;
         _currentPageViewModel = employeesViewModel;
@@ -46,7 +48,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public PlaceholderViewModel LicensesViewModel { get; }
 
-    public PlaceholderViewModel RulesViewModel { get; }
+    public ActivityClassificationRulesViewModel RulesViewModel { get; }
 
     public ICommand ShowEmployeesCommand { get; }
 
@@ -79,7 +81,7 @@ public sealed class MainViewModel : ViewModelBase
         "Карточка сотрудника" => "Сводная аналитика выбранного сотрудника за период.",
         "Аналитика" => "Сводная аналитика по команде или по всей компании.",
         "Лицензии" => "Будущий раздел управления лицензиями компании.",
-        "Правила" => "Будущий раздел правил и классификации активности.",
+        "Правила классификации" => "Company-specific правила классификации активности для приложений и окон.",
         _ => "Административная консоль компании."
     };
 
@@ -99,6 +101,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         await EmployeesViewModel.EnsureLoadedAsync();
         await TeamDashboardViewModel.EnsureLoadedAsync();
+        await RulesViewModel.EnsureLoadedAsync();
     }
 
     public async Task OpenEmployeeAnalyticsAsync(CompanyUserListItem employee)
@@ -132,8 +135,14 @@ public sealed class MainViewModel : ViewModelBase
 
     private void ShowRules()
     {
+        if (!CanViewRulesSection)
+        {
+            return;
+        }
+
         CurrentPageViewModel = RulesViewModel;
-        CurrentSectionTitle = "Правила";
+        CurrentSectionTitle = "Правила классификации";
         OnPropertyChanged(nameof(CurrentSectionSubtitle));
+        _ = _rulesViewModel.EnsureLoadedAsync();
     }
 }

@@ -12,6 +12,7 @@ public sealed class AppCompositionRoot
     public IAdminUsersService AdminUsersService { get; }
     public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
     public ITeamDashboardService TeamDashboardService { get; }
+    public IActivityClassificationRulesService ActivityClassificationRulesService { get; }
 
     public AppCompositionRoot()
     {
@@ -26,6 +27,7 @@ public sealed class AppCompositionRoot
         AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
         AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
         TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
+        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -37,6 +39,7 @@ public sealed class AppCompositionRoot
     {
         EmployeeAnalyticsViewModel? analyticsViewModel = null;
         TeamDashboardViewModel? teamDashboardViewModel = null;
+        ActivityClassificationRulesViewModel? rulesViewModel = null;
         MainViewModel? mainViewModel = null;
 
         analyticsViewModel = new EmployeeAnalyticsViewModel(
@@ -45,6 +48,10 @@ public sealed class AppCompositionRoot
 
         teamDashboardViewModel = new TeamDashboardViewModel(
             TeamDashboardService,
+            CurrentSessionContext);
+
+        rulesViewModel = new ActivityClassificationRulesViewModel(
+            ActivityClassificationRulesService,
             CurrentSessionContext);
 
         var employeesViewModel = new EmployeesViewModel(
@@ -58,7 +65,7 @@ public sealed class AppCompositionRoot
             analyticsViewModel,
             teamDashboardViewModel,
             new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
-            new PlaceholderViewModel("Правила", "Раздел правил и классификаций будет добавлен позже."));
+            rulesViewModel);
 
         return mainViewModel;
     }
