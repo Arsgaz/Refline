@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using Refline.Admin.Business.Identity;
+using Refline.Admin.Models;
 using Refline.Admin.Utils;
 
 namespace Refline.Admin.ViewModels;
@@ -10,16 +11,19 @@ public sealed class MainViewModel : ViewModelBase
     private readonly CurrentSessionContext _currentSessionContext;
     private object _currentPageViewModel;
     private string _currentSectionTitle;
+    private readonly EmployeeAnalyticsViewModel _employeeAnalyticsViewModel;
 
     public MainViewModel(
         CurrentSessionContext currentSessionContext,
         EmployeesViewModel employeesViewModel,
+        EmployeeAnalyticsViewModel employeeAnalyticsViewModel,
         PlaceholderViewModel analyticsViewModel,
         PlaceholderViewModel licensesViewModel,
         PlaceholderViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
         EmployeesViewModel = employeesViewModel;
+        _employeeAnalyticsViewModel = employeeAnalyticsViewModel;
         AnalyticsViewModel = analyticsViewModel;
         LicensesViewModel = licensesViewModel;
         RulesViewModel = rulesViewModel;
@@ -34,6 +38,8 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public EmployeesViewModel EmployeesViewModel { get; }
+
+    public EmployeeAnalyticsViewModel EmployeeAnalyticsViewModel => _employeeAnalyticsViewModel;
 
     public PlaceholderViewModel AnalyticsViewModel { get; }
 
@@ -69,6 +75,7 @@ public sealed class MainViewModel : ViewModelBase
     public string CurrentSectionSubtitle => CurrentSectionTitle switch
     {
         "Сотрудники" => "Пользователи компании, роли и базовый статус аккаунтов.",
+        "Карточка сотрудника" => "Сводная аналитика выбранного сотрудника за период.",
         "Аналитика" => "Заготовка для будущих сводок и отчётов.",
         "Лицензии" => "Будущий раздел управления лицензиями компании.",
         "Правила" => "Будущий раздел правил и классификации активности.",
@@ -90,6 +97,14 @@ public sealed class MainViewModel : ViewModelBase
     public async Task InitializeAsync()
     {
         await EmployeesViewModel.EnsureLoadedAsync();
+    }
+
+    public async Task OpenEmployeeAnalyticsAsync(CompanyUserListItem employee)
+    {
+        CurrentPageViewModel = EmployeeAnalyticsViewModel;
+        CurrentSectionTitle = "Карточка сотрудника";
+        OnPropertyChanged(nameof(CurrentSectionSubtitle));
+        await EmployeeAnalyticsViewModel.OpenForEmployeeAsync(employee);
     }
 
     private void ShowEmployees()

@@ -13,6 +13,10 @@
             <views:EmployeesPage />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type viewModels:EmployeeAnalyticsViewModel}">
+            <views:EmployeeAnalyticsPage />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
             <views:PlaceholderPage />
         </DataTemplate>

@@ -92,7 +92,8 @@
         <Grid Grid.Row="3">
             <Border Style="{StaticResource SectionCardBorderStyle}">
                 <Grid>
-                    <DataGrid ItemsSource="{Binding Users}">
+                    <DataGrid ItemsSource="{Binding Users}"
+                              SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ФИО"
                                                 Binding="{Binding FullName}"
@@ -140,6 +141,19 @@
                             <DataGridTextColumn Header="Создан"
                                                 Binding="{Binding CreatedAtDisplay}"
                                                 Width="1.4*" />
+                            <DataGridTemplateColumn Header=""
+                                                    Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Width="92"
+                                                Height="34"
+                                                Content="Открыть"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding DataContext.OpenEmployeeAnalyticsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 

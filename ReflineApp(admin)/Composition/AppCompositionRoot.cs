@@ -10,6 +10,7 @@ public sealed class AppCompositionRoot
     public CurrentSessionContext CurrentSessionContext { get; }
     public IAuthenticationService AuthenticationService { get; }
     public IAdminUsersService AdminUsersService { get; }
+    public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
 
     public AppCompositionRoot()
     {
@@ -22,6 +23,7 @@ public sealed class AppCompositionRoot
         CurrentSessionContext = new CurrentSessionContext();
         AuthenticationService = new AdminAuthenticationService(httpClient, CurrentSessionContext);
         AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
+        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -31,13 +33,26 @@ public sealed class AppCompositionRoot
 
     public MainViewModel CreateMainViewModel()
     {
-        var employeesViewModel = new EmployeesViewModel(AdminUsersService, CurrentSessionContext);
+        EmployeeAnalyticsViewModel? analyticsViewModel = null;
+        MainViewModel? mainViewModel = null;
 
-        return new MainViewModel(
+        analyticsViewModel = new EmployeeAnalyticsViewModel(
+            AdminUserAnalyticsService,
+            () => mainViewModel?.ShowEmployeesCommand.Execute(null));
+
+        var employeesViewModel = new EmployeesViewModel(
+            AdminUsersService,
+            CurrentSessionContext,
+            employee => mainViewModel!.OpenEmployeeAnalyticsAsync(employee));
+
+        mainViewModel = new MainViewModel(
             CurrentSessionContext,
             employeesViewModel,
+            analyticsViewModel,
             new PlaceholderViewModel("Аналитика", "Раздел аналитики будет добавлен следующим этапом."),
             new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
             new PlaceholderViewModel("Правила", "Раздел правил и классификаций будет добавлен позже."));
+
+        return mainViewModel;
     }
 }

@@ -11,22 +11,39 @@ public sealed class EmployeesViewModel : ViewModelBase
 {
     private readonly IAdminUsersService _adminUsersService;
     private readonly CurrentSessionContext _currentSessionContext;
+    private readonly Func<CompanyUserListItem, Task> _openEmployeeAnalyticsAsync;
 
     private string _errorMessage = string.Empty;
     private bool _isLoading;
     private bool _hasLoaded;
+    private CompanyUserListItem? _selectedUser;
 
-    public EmployeesViewModel(IAdminUsersService adminUsersService, CurrentSessionContext currentSessionContext)
+    public EmployeesViewModel(
+        IAdminUsersService adminUsersService,
+        CurrentSessionContext currentSessionContext,
+        Func<CompanyUserListItem, Task> openEmployeeAnalyticsAsync)
     {
         _adminUsersService = adminUsersService;
         _currentSessionContext = currentSessionContext;
+        _openEmployeeAnalyticsAsync = openEmployeeAnalyticsAsync;
         Users = new ObservableCollection<CompanyUserListItem>();
         RefreshCommand = new RelayCommand(async () => await LoadAsync(forceReload: true), () => !IsLoading);
+        OpenEmployeeAnalyticsCommand = new RelayCommand(
+            async parameter => await OpenEmployeeAnalyticsAsync(parameter as CompanyUserListItem ?? SelectedUser),
+            _ => !IsLoading);
     }
 
     public ObservableCollection<CompanyUserListItem> Users { get; }
 
     public ICommand RefreshCommand { get; }
+
+    public ICommand OpenEmployeeAnalyticsCommand { get; }
+
+    public CompanyUserListItem? SelectedUser
+    {
+        get => _selectedUser;
+        set => SetProperty(ref _selectedUser, value);
+    }
 
     public string ErrorMessage
     {
@@ -113,5 +130,15 @@ public sealed class EmployeesViewModel : ViewModelBase
             IsLoading = false;
             OnPropertyChanged(nameof(IsEmptyStateVisible));
         }
+    }
+
+    private async Task OpenEmployeeAnalyticsAsync(CompanyUserListItem? user)
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        await _openEmployeeAnalyticsAsync(user);
     }
 }
