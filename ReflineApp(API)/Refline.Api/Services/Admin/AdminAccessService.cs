@@ -63,7 +63,7 @@ public sealed class AdminAccessService(ReflineDbContext dbContext) : IAdminAcces
 
         if (context.Role == UserRole.Manager)
         {
-            query = query.Where(user => user.ManagerId == context.UserId);
+            query = query.Where(user => user.Id == context.UserId || user.ManagerId == context.UserId);
         }
 
         return await query.AnyAsync(cancellationToken);
