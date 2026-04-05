@@ -57,7 +57,10 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Property<bool>("IsProductive")
                 .HasColumnType("boolean");
 
-            b.Property<DateTimeOffset>("LastActiveAt")
+            b.Property<DateTimeOffset>("EndedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("StartedAt")
                 .HasColumnType("timestamp with time zone");
 
             b.Property<long>("UserId")
@@ -76,7 +79,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
             b.HasIndex("UserId", "ActivityDate");
 
-            b.HasIndex("UserId", "DeviceId", "LastActiveAt");
+            b.HasIndex("UserId", "DeviceId", "EndedAt");
 
             b.ToTable("activity_records", (string)null);
         });
@@ -201,6 +204,11 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                 .HasMaxLength(128)
                 .HasColumnType("character varying(128)");
 
+            b.Property<string>("LicenseType")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
             b.Property<int>("MaxDevices")
                 .HasColumnType("integer");
 
@@ -209,6 +217,8 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.HasIndex("CompanyId");
 
             b.HasIndex("IsActive");
+
+            b.HasIndex("LicenseType");
 
             b.HasIndex("LicenseKey")
                 .IsUnique();
@@ -223,6 +233,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                 IsActive = true,
                 IssuedAt = new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero),
                 LicenseKey = "REFLINE-DEMO-LICENSE-001",
+                LicenseType = "Corporate",
                 MaxDevices = 100
             });
         });

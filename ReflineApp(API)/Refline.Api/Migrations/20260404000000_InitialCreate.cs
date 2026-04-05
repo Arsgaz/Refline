@@ -38,6 +38,7 @@ public partial class InitialCreate : Migration
                 CompanyId = table.Column<long>(type: "bigint", nullable: false),
                 LicenseKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                 MaxDevices = table.Column<int>(type: "integer", nullable: false),
+                LicenseType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                 IssuedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                 ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                 IsActive = table.Column<bool>(type: "boolean", nullable: false)
@@ -100,7 +101,8 @@ public partial class InitialCreate : Migration
                 IsProductive = table.Column<bool>(type: "boolean", nullable: false),
                 DurationSeconds = table.Column<int>(type: "integer", nullable: false),
                 ActivityDate = table.Column<DateOnly>(type: "date", nullable: false),
-                LastActiveAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                EndedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
             },
             constraints: table =>
             {
@@ -152,27 +154,27 @@ public partial class InitialCreate : Migration
 
         migrationBuilder.InsertData(
             table: "licenses",
-            columns: new[] { "Id", "CompanyId", "ExpiresAt", "IsActive", "IssuedAt", "LicenseKey", "MaxDevices" },
-            columnTypes: new[] { "bigint", "bigint", "timestamp with time zone", "boolean", "timestamp with time zone", "character varying(128)", "integer" },
-            values: new object[] { 1L, 1L, new DateTimeOffset(new DateTime(2027, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), true, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "REFLINE-DEMO-LICENSE-001", 100 });
+            columns: new[] { "Id", "CompanyId", "ExpiresAt", "IsActive", "IssuedAt", "LicenseKey", "LicenseType", "MaxDevices" },
+            columnTypes: new[] { "bigint", "bigint", "timestamp with time zone", "boolean", "timestamp with time zone", "character varying(128)", "character varying(32)", "integer" },
+            values: new object[] { 1L, 1L, new DateTimeOffset(new DateTime(2027, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), true, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "REFLINE-DEMO-LICENSE-001", "Corporate", 100 });
 
         migrationBuilder.InsertData(
             table: "users",
             columns: new[] { "Id", "CompanyId", "CreatedAt", "FullName", "IsActive", "Login", "ManagerId", "PasswordHash", "Role" },
             columnTypes: new[] { "bigint", "bigint", "timestamp with time zone", "character varying(200)", "boolean", "character varying(100)", "bigint", "character varying(512)", "character varying(32)" },
-            values: new object[] { 1L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "System Admin", true, "admin", null, "seed-admin-password-hash", "Admin" });
+            values: new object[] { 1L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "System Admin", true, "admin", null, "240BE518FABD2724DDB6F04EEB1DA5967448D7E831C08C8FA822809F74C720A9", "Admin" });
 
         migrationBuilder.InsertData(
             table: "users",
             columns: new[] { "Id", "CompanyId", "CreatedAt", "FullName", "IsActive", "Login", "ManagerId", "PasswordHash", "Role" },
             columnTypes: new[] { "bigint", "bigint", "timestamp with time zone", "character varying(200)", "boolean", "character varying(100)", "bigint", "character varying(512)", "character varying(32)" },
-            values: new object[] { 2L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "Team Manager", true, "manager", 1L, "seed-manager-password-hash", "Manager" });
+            values: new object[] { 2L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "Team Manager", true, "manager", 1L, "866485796CFA8D7C0CF7111640205B83076433547577511D81F8030AE99ECEA5", "Manager" });
 
         migrationBuilder.InsertData(
             table: "users",
             columns: new[] { "Id", "CompanyId", "CreatedAt", "FullName", "IsActive", "Login", "ManagerId", "PasswordHash", "Role" },
             columnTypes: new[] { "bigint", "bigint", "timestamp with time zone", "character varying(200)", "boolean", "character varying(100)", "bigint", "character varying(512)", "character varying(32)" },
-            values: new object[] { 3L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "Regular Employee", true, "employee", 2L, "seed-employee-password-hash", "Employee" });
+            values: new object[] { 3L, 1L, new DateTimeOffset(new DateTime(2026, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified), TimeSpan.Zero), "Regular Employee", true, "employee", 2L, "5B2F8E27E2E5B4081C03CE70B288C87BD1263140CBD1BD9AE078123509B7CAFF", "Employee" });
 
         migrationBuilder.CreateIndex(
             name: "IX_activity_records_Category",
@@ -190,9 +192,9 @@ public partial class InitialCreate : Migration
             columns: new[] { "UserId", "ActivityDate" });
 
         migrationBuilder.CreateIndex(
-            name: "IX_activity_records_UserId_DeviceId_LastActiveAt",
+            name: "IX_activity_records_UserId_DeviceId_EndedAt",
             table: "activity_records",
-            columns: new[] { "UserId", "DeviceId", "LastActiveAt" });
+            columns: new[] { "UserId", "DeviceId", "EndedAt" });
 
         migrationBuilder.CreateIndex(
             name: "IX_companies_IsActive",
@@ -244,6 +246,11 @@ public partial class InitialCreate : Migration
             name: "IX_licenses_IsActive",
             table: "licenses",
             column: "IsActive");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_licenses_LicenseType",
+            table: "licenses",
+            column: "LicenseType");
 
         migrationBuilder.CreateIndex(
             name: "IX_licenses_LicenseKey",

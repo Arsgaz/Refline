@@ -41,7 +41,10 @@ public sealed class ActivityRecordConfiguration : IEntityTypeConfiguration<Activ
         builder.Property(activity => activity.ActivityDate)
             .IsRequired();
 
-        builder.Property(activity => activity.LastActiveAt)
+        builder.Property(activity => activity.StartedAt)
+            .IsRequired();
+
+        builder.Property(activity => activity.EndedAt)
             .IsRequired();
 
         builder.HasOne(activity => activity.User)
@@ -50,7 +53,7 @@ public sealed class ActivityRecordConfiguration : IEntityTypeConfiguration<Activ
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(activity => new { activity.UserId, activity.ActivityDate });
-        builder.HasIndex(activity => new { activity.UserId, activity.DeviceId, activity.LastActiveAt });
+        builder.HasIndex(activity => new { activity.UserId, activity.DeviceId, activity.EndedAt });
         builder.HasIndex(activity => activity.Category);
         builder.HasIndex(activity => activity.IsProductive);
     }
