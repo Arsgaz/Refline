@@ -6,7 +6,6 @@
         Title="Refline — Аналитика рабочего времени"
         Height="650" Width="1050"
         WindowStartupLocation="CenterScreen"
-        Background="#0D1117"
         FontFamily="Segoe UI">
 
     <Window.Resources>
@@ -154,7 +153,7 @@
         <Frame x:Name="MainFrame"
                NavigationUIVisibility="Hidden"
                Margin="220,0,0,0"
-               Background="#0D1117"/>
+               Background="#A00D1117"/>
     </Grid>
 
 </Window>
