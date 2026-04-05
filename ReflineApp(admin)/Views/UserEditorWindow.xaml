@@ -88,7 +88,8 @@
                                       SelectedValuePath="Value" />
                         </StackPanel>
 
-                        <StackPanel Grid.Column="2">
+                        <StackPanel Grid.Column="2"
+                                    x:Name="ManagerPanel">
                             <TextBlock Text="Менеджер"
                                        Margin="0,0,0,6"
                                        Style="{StaticResource InputLabelStyle}" />

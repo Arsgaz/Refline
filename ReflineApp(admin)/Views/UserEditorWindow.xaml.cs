@@ -23,6 +23,7 @@ public partial class UserEditorWindow : Window
         };
 
         ManagerComboBox.ItemsSource = managerOptions;
+        RoleComboBox.SelectionChanged += RoleComboBox_SelectionChanged;
 
         if (_isCreateMode)
         {
@@ -32,6 +33,7 @@ public partial class UserEditorWindow : Window
 
             RoleComboBox.SelectedValue = UserRole.Employee;
             ManagerComboBox.SelectedIndex = managerOptions.Count > 0 ? 0 : -1;
+            UpdateManagerVisibility();
             return;
         }
 
@@ -44,6 +46,7 @@ public partial class UserEditorWindow : Window
         LoginTextBox.Text = user.Login;
         RoleComboBox.SelectedValue = user.Role;
         ManagerComboBox.SelectedValue = user.ManagerId;
+        UpdateManagerVisibility();
     }
 
     public AdminUserEditorResult? Result { get; private set; }
@@ -90,7 +93,7 @@ public partial class UserEditorWindow : Window
             Login = login,
             Password = password,
             Role = role,
-            ManagerId = ManagerComboBox.SelectedValue is long selectedManagerId
+            ManagerId = role == UserRole.Employee && ManagerComboBox.SelectedValue is long selectedManagerId
                 ? selectedManagerId
                 : null
         };
@@ -104,6 +107,22 @@ public partial class UserEditorWindow : Window
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
         DialogResult = false;
+    }
+
+    private void RoleComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        UpdateManagerVisibility();
+    }
+
+    private void UpdateManagerVisibility()
+    {
+        var showManager = RoleComboBox.SelectedValue is UserRole.Employee;
+        ManagerPanel.Visibility = showManager ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!showManager)
+        {
+            ManagerComboBox.SelectedIndex = ManagerComboBox.Items.Count > 0 ? 0 : -1;
+        }
     }
 
     private sealed record RoleOption(UserRole Value, string Text);

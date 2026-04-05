@@ -67,6 +67,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         var managerValidation = await ValidateManagerAsync(
             accessContext.CompanyId,
             request.ManagerId,
+            request.Role,
             null,
             cancellationToken);
 
@@ -172,6 +173,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         var managerValidation = await ValidateManagerAsync(
             accessContext.CompanyId,
             request.ManagerId,
+            request.Role,
             userId,
             cancellationToken);
 
@@ -298,6 +300,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         var managerValidation = await ValidateManagerAsync(
             accessContext.CompanyId,
             user.ManagerId,
+            user.Role,
             user.Id,
             cancellationToken);
 
@@ -318,9 +321,22 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
     private async Task<ManagerValidationResult> ValidateManagerAsync(
         long companyId,
         long? managerId,
+        UserRole targetUserRole,
         long? userId,
         CancellationToken cancellationToken)
     {
+        if (targetUserRole is UserRole.Admin or UserRole.Manager)
+        {
+            if (managerId.HasValue)
+            {
+                return ManagerValidationResult.Failure(
+                    AdminUserManagementErrorType.Validation,
+                    "ManagerId can only be set for Employee role.");
+            }
+
+            return ManagerValidationResult.Success(null);
+        }
+
         if (!managerId.HasValue)
         {
             return ManagerValidationResult.Success(null);
@@ -366,11 +382,11 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
                 "Selected manager must be active.");
         }
 
-        if (manager.Role is not UserRole.Admin and not UserRole.Manager)
+        if (manager.Role != UserRole.Manager)
         {
             return ManagerValidationResult.Failure(
                 AdminUserManagementErrorType.Validation,
-                "Selected manager must have Admin or Manager role.");
+                "Selected manager must have Manager role.");
         }
 
         return ManagerValidationResult.Success(manager.Id);

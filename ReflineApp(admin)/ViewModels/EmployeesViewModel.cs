@@ -364,10 +364,9 @@ public sealed class EmployeesViewModel : ViewModelBase
         var managerOptions = Users
             .Where(user =>
                 user.IsActive &&
-                user.Role is UserRole.Admin or UserRole.Manager &&
+                user.Role == UserRole.Manager &&
                 (editedUser is null || user.Id != editedUser.Id))
-            .OrderBy(user => user.Role)
-            .ThenBy(user => user.FullName)
+            .OrderBy(user => user.FullName)
             .Select(user => new ManagerOption
             {
                 Id = user.Id,
