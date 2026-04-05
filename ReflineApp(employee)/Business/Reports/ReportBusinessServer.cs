@@ -28,6 +28,11 @@ public class ReportBusinessServer : IReportBusinessServer
 
     public OperationResult<string> ExportTodayReport()
     {
+        return ExportReport(DateTime.Today, DateTime.Today, "Сегодня");
+    }
+
+    public OperationResult<string> ExportReport(DateTime startDate, DateTime endDate, string periodLabel)
+    {
         var settingsResult = _settingsDataService.Load();
         if (!settingsResult.IsSuccess || settingsResult.Value == null)
         {
@@ -49,30 +54,49 @@ public class ReportBusinessServer : IReportBusinessServer
             return OperationResult<string>.Failure($"Не удалось подготовить папку отчётов: {ex.Message}", "REPORT_DIR_ERROR");
         }
 
-        var activityResult = _activityDataService.LoadByDate(DateTime.Today);
+        var normalizedStartDate = startDate.Date;
+        var normalizedEndDate = endDate.Date;
+        if (normalizedStartDate > normalizedEndDate)
+        {
+            (normalizedStartDate, normalizedEndDate) = (normalizedEndDate, normalizedStartDate);
+        }
+
+        var activityResult = _activityDataService.LoadByDateRange(normalizedStartDate, normalizedEndDate);
         if (!activityResult.IsSuccess || activityResult.Value == null)
         {
             return OperationResult<string>.Failure(activityResult.Message, activityResult.ErrorCode);
         }
 
-        var activities = activityResult.Value.OrderByDescending(a => a.TimeSpentSeconds).ToList();
-        var totalSeconds = activities.Sum(a => a.TimeSpentSeconds);
+        var activities = activityResult.Value
+            .GroupBy(a => string.IsNullOrWhiteSpace(a.AppName) ? "Неизвестное приложение" : a.AppName.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new
+            {
+                AppName = group.First().AppName,
+                TotalSeconds = group.Sum(a => a.TimeSpentSeconds)
+            })
+            .OrderByDescending(a => a.TotalSeconds)
+            .ThenBy(a => a.AppName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var totalSeconds = activities.Sum(a => a.TotalSeconds);
         var totalTs = TimeSpan.FromSeconds(totalSeconds);
 
         var sb = new StringBuilder();
         sb.AppendLine("--- Отчёт активности Refline ---");
-        sb.AppendLine($"Дата: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
-        sb.AppendLine($"Отработано сегодня: {(int)totalTs.TotalHours} ч {totalTs.Minutes:D2} мин");
+        sb.AppendLine($"Дата формирования: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
+        sb.AppendLine($"Период: {periodLabel}");
+        sb.AppendLine($"Диапазон: {normalizedStartDate:dd.MM.yyyy} - {normalizedEndDate:dd.MM.yyyy}");
+        sb.AppendLine($"Отработано за период: {(int)totalTs.TotalHours} ч {totalTs.Minutes:D2} мин");
         sb.AppendLine();
         sb.AppendLine("Активные приложения:");
 
         var index = 1;
         foreach (var activity in activities)
         {
-            sb.AppendLine($"{index++}. {activity.AppName} - {activity.DurationString}");
+            var duration = TimeSpan.FromSeconds(activity.TotalSeconds);
+            sb.AppendLine($"{index++}. {activity.AppName} - {(int)duration.TotalHours} ч {duration.Minutes:D2} мин");
         }
 
-        var fileName = $"Refline_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt";
+        var fileName = $"Refline_Report_{normalizedStartDate:yyyy-MM-dd}_{normalizedEndDate:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}.txt";
         var fullPath = Path.Combine(settingsResult.Value.ReportsPath, fileName);
 
         var saveResult = _reportDataService.SaveTextReport(fullPath, sb.ToString());

@@ -39,6 +39,32 @@ public class ActivityDataService : IActivityDataService
         }
     }
 
+    public OperationResult<IReadOnlyList<AppActivity>> LoadByDateRange(DateTime startDate, DateTime endDate)
+    {
+        try
+        {
+            lock (FileSync)
+            {
+                var normalizedStartDate = startDate.Date;
+                var normalizedEndDate = endDate.Date;
+
+                var filtered = ReadAllUnsafe()
+                    .Where(a => a.ActivityDate.Date >= normalizedStartDate && a.ActivityDate.Date <= normalizedEndDate)
+                    .OrderByDescending(a => a.ActivityDate)
+                    .ThenByDescending(a => a.TimeSpentSeconds)
+                    .ToList();
+
+                return OperationResult<IReadOnlyList<AppActivity>>.Success(filtered);
+            }
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<IReadOnlyList<AppActivity>>.Failure(
+                $"Ошибка чтения активностей за период: {ex.Message}",
+                "ACTIVITY_RANGE_READ_ERROR");
+        }
+    }
+
     public OperationResult<AppActivity?> GetByAppAndDate(string appName, DateTime activityDate)
     {
         try
