@@ -83,7 +83,7 @@ public sealed class CompanyActivityClassificationService : ICompanyActivityClass
         await _refreshLock.WaitAsync(cancellationToken);
         try
         {
-            var apiResult = await _apiService.GetCompanyRulesAsync(companyId, cancellationToken);
+            var apiResult = await _apiService.GetMyCompanyRulesAsync(cancellationToken);
             if (!apiResult.IsSuccess || apiResult.Value == null)
             {
                 _lastApiLoadedRulesCount = 0;

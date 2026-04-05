@@ -2,40 +2,23 @@ using Microsoft.EntityFrameworkCore;
 using Refline.Api.Data;
 using Refline.Api.Entities;
 using Refline.Api.Enums;
+using Refline.Api.Services.Auth;
 
 namespace Refline.Api.Services.Admin;
 
-public sealed class AdminAccessService(ReflineDbContext dbContext) : IAdminAccessService
+public sealed class AdminAccessService(
+    ReflineDbContext dbContext,
+    IRequestUserContextService requestUserContextService) : IAdminAccessService
 {
     public async Task<AdminAccessContextResult> ResolveAccessContextAsync(HttpContext httpContext, CancellationToken cancellationToken)
     {
-        if (!httpContext.Request.Headers.TryGetValue(AdminRequestHeaders.RequestingUserId, out var headerValues))
+        var requestUserResult = await requestUserContextService.ResolveAsync(httpContext, cancellationToken);
+        if (!requestUserResult.IsSuccess)
         {
-            return AdminAccessContextResult.Failure(
-                $"Missing required header '{AdminRequestHeaders.RequestingUserId}'.");
+            return AdminAccessContextResult.Failure(requestUserResult.ErrorMessage!);
         }
 
-        if (!long.TryParse(headerValues.ToString(), out var requestingUserId) || requestingUserId <= 0)
-        {
-            return AdminAccessContextResult.Failure(
-                $"Header '{AdminRequestHeaders.RequestingUserId}' must contain a valid positive user id.");
-        }
-
-        var requestingUser = await dbContext.Users
-            .AsNoTracking()
-            .Where(user => user.Id == requestingUserId && user.IsActive)
-            .Select(user => new
-            {
-                user.Id,
-                user.CompanyId,
-                user.Role
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (requestingUser is null)
-        {
-            return AdminAccessContextResult.Failure("Requesting user was not found or is inactive.");
-        }
+        var requestingUser = requestUserResult.Context!;
 
         if (requestingUser.Role == UserRole.Employee)
         {
@@ -43,7 +26,7 @@ public sealed class AdminAccessService(ReflineDbContext dbContext) : IAdminAcces
         }
 
         return AdminAccessContextResult.Success(new AdminAccessContext(
-            requestingUser.Id,
+            requestingUser.UserId,
             requestingUser.CompanyId,
             requestingUser.Role));
     }
