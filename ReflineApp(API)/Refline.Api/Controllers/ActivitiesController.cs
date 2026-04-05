@@ -59,6 +59,20 @@ public sealed class ActivitiesController(
                 normalizedCount);
         }
 
+        var incomingCategories = normalizedRecords
+            .Select(item => item.Record.Category?.Trim())
+            .Where(category => !string.IsNullOrWhiteSpace(category))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(category => category, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (incomingCategories.Length > 0)
+        {
+            logger.LogInformation(
+                "Received activity batch categories: {Categories}.",
+                string.Join(", ", incomingCategories));
+        }
+
         var invalidRecord = normalizedRecords.FirstOrDefault(item =>
             item.Record.UserId <= 0 ||
             string.IsNullOrWhiteSpace(item.Record.DeviceId) ||
@@ -83,7 +97,7 @@ public sealed class ActivitiesController(
             DeviceId = item.Record.DeviceId,
             AppName = item.Record.AppName,
             WindowTitle = item.Record.WindowTitle,
-            Category = ParseCategory(item.Record.Category),
+            Category = ParseCategory(item.Record.Category, logger),
             IsIdle = item.Record.IsIdle,
             IsProductive = item.Record.IsProductive,
             DurationSeconds = item.Record.DurationSeconds,
@@ -100,10 +114,28 @@ public sealed class ActivitiesController(
         return Ok(new { insertedCount = request.Records.Count, message = "Activity batch saved." });
     }
 
-    private static ActivityCategory ParseCategory(string category)
+    private static ActivityCategory ParseCategory(string? category, ILogger logger)
     {
-        return Enum.TryParse<ActivityCategory>(category, true, out var parsedCategory)
-            ? parsedCategory
-            : ActivityCategory.Unknown;
+        var normalized = (category ?? string.Empty).Trim();
+
+        return normalized switch
+        {
+            nameof(ActivityCategory.Work) => ActivityCategory.Work,
+            nameof(ActivityCategory.Communication) => ActivityCategory.Communication,
+            nameof(ActivityCategory.ConditionalWork) => ActivityCategory.ConditionalWork,
+            nameof(ActivityCategory.Entertainment) => ActivityCategory.Entertainment,
+            nameof(ActivityCategory.System) => ActivityCategory.System,
+            nameof(ActivityCategory.Unknown) => ActivityCategory.Unknown,
+            _ => LogUnknownCategory(normalized, logger)
+        };
+    }
+
+    private static ActivityCategory LogUnknownCategory(string category, ILogger logger)
+    {
+        logger.LogWarning(
+            "Unknown activity category '{Category}' received in batch. Falling back to Unknown.",
+            string.IsNullOrWhiteSpace(category) ? "<empty>" : category);
+
+        return ActivityCategory.Unknown;
     }
 }

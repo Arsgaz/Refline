@@ -124,6 +124,7 @@ public sealed class ApiActivitySyncService : IActivitySyncService
     {
         var startedAtUtc = segment.StartedAt.ToUniversalTime();
         var endedAtUtc = segment.EndedAt.ToUniversalTime();
+        var category = NormalizeCategoryForApi(segment.Category);
 
         return new ActivitySegmentDto
         {
@@ -131,13 +132,27 @@ public sealed class ApiActivitySyncService : IActivitySyncService
             DeviceId = segment.DeviceId,
             AppName = segment.AppName,
             WindowTitle = segment.WindowTitle,
-            Category = segment.Category,
+            Category = category,
             IsIdle = segment.IsIdle,
             IsProductive = segment.IsProductive,
             DurationSeconds = segment.DurationSeconds,
             ActivityDate = DateOnly.FromDateTime(segment.ActivityDate),
             StartedAt = startedAtUtc,
             EndedAt = endedAtUtc
+        };
+    }
+
+    private static string NormalizeCategoryForApi(string category)
+    {
+        return category?.Trim() switch
+        {
+            nameof(ActivityCategory.Work) => nameof(ActivityCategory.Work),
+            nameof(ActivityCategory.Communication) => nameof(ActivityCategory.Communication),
+            nameof(ActivityCategory.ConditionalWork) => nameof(ActivityCategory.ConditionalWork),
+            nameof(ActivityCategory.Entertainment) => nameof(ActivityCategory.Entertainment),
+            nameof(ActivityCategory.System) => nameof(ActivityCategory.System),
+            nameof(ActivityCategory.Unknown) => nameof(ActivityCategory.Unknown),
+            _ => nameof(ActivityCategory.Unknown)
         };
     }
 }
