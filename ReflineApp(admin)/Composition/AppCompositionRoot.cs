@@ -37,6 +37,7 @@ public sealed class AppCompositionRoot
             CurrentSessionContext,
             employeesViewModel,
             new PlaceholderViewModel("Аналитика", "Раздел аналитики будет добавлен следующим этапом."),
-            new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."));
+            new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
+            new PlaceholderViewModel("Правила", "Раздел правил и классификаций будет добавлен позже."));
     }
 }

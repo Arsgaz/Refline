@@ -5,77 +5,180 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,16">
-            <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Список пользователей компании"
-                           FontSize="20"
+        <DockPanel Grid.Row="0" Margin="0,0,0,18">
+            <StackPanel DockPanel.Dock="Left"
+                        MaxWidth="620">
+                <TextBlock Text="Список сотрудников компании"
+                           FontSize="22"
                            FontWeight="SemiBold" />
-                <TextBlock Text="{}Данные загружаются из Refline.Api endpoint `/api/admin/companies/{companyId}/users`."
-                           Margin="0,6,0,0"
+                <TextBlock Text="Базовый read-only список пользователей компании из административного API."
+                           Margin="0,8,0,0"
                            Foreground="{StaticResource AppMutedTextBrush}" />
             </StackPanel>
 
             <Button DockPanel.Dock="Right"
-                    Width="130"
+                    Width="148"
+                    Height="42"
                     HorizontalAlignment="Right"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Content="Обновить"
                     Command="{Binding RefreshCommand}" />
         </DockPanel>
 
-        <Border Grid.Row="1"
+        <Grid Grid.Row="1"
+              Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Style="{StaticResource CardBorderStyle}"
+                    Margin="0,0,14,0">
+                <StackPanel>
+                    <TextBlock Text="Сотрудники"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                    <TextBlock Text="{Binding Users.Count}"
+                               Margin="0,10,0,0"
+                               FontSize="28"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource CardBorderStyle}"
+                    Margin="0,0,14,0">
+                <StackPanel>
+                    <TextBlock Text="Статус загрузки"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                    <TextBlock Text="{Binding UsersCountText}"
+                               Margin="0,10,0,0"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <TextBlock Text="Источник данных"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                    <TextBlock Text="GET /api/admin/companies/{companyId}/users"
+                               Margin="0,10,0,0"
+                               FontFamily="Consolas"
+                               FontSize="15" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2"
                 Margin="0,0,0,16"
-                Padding="12"
-                Background="{StaticResource AppPanelAltBrush}"
+                Padding="12,10"
+                Background="{StaticResource AppPanelElevatedBrush}"
                 BorderBrush="{StaticResource AppBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Загрузка сотрудников..." />
+            <TextBlock Text="Загрузка сотрудников..."
+                       Foreground="{StaticResource AppMutedTextBrush}" />
         </Border>
 
-        <StackPanel Grid.Row="2">
-            <Border Padding="12"
-                    Margin="0,0,0,16"
-                    Background="#3F1D1D"
-                    BorderBrush="{StaticResource AppErrorBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                <TextBlock Text="{Binding ErrorMessage}"
-                           Foreground="{StaticResource AppErrorBrush}" />
-            </Border>
-
-            <Border Padding="18"
-                    Background="{StaticResource AppPanelBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="10">
+        <Grid Grid.Row="3">
+            <Border Style="{StaticResource SectionCardBorderStyle}">
                 <Grid>
                     <DataGrid ItemsSource="{Binding Users}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="2*" />
-                            <DataGridTextColumn Header="Логин" Binding="{Binding Login}" Width="*" />
-                            <DataGridTextColumn Header="Роль" Binding="{Binding RoleDisplay}" Width="*" />
-                            <DataGridTextColumn Header="Статус" Binding="{Binding StatusDisplay}" Width="*" />
-                            <DataGridTextColumn Header="Создан" Binding="{Binding CreatedAtDisplay}" Width="*" />
+                            <DataGridTextColumn Header="ФИО"
+                                                Binding="{Binding FullName}"
+                                                Width="2.3*" />
+                            <DataGridTextColumn Header="Логин"
+                                                Binding="{Binding Login}"
+                                                Width="1.3*" />
+                            <DataGridTemplateColumn Header="Роль"
+                                                    Width="1.2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource PillBorderStyle}"
+                                                Background="#16263A"
+                                                BorderBrush="{StaticResource AppBorderActiveBrush}">
+                                            <TextBlock Text="{Binding RoleDisplay}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource AppAccentBrush}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Статус"
+                                                    Width="1.1*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="StatusPill"
+                                                Style="{StaticResource PillBorderStyle}"
+                                                Background="#152A1D"
+                                                BorderBrush="{StaticResource AppSuccessBrush}">
+                                            <TextBlock x:Name="StatusText"
+                                                       Text="{Binding StatusDisplay}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource AppSuccessBrush}" />
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                <Setter TargetName="StatusPill" Property="Background" Value="#3B1F24" />
+                                                <Setter TargetName="StatusPill" Property="BorderBrush" Value="{StaticResource AppErrorBrush}" />
+                                                <Setter TargetName="StatusText" Property="Foreground" Value="{StaticResource AppErrorBrush}" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Создан"
+                                                Binding="{Binding CreatedAtDisplay}"
+                                                Width="1.4*" />
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Border Padding="20"
-                            Background="#CC111827"
-                            CornerRadius="8"
-                            Visibility="{Binding HasUsers, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <TextBlock Text="Сотрудники не найдены."
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="{StaticResource AppMutedTextBrush}" />
+                    <Border Padding="24"
+                            Background="{StaticResource AppOverlayBrush}"
+                            CornerRadius="10"
+                            Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Не удалось загрузить список сотрудников"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextBrush}" />
+                            <TextBlock Text="{Binding ErrorMessage}"
+                                       Margin="0,12,0,0"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource AppErrorBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="24"
+                            Background="{StaticResource AppOverlayBrush}"
+                            CornerRadius="10"
+                            Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    MaxWidth="340">
+                            <TextBlock Text="Сотрудники не найдены"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="После появления пользователей в компании этот список будет доступен здесь."
+                                       Margin="0,12,0,0"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>
-        </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

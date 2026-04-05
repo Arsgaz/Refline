@@ -15,18 +15,21 @@ public sealed class MainViewModel : ViewModelBase
         CurrentSessionContext currentSessionContext,
         EmployeesViewModel employeesViewModel,
         PlaceholderViewModel analyticsViewModel,
-        PlaceholderViewModel licensesViewModel)
+        PlaceholderViewModel licensesViewModel,
+        PlaceholderViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
         EmployeesViewModel = employeesViewModel;
         AnalyticsViewModel = analyticsViewModel;
         LicensesViewModel = licensesViewModel;
+        RulesViewModel = rulesViewModel;
         _currentPageViewModel = employeesViewModel;
         _currentSectionTitle = "Сотрудники";
 
         ShowEmployeesCommand = new RelayCommand(ShowEmployees);
         ShowAnalyticsCommand = new RelayCommand(ShowAnalytics);
         ShowLicensesCommand = new RelayCommand(ShowLicenses);
+        ShowRulesCommand = new RelayCommand(ShowRules);
         ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
     }
 
@@ -36,11 +39,15 @@ public sealed class MainViewModel : ViewModelBase
 
     public PlaceholderViewModel LicensesViewModel { get; }
 
+    public PlaceholderViewModel RulesViewModel { get; }
+
     public ICommand ShowEmployeesCommand { get; }
 
     public ICommand ShowAnalyticsCommand { get; }
 
     public ICommand ShowLicensesCommand { get; }
+
+    public ICommand ShowRulesCommand { get; }
 
     public ICommand ExitCommand { get; }
 
@@ -51,6 +58,15 @@ public sealed class MainViewModel : ViewModelBase
         Models.UserRole.Admin => "Администратор",
         Models.UserRole.Manager => "Менеджер",
         _ => "Нет доступа"
+    };
+
+    public string CurrentSectionSubtitle => CurrentSectionTitle switch
+    {
+        "Сотрудники" => "Пользователи компании, роли и базовый статус аккаунтов.",
+        "Аналитика" => "Заготовка для будущих сводок и отчётов.",
+        "Лицензии" => "Будущий раздел управления лицензиями компании.",
+        "Правила" => "Будущий раздел правил и классификации активности.",
+        _ => "Административная консоль компании."
     };
 
     public object CurrentPageViewModel
@@ -74,17 +90,27 @@ public sealed class MainViewModel : ViewModelBase
     {
         CurrentPageViewModel = EmployeesViewModel;
         CurrentSectionTitle = "Сотрудники";
+        OnPropertyChanged(nameof(CurrentSectionSubtitle));
     }
 
     private void ShowAnalytics()
     {
         CurrentPageViewModel = AnalyticsViewModel;
         CurrentSectionTitle = "Аналитика";
+        OnPropertyChanged(nameof(CurrentSectionSubtitle));
     }
 
     private void ShowLicenses()
     {
         CurrentPageViewModel = LicensesViewModel;
         CurrentSectionTitle = "Лицензии";
+        OnPropertyChanged(nameof(CurrentSectionSubtitle));
+    }
+
+    private void ShowRules()
+    {
+        CurrentPageViewModel = RulesViewModel;
+        CurrentSectionTitle = "Правила";
+        OnPropertyChanged(nameof(CurrentSectionSubtitle));
     }
 }

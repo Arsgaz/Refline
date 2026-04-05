@@ -31,7 +31,14 @@ public sealed class EmployeesViewModel : ViewModelBase
     public string ErrorMessage
     {
         get => _errorMessage;
-        private set => SetProperty(ref _errorMessage, value);
+        private set
+        {
+            if (SetProperty(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+                OnPropertyChanged(nameof(IsEmptyStateVisible));
+            }
+        }
     }
 
     public bool IsLoading
@@ -47,6 +54,14 @@ public sealed class EmployeesViewModel : ViewModelBase
     }
 
     public bool HasUsers => Users.Count > 0;
+
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+
+    public bool IsEmptyStateVisible => !IsLoading && !HasUsers && !HasError;
+
+    public string UsersCountText => HasUsers
+        ? $"Найдено сотрудников: {Users.Count}"
+        : "Сотрудники не загружены";
 
     public async Task EnsureLoadedAsync()
     {
@@ -79,6 +94,7 @@ public sealed class EmployeesViewModel : ViewModelBase
                     ? "Не удалось загрузить список сотрудников."
                     : result.Message;
                 OnPropertyChanged(nameof(HasUsers));
+                OnPropertyChanged(nameof(UsersCountText));
                 return;
             }
 
@@ -90,10 +106,12 @@ public sealed class EmployeesViewModel : ViewModelBase
 
             _hasLoaded = true;
             OnPropertyChanged(nameof(HasUsers));
+            OnPropertyChanged(nameof(UsersCountText));
         }
         finally
         {
             IsLoading = false;
+            OnPropertyChanged(nameof(IsEmptyStateVisible));
         }
     }
 }
