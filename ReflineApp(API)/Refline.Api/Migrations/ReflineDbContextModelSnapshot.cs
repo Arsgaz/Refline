@@ -22,6 +22,58 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+        modelBuilder.Entity("Refline.Api.Entities.ActivityClassificationRule", b =>
+        {
+            b.Property<long>("Id")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bigint");
+
+            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+            b.Property<string>("AppNamePattern")
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnType("character varying(200)");
+
+            b.Property<string>("Category")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
+            b.Property<long>("CompanyId")
+                .HasColumnType("bigint");
+
+            b.Property<DateTimeOffset>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW()");
+
+            b.Property<bool>("IsEnabled")
+                .HasColumnType("boolean");
+
+            b.Property<int>("Priority")
+                .HasColumnType("integer");
+
+            b.Property<DateTimeOffset>("UpdatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW()");
+
+            b.Property<string>("WindowTitlePattern")
+                .HasMaxLength(500)
+                .HasColumnType("character varying(500)");
+
+            b.HasKey("Id");
+
+            b.HasIndex("CompanyId");
+
+            b.HasIndex("CompanyId", "IsEnabled");
+
+            b.HasIndex("CompanyId", "Priority");
+
+            b.ToTable("activity_classification_rules", (string)null);
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.ActivityRecord", b =>
         {
             b.Property<long>("Id")
@@ -342,6 +394,17 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Navigation("User");
         });
 
+        modelBuilder.Entity("Refline.Api.Entities.ActivityClassificationRule", b =>
+        {
+            b.HasOne("Refline.Api.Entities.Company", "Company")
+                .WithMany("ActivityClassificationRules")
+                .HasForeignKey("CompanyId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("Company");
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.DeviceActivation", b =>
         {
             b.HasOne("Refline.Api.Entities.License", "License")
@@ -390,6 +453,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("Refline.Api.Entities.Company", b =>
         {
+            b.Navigation("ActivityClassificationRules");
             b.Navigation("Licenses");
             b.Navigation("Users");
         });

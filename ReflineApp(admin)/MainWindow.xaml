@@ -1,0 +1,181 @@
+<Window x:Class="Refline.Admin.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewModels="clr-namespace:Refline.Admin.ViewModels"
+        xmlns:views="clr-namespace:Refline.Admin.Views"
+        Title="Refline Admin"
+        Width="1280"
+        Height="780"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource AppBackgroundBrush}">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewModels:EmployeesViewModel}">
+            <views:EmployeesPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:EmployeeAnalyticsViewModel}">
+            <views:EmployeeAnalyticsPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:TeamDashboardViewModel}">
+            <views:TeamDashboardPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:ActivityClassificationRulesViewModel}">
+            <views:ActivityClassificationRulesPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
+            <views:PlaceholderPage />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Margin="0"
+                Background="{StaticResource AppPanelBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Grid Margin="16,24,16,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0"
+                            Margin="0,6,0,30">
+                    <TextBlock Text="Refline"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AppAccentBrush}" />
+                    <TextBlock Text="Admin Console"
+                               Margin="0,4,0,0"
+                               FontSize="26"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Управление компанией"
+                               Margin="0,8,0,0"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1"
+                            HorizontalAlignment="Center">
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowEmployeesCommand}">
+                        <DockPanel>
+                            <TextBlock Text="Сотрудники" />
+                            <TextBlock Text="01"
+                                       DockPanel.Dock="Right"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </DockPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowAnalyticsCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewAnalyticsSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
+                        <DockPanel>
+                            <TextBlock Text="Аналитика" />
+                            <TextBlock Text="02"
+                                       DockPanel.Dock="Right"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </DockPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowLicensesCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewLicensesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
+                        <DockPanel>
+                            <TextBlock Text="Лицензии" />
+                            <TextBlock Text="03"
+                                       DockPanel.Dock="Right"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </DockPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowRulesCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewRulesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
+                        <DockPanel>
+                            <TextBlock Text="Правила" />
+                            <TextBlock Text="04"
+                                       DockPanel.Dock="Right"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </DockPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2">
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Background="{StaticResource AppPanelElevatedBrush}"
+                            Padding="14">
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentUserDisplayName}"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding CurrentUserRoleDisplay}"
+                                       Margin="0,6,0,0"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Content="Выход"
+                            Margin="0,14,0,0"
+                            Command="{Binding ExitCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="26">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0"
+                  Margin="0,0,0,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding CurrentSectionTitle}"
+                               FontSize="32"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding CurrentSectionSubtitle}"
+                               Margin="0,8,0,0"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Padding="14,10"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource AppPanelBrush}"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <StackPanel>
+                        <TextBlock Text="Система"
+                                   FontSize="12"
+                                   Foreground="{StaticResource AppMutedTextBrush}" />
+                        <TextBlock Text="Refline Admin"
+                                   Margin="0,4,0,0"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <ContentControl Grid.Row="1"
+                            Content="{Binding CurrentPageViewModel}" />
+        </Grid>
+    </Grid>
+</Window>
