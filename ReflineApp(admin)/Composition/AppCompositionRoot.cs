@@ -11,6 +11,7 @@ public sealed class AppCompositionRoot
     public IAuthenticationService AuthenticationService { get; }
     public IAdminUsersService AdminUsersService { get; }
     public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
+    public ITeamDashboardService TeamDashboardService { get; }
 
     public AppCompositionRoot()
     {
@@ -24,6 +25,7 @@ public sealed class AppCompositionRoot
         AuthenticationService = new AdminAuthenticationService(httpClient, CurrentSessionContext);
         AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
         AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
+        TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -34,11 +36,16 @@ public sealed class AppCompositionRoot
     public MainViewModel CreateMainViewModel()
     {
         EmployeeAnalyticsViewModel? analyticsViewModel = null;
+        TeamDashboardViewModel? teamDashboardViewModel = null;
         MainViewModel? mainViewModel = null;
 
         analyticsViewModel = new EmployeeAnalyticsViewModel(
             AdminUserAnalyticsService,
             () => mainViewModel?.ShowEmployeesCommand.Execute(null));
+
+        teamDashboardViewModel = new TeamDashboardViewModel(
+            TeamDashboardService,
+            CurrentSessionContext);
 
         var employeesViewModel = new EmployeesViewModel(
             AdminUsersService,
@@ -49,7 +56,7 @@ public sealed class AppCompositionRoot
             CurrentSessionContext,
             employeesViewModel,
             analyticsViewModel,
-            new PlaceholderViewModel("Аналитика", "Раздел аналитики будет добавлен следующим этапом."),
+            teamDashboardViewModel,
             new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
             new PlaceholderViewModel("Правила", "Раздел правил и классификаций будет добавлен позже."));
 

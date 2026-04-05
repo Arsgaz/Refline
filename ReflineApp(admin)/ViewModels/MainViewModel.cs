@@ -12,19 +12,20 @@ public sealed class MainViewModel : ViewModelBase
     private object _currentPageViewModel;
     private string _currentSectionTitle;
     private readonly EmployeeAnalyticsViewModel _employeeAnalyticsViewModel;
+    private readonly TeamDashboardViewModel _teamDashboardViewModel;
 
     public MainViewModel(
         CurrentSessionContext currentSessionContext,
         EmployeesViewModel employeesViewModel,
         EmployeeAnalyticsViewModel employeeAnalyticsViewModel,
-        PlaceholderViewModel analyticsViewModel,
+        TeamDashboardViewModel teamDashboardViewModel,
         PlaceholderViewModel licensesViewModel,
         PlaceholderViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
         EmployeesViewModel = employeesViewModel;
         _employeeAnalyticsViewModel = employeeAnalyticsViewModel;
-        AnalyticsViewModel = analyticsViewModel;
+        _teamDashboardViewModel = teamDashboardViewModel;
         LicensesViewModel = licensesViewModel;
         RulesViewModel = rulesViewModel;
         _currentPageViewModel = employeesViewModel;
@@ -41,7 +42,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public EmployeeAnalyticsViewModel EmployeeAnalyticsViewModel => _employeeAnalyticsViewModel;
 
-    public PlaceholderViewModel AnalyticsViewModel { get; }
+    public TeamDashboardViewModel TeamDashboardViewModel => _teamDashboardViewModel;
 
     public PlaceholderViewModel LicensesViewModel { get; }
 
@@ -76,7 +77,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         "Сотрудники" => "Пользователи компании, роли и базовый статус аккаунтов.",
         "Карточка сотрудника" => "Сводная аналитика выбранного сотрудника за период.",
-        "Аналитика" => "Заготовка для будущих сводок и отчётов.",
+        "Аналитика" => "Сводная аналитика по команде или по всей компании.",
         "Лицензии" => "Будущий раздел управления лицензиями компании.",
         "Правила" => "Будущий раздел правил и классификации активности.",
         _ => "Административная консоль компании."
@@ -97,6 +98,7 @@ public sealed class MainViewModel : ViewModelBase
     public async Task InitializeAsync()
     {
         await EmployeesViewModel.EnsureLoadedAsync();
+        await TeamDashboardViewModel.EnsureLoadedAsync();
     }
 
     public async Task OpenEmployeeAnalyticsAsync(CompanyUserListItem employee)
@@ -116,7 +118,7 @@ public sealed class MainViewModel : ViewModelBase
 
     private void ShowAnalytics()
     {
-        CurrentPageViewModel = AnalyticsViewModel;
+        CurrentPageViewModel = TeamDashboardViewModel;
         CurrentSectionTitle = "Аналитика";
         OnPropertyChanged(nameof(CurrentSectionSubtitle));
     }
