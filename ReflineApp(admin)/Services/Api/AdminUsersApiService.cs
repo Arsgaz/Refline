@@ -55,6 +55,105 @@ public sealed class AdminUsersApiService : IAdminUsersService
         }
     }
 
+    public async Task<OperationResult<CompanyUserListItem>> CreateUserAsync(AdminUserCreateRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, "api/admin/users");
+            httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult<CompanyUserListItem>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            var createdUser = await response.Content.ReadFromJsonAsync<CompanyUserListItem>(_jsonOptions, cancellationToken);
+            return createdUser is null
+                ? OperationResult<CompanyUserListItem>.Failure("API вернул пустой ответ после создания пользователя.", "API_EMPTY_RESPONSE")
+                : OperationResult<CompanyUserListItem>.Success(createdUser);
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult<CompanyUserListItem>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult<CompanyUserListItem>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    public async Task<OperationResult<CompanyUserListItem>> UpdateUserAsync(long userId, AdminUserUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+        {
+            return OperationResult<CompanyUserListItem>.Failure("Не удалось определить пользователя для редактирования.");
+        }
+
+        try
+        {
+            using var httpRequest = CreateAuthorizedRequest(HttpMethod.Put, $"api/admin/users/{userId}");
+            httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult<CompanyUserListItem>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            var updatedUser = await response.Content.ReadFromJsonAsync<CompanyUserListItem>(_jsonOptions, cancellationToken);
+            return updatedUser is null
+                ? OperationResult<CompanyUserListItem>.Failure("API вернул пустой ответ после обновления пользователя.", "API_EMPTY_RESPONSE")
+                : OperationResult<CompanyUserListItem>.Success(updatedUser);
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult<CompanyUserListItem>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult<CompanyUserListItem>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    public async Task<OperationResult> DeactivateUserAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+        {
+            return OperationResult.Failure("Не удалось определить пользователя для деактивации.");
+        }
+
+        try
+        {
+            using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/deactivate");
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            return OperationResult.Success("Пользователь деактивирован.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    private HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string requestUri)
+    {
+        var request = new HttpRequestMessage(method, requestUri);
+        request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
+        return request;
+    }
+
     private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         try

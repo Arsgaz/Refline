@@ -9,8 +9,73 @@ namespace Refline.Api.Controllers;
 public sealed class AdminUsersController(
     IAdminAccessService adminAccessService,
     AdminAnalyticsService adminAnalyticsService,
+    AdminUserManagementService adminUserManagementService,
     ILogger<AdminUsersController> logger) : ControllerBase
 {
+    [HttpPost]
+    public async Task<ActionResult<AdminManagedUserDto>> CreateUser(
+        [FromBody] CreateAdminUserRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin user create requested for login {Login}.", request.Login);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin user create request for login {Login}: {Reason}",
+                request.Login,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var result = await adminUserManagementService.CreateUserAsync(accessContextResult.Context!, request, cancellationToken);
+        return ToActionResult(result, StatusCodes.Status201Created);
+    }
+
+    [HttpPut("{userId:long}")]
+    public async Task<ActionResult<AdminManagedUserDto>> UpdateUser(
+        long userId,
+        [FromBody] UpdateAdminUserRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin user update requested for user {UserId}.", userId);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin user update request for user {UserId}: {Reason}",
+                userId,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var result = await adminUserManagementService.UpdateUserAsync(accessContextResult.Context!, userId, request, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{userId:long}/deactivate")]
+    public async Task<ActionResult<AdminManagedUserDto>> DeactivateUser(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin user deactivate requested for user {UserId}.", userId);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin user deactivate request for user {UserId}: {Reason}",
+                userId,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var result = await adminUserManagementService.DeactivateUserAsync(accessContextResult.Context!, userId, cancellationToken);
+        return ToActionResult(result);
+    }
+
     [HttpGet("{userId:long}/summary")]
     public async Task<ActionResult<UserSummaryDto>> GetUserSummary(
         long userId,
@@ -119,5 +184,24 @@ public sealed class AdminUsersController(
 
         var breakdown = await adminAnalyticsService.GetUserActivityBreakdownAsync(userId, from.Value, to.Value, cancellationToken);
         return Ok(breakdown);
+    }
+
+    private ActionResult<AdminManagedUserDto> ToActionResult(
+        AdminUserManagementResult<AdminManagedUserDto> result,
+        int successStatusCode = StatusCodes.Status200OK)
+    {
+        if (result.IsSuccess)
+        {
+            return StatusCode(successStatusCode, result.Value);
+        }
+
+        return result.ErrorType switch
+        {
+            AdminUserManagementErrorType.Validation => BadRequest(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Conflict => Conflict(new { message = result.ErrorMessage }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = "Unexpected user management error." })
+        };
     }
 }
