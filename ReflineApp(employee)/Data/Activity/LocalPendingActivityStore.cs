@@ -7,6 +7,7 @@ namespace Refline.Data.Activity;
 
 public sealed class LocalPendingActivityStore : IPendingActivityStore
 {
+    private static readonly TimeSpan MergeGapThreshold = TimeSpan.FromSeconds(5);
     private static readonly object FileSync = new();
     private readonly string _filePath;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
@@ -73,8 +74,16 @@ public sealed class LocalPendingActivityStore : IPendingActivityStore
                 foreach (var segment in segments)
                 {
                     var copy = Clone(segment);
-                    copy.Id = copy.Id > 0 ? copy.Id : nextId++;
                     copy.IsSynced = false;
+
+                    var mergeTarget = all.Count == 0 ? null : all[^1];
+                    if (mergeTarget != null && CanMerge(mergeTarget, copy))
+                    {
+                        MergeInto(mergeTarget, copy);
+                        continue;
+                    }
+
+                    copy.Id = copy.Id > 0 ? copy.Id : nextId++;
                     all.Add(copy);
                 }
 
@@ -237,5 +246,47 @@ public sealed class LocalPendingActivityStore : IPendingActivityStore
             LastSyncAttemptAt = source.LastSyncAttemptAt,
             SyncAttemptCount = source.SyncAttemptCount
         };
+    }
+
+    private static bool CanMerge(PendingActivitySegment existing, PendingActivitySegment incoming)
+    {
+        if (existing.IsSynced)
+        {
+            return false;
+        }
+
+        if (existing.UserId != incoming.UserId ||
+            !string.Equals(existing.DeviceId, incoming.DeviceId, StringComparison.Ordinal) ||
+            !string.Equals(existing.AppName, incoming.AppName, StringComparison.Ordinal) ||
+            !string.Equals(existing.Category, incoming.Category, StringComparison.Ordinal) ||
+            existing.IsIdle != incoming.IsIdle ||
+            existing.IsProductive != incoming.IsProductive ||
+            existing.ActivityDate.Date != incoming.ActivityDate.Date)
+        {
+            return false;
+        }
+
+        return incoming.StartedAt <= existing.EndedAt.Add(MergeGapThreshold);
+    }
+
+    private static void MergeInto(PendingActivitySegment target, PendingActivitySegment incoming)
+    {
+        if (!string.IsNullOrWhiteSpace(incoming.WindowTitle))
+        {
+            target.WindowTitle = incoming.WindowTitle;
+        }
+
+        if (incoming.StartedAt < target.StartedAt)
+        {
+            target.StartedAt = incoming.StartedAt;
+        }
+
+        if (incoming.EndedAt > target.EndedAt)
+        {
+            target.EndedAt = incoming.EndedAt;
+        }
+
+        target.DurationSeconds = Math.Max(1, target.DurationSeconds + incoming.DurationSeconds);
+        target.CreatedAt = incoming.CreatedAt < target.CreatedAt ? incoming.CreatedAt : target.CreatedAt;
     }
 }

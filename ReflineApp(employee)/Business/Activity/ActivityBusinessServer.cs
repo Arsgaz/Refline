@@ -355,7 +355,6 @@ public class ActivityBusinessServer : IActivityBusinessServer
     {
         return current.ActivityDate.Date == activity.ActivityDate.Date &&
             string.Equals(current.AppName, activity.AppName, StringComparison.Ordinal) &&
-            string.Equals(current.WindowTitle, activity.WindowTitle, StringComparison.Ordinal) &&
             current.IsIdle == activity.IsIdle &&
             current.Category == activity.Category &&
             current.IsProductive == activity.IsProductive;
