@@ -9,6 +9,7 @@ using Refline.Business.Activity;
 using Refline.Business.Reports;
 using Refline.Models;
 using Refline.Services;
+using Refline.Services.ActivitySync;
 using Refline.Utils;
 using SkiaSharp;
 
@@ -18,6 +19,7 @@ public class MainViewModel : ViewModelBase
 {
     private readonly IActivityBusinessServer _activityBusinessServer;
     private readonly IReportBusinessServer _reportBusinessServer;
+    private readonly IActivitySyncService _activitySyncService;
     private readonly WindowTracker _windowTracker;
     private readonly Dispatcher _uiDispatcher;
 
@@ -27,6 +29,7 @@ public class MainViewModel : ViewModelBase
     private ObservableCollection<AppActivity> _activities = new();
 
     private readonly DispatcherTimer _uiTimer;
+    private readonly DispatcherTimer _syncTimer;
     private TimeSpan _sessionTime;
     private string _sessionTimeString = "00:00:00";
     private string _todayTotalString = "0 ч 00 мин";
@@ -47,10 +50,12 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(
         IActivityBusinessServer activityBusinessServer,
         IReportBusinessServer reportBusinessServer,
+        IActivitySyncService activitySyncService,
         WindowTracker windowTracker)
     {
         _activityBusinessServer = activityBusinessServer;
         _reportBusinessServer = reportBusinessServer;
+        _activitySyncService = activitySyncService;
         _windowTracker = windowTracker;
         _uiDispatcher = Dispatcher.CurrentDispatcher;
 
@@ -62,10 +67,18 @@ public class MainViewModel : ViewModelBase
         };
         _uiTimer.Tick += UiTimer_Tick;
 
+        _syncTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(45)
+        };
+        _syncTimer.Tick += SyncTimer_Tick;
+        _syncTimer.Start();
+
         ToggleTrackingCommand = new RelayCommand(ExecuteToggleTracking);
         ExportCommand = new RelayCommand(ExecuteExport);
 
         LoadInitialData();
+        _ = TriggerSyncAsync("startup");
     }
 
     public ObservableCollection<AppActivity> Activities
@@ -279,6 +292,11 @@ public class MainViewModel : ViewModelBase
     {
         _sessionTime = _sessionTime.Add(TimeSpan.FromSeconds(1));
         SessionTimeString = _sessionTime.ToString(@"hh\:mm\:ss");
+    }
+
+    private async void SyncTimer_Tick(object? sender, EventArgs e)
+    {
+        await TriggerSyncAsync("timer");
     }
 
     private void Tracker_OnWindowTracked(string windowTitle, bool isIdle)
@@ -516,6 +534,8 @@ public class MainViewModel : ViewModelBase
 
     public void OnClosing()
     {
+        _syncTimer.Stop();
+
         if (IsTracking)
         {
             _windowTracker.Stop();
@@ -525,6 +545,42 @@ public class MainViewModel : ViewModelBase
         if (!saveResult.IsSuccess)
         {
             AppLogger.Log(saveResult.Message, "ERROR");
+        }
+
+        try
+        {
+            var syncResult = _activitySyncService.TrySyncPendingAsync().GetAwaiter().GetResult();
+            if (!syncResult.IsSuccess)
+            {
+                AppLogger.Log(syncResult.Message, "ERROR");
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Ошибка финальной activity sync: {ex.Message}", "ERROR");
+        }
+    }
+
+    private async Task TriggerSyncAsync(string trigger)
+    {
+        try
+        {
+            var syncResult = await _activitySyncService.TrySyncPendingAsync();
+            if (syncResult.IsSuccess)
+            {
+                if (syncResult.Value > 0)
+                {
+                    AppLogger.Log($"Activity sync trigger '{trigger}' completed. {syncResult.Message}");
+                }
+
+                return;
+            }
+
+            AppLogger.Log($"Activity sync trigger '{trigger}' failed. {syncResult.Message}", "ERROR");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Ошибка activity sync trigger '{trigger}': {ex.Message}", "ERROR");
         }
     }
 }
