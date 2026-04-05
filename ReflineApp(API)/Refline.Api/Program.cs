@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Refline.Api.Data;
+using Refline.Api.Services.Admin;
 using Refline.Api.Services.Auth;
 using Refline.Api.Services.Licenses;
 using System.Text.Json.Serialization;
@@ -13,6 +14,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<AdminAnalyticsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LicenseActivationService>();
 

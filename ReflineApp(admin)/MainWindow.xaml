@@ -1,0 +1,91 @@
+<Window x:Class="Refline.Admin.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewModels="clr-namespace:Refline.Admin.ViewModels"
+        xmlns:views="clr-namespace:Refline.Admin.Views"
+        Title="Refline Admin"
+        Width="1200"
+        Height="760"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewModels:EmployeesViewModel}">
+            <views:EmployeesPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
+            <views:PlaceholderPage />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Background="{StaticResource AppPanelBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel Margin="18">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Refline Admin"
+                               FontSize="24"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Управление компанией"
+                               Margin="0,6,0,24"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+
+                    <Button Content="Сотрудники"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowEmployeesCommand}" />
+                    <Button Content="Аналитика"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowAnalyticsCommand}" />
+                    <Button Content="Лицензии"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding ShowLicensesCommand}" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Border Padding="12"
+                            Margin="0,0,0,12"
+                            Background="{StaticResource AppPanelAltBrush}"
+                            BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentUserDisplayName}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding CurrentUserRoleDisplay}"
+                                       Margin="0,4,0,0"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Content="Выход"
+                            Command="{Binding ExitCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,18">
+                <TextBlock Text="{Binding CurrentSectionTitle}"
+                           FontSize="28"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Первый рабочий foundation для админского desktop-клиента."
+                           Margin="0,6,0,0"
+                           Foreground="{StaticResource AppMutedTextBrush}" />
+            </StackPanel>
+
+            <ContentControl Grid.Row="1"
+                            Content="{Binding CurrentPageViewModel}" />
+        </Grid>
+    </Grid>
+</Window>
