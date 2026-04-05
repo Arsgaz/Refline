@@ -60,6 +60,12 @@ public sealed class MainViewModel : ViewModelBase
         _ => "Нет доступа"
     };
 
+    public bool CanViewAnalyticsSection => _currentSessionContext.Role is Models.UserRole.Admin or Models.UserRole.Manager;
+
+    public bool CanViewLicensesSection => _currentSessionContext.Role == Models.UserRole.Admin;
+
+    public bool CanViewRulesSection => _currentSessionContext.Role == Models.UserRole.Admin;
+
     public string CurrentSectionSubtitle => CurrentSectionTitle switch
     {
         "Сотрудники" => "Пользователи компании, роли и базовый статус аккаунтов.",

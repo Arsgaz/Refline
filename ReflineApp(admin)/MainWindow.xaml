@@ -64,6 +64,9 @@
                     </Button>
                     <Button Style="{StaticResource NavButtonStyle}"
                             Command="{Binding ShowAnalyticsCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewAnalyticsSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
                         <DockPanel>
                             <TextBlock Text="Аналитика" />
                             <TextBlock Text="02"
@@ -73,6 +76,9 @@
                     </Button>
                     <Button Style="{StaticResource NavButtonStyle}"
                             Command="{Binding ShowLicensesCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewLicensesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
                         <DockPanel>
                             <TextBlock Text="Лицензии" />
                             <TextBlock Text="03"
@@ -82,6 +88,9 @@
                     </Button>
                     <Button Style="{StaticResource NavButtonStyle}"
                             Command="{Binding ShowRulesCommand}">
+                        <Button.Visibility>
+                            <Binding Path="CanViewRulesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                        </Button.Visibility>
                         <DockPanel>
                             <TextBlock Text="Правила" />
                             <TextBlock Text="04"

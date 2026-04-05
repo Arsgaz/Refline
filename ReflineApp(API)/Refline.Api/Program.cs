@@ -14,6 +14,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
 builder.Services.AddScoped<AdminAnalyticsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LicenseActivationService>();

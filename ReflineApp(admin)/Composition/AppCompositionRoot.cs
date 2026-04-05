@@ -21,7 +21,7 @@ public sealed class AppCompositionRoot
 
         CurrentSessionContext = new CurrentSessionContext();
         AuthenticationService = new AdminAuthenticationService(httpClient, CurrentSessionContext);
-        AdminUsersService = new AdminUsersApiService(httpClient);
+        AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()

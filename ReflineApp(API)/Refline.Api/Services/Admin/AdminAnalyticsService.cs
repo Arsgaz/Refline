@@ -13,11 +13,21 @@ public sealed class AdminAnalyticsService(ReflineDbContext dbContext)
             .AnyAsync(company => company.Id == companyId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<CompanyUserListItemDto>> GetCompanyUsersAsync(long companyId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<CompanyUserListItemDto>> GetCompanyUsersAsync(
+        long companyId,
+        long? managerId,
+        CancellationToken cancellationToken)
     {
-        return await dbContext.Users
+        var query = dbContext.Users
             .AsNoTracking()
-            .Where(user => user.CompanyId == companyId)
+            .Where(user => user.CompanyId == companyId);
+
+        if (managerId.HasValue)
+        {
+            query = query.Where(user => user.ManagerId == managerId.Value);
+        }
+
+        return await query
             .OrderBy(user => user.Role)
             .ThenBy(user => user.FullName)
             .ThenBy(user => user.Id)

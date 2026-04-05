@@ -10,11 +10,15 @@ namespace Refline.Admin.Services.Api;
 public sealed class AdminUsersApiService : IAdminUsersService
 {
     private readonly HttpClient _httpClient;
+    private readonly Business.Identity.CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public AdminUsersApiService(HttpClient httpClient)
+    public AdminUsersApiService(
+        HttpClient httpClient,
+        Business.Identity.CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
     }
@@ -28,7 +32,10 @@ public sealed class AdminUsersApiService : IAdminUsersService
 
         try
         {
-            using var response = await _httpClient.GetAsync($"api/admin/companies/{companyId}/users", cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"api/admin/companies/{companyId}/users");
+            request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
