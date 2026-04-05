@@ -14,4 +14,6 @@ public interface ICompanyActivityClassificationService
     ActivityCategory? TryClassify(string appName, string? windowTitle);
 
     ActivityClassificationDecision? TryClassifyDetailed(string appName, string? windowTitle);
+
+    ActivityClassificationDiagnosticsSnapshot GetDiagnosticsSnapshot();
 }

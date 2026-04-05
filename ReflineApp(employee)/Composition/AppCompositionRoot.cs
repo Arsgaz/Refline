@@ -102,7 +102,12 @@ public sealed class AppCompositionRoot
 
     public MainViewModel CreateMainViewModel()
     {
-        return new MainViewModel(ActivityBusinessServer, ReportBusinessServer, ActivitySyncService, WindowTracker);
+        return new MainViewModel(
+            ActivityBusinessServer,
+            CompanyActivityClassificationService,
+            ReportBusinessServer,
+            ActivitySyncService,
+            WindowTracker);
     }
 
     public SettingsViewModel CreateSettingsViewModel()

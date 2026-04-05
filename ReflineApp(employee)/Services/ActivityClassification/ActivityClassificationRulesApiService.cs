@@ -52,6 +52,14 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
             if (!response.IsSuccessStatusCode)
             {
                 var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden &&
+                    currentUser.Role == UserRole.Employee)
+                {
+                    errorMessage =
+                        $"Employee-клиент не может загрузить company rules: endpoint '{request.RequestUri?.PathAndQuery}' " +
+                        "требует admin access и возвращает 403. Нужен отдельный employee-readable endpoint или предварительная доставка кеша.";
+                }
+
                 return OperationResult<IReadOnlyList<ActivityClassificationRule>>.Failure(
                     errorMessage,
                     $"HTTP_{(int)response.StatusCode}");
