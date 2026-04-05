@@ -9,6 +9,7 @@ using Refline.Data.Infrastructure;
 using Refline.Data.Reports;
 using Refline.Data.Settings;
 using Refline.Services;
+using Refline.Services.ActivitySync;
 using Refline.ViewModels;
 
 namespace Refline.Composition;
@@ -26,6 +27,7 @@ public sealed class AppCompositionRoot
     public ICurrentUserContext CurrentUserContext { get; }
     public IActivationBootstrapService ActivationBootstrapService { get; }
     public WindowTracker WindowTracker { get; }
+    public IActivitySyncService ActivitySyncService { get; }
 
     public AppCompositionRoot()
     {
@@ -36,6 +38,7 @@ public sealed class AppCompositionRoot
         };
 
         var activityDataService = new ActivityDataService();
+        var pendingActivityStore = new LocalPendingActivityStore();
         var settingsDataService = new SettingsDataService();
         var reportDataService = new ReportDataService();
         _localActivationStateStore = new LocalActivationStateStore();
@@ -46,6 +49,7 @@ public sealed class AppCompositionRoot
         _currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
 
         WindowTracker = new WindowTracker();
+        ActivitySyncService = new ApiActivitySyncService(apiHttpClient, pendingActivityStore);
 
         AuthenticationService = new ApiAuthenticationService(
             apiHttpClient,
@@ -67,7 +71,10 @@ public sealed class AppCompositionRoot
             new ActivityValidationService(),
             new ActivityLockService(),
             new ActivityClassificationService(),
-            new ActivityMetricsService());
+            new ActivityMetricsService(),
+            pendingActivityStore,
+            CurrentUserContext,
+            _localActivationStateStore);
 
         SettingsBusinessServer = new SettingsBusinessServer(
             settingsDataService,
@@ -83,7 +90,7 @@ public sealed class AppCompositionRoot
 
     public MainViewModel CreateMainViewModel()
     {
-        return new MainViewModel(ActivityBusinessServer, ReportBusinessServer, WindowTracker);
+        return new MainViewModel(ActivityBusinessServer, ReportBusinessServer, ActivitySyncService, WindowTracker);
     }
 
     public SettingsViewModel CreateSettingsViewModel()
