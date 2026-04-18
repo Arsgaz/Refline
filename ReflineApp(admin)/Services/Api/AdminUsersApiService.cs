@@ -55,7 +55,7 @@ public sealed class AdminUsersApiService : IAdminUsersService
         }
     }
 
-    public async Task<OperationResult<CompanyUserListItem>> CreateUserAsync(AdminUserCreateRequest request, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<CreatedUserCredentials>> CreateUserAsync(AdminUserCreateRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -66,21 +66,21 @@ public sealed class AdminUsersApiService : IAdminUsersService
             if (!response.IsSuccessStatusCode)
             {
                 var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
-                return OperationResult<CompanyUserListItem>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+                return OperationResult<CreatedUserCredentials>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
             }
 
-            var createdUser = await response.Content.ReadFromJsonAsync<CompanyUserListItem>(_jsonOptions, cancellationToken);
+            var createdUser = await response.Content.ReadFromJsonAsync<CreatedUserCredentials>(_jsonOptions, cancellationToken);
             return createdUser is null
-                ? OperationResult<CompanyUserListItem>.Failure("API вернул пустой ответ после создания пользователя.", "API_EMPTY_RESPONSE")
-                : OperationResult<CompanyUserListItem>.Success(createdUser);
+                ? OperationResult<CreatedUserCredentials>.Failure("API вернул пустой ответ после создания пользователя.", "API_EMPTY_RESPONSE")
+                : OperationResult<CreatedUserCredentials>.Success(createdUser);
         }
         catch (HttpRequestException ex)
         {
-            return OperationResult<CompanyUserListItem>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+            return OperationResult<CreatedUserCredentials>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
         }
         catch (TaskCanceledException ex)
         {
-            return OperationResult<CompanyUserListItem>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+            return OperationResult<CreatedUserCredentials>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
         }
     }
 
@@ -173,6 +173,38 @@ public sealed class AdminUsersApiService : IAdminUsersService
         catch (TaskCanceledException ex)
         {
             return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    public async Task<OperationResult<ResetPasswordResult>> ResetPasswordAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+        {
+            return OperationResult<ResetPasswordResult>.Failure("Не удалось определить пользователя для сброса пароля.");
+        }
+
+        try
+        {
+            using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/reset-password");
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult<ResetPasswordResult>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            var resetResult = await response.Content.ReadFromJsonAsync<ResetPasswordResult>(_jsonOptions, cancellationToken);
+            return resetResult is null
+                ? OperationResult<ResetPasswordResult>.Failure("API вернул пустой ответ после сброса пароля.", "API_EMPTY_RESPONSE")
+                : OperationResult<ResetPasswordResult>.Success(resetResult);
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult<ResetPasswordResult>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult<ResetPasswordResult>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
         }
     }
 

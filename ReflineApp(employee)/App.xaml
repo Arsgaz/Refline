@@ -1,6 +1,7 @@
 <Application x:Class="Refline.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:Refline.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
 
     <Application.Resources>
@@ -15,6 +16,8 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
 
             </ResourceDictionary.MergedDictionaries>
+
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
 
             <Style x:Key="AnimatedButton"
                    TargetType="Button"

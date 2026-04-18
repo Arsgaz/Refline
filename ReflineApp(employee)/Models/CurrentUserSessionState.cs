@@ -7,6 +7,7 @@ public sealed class CurrentUserSessionState
     public string FullName { get; set; } = string.Empty;
     public string Login { get; set; } = string.Empty;
     public UserRole Role { get; set; } = UserRole.Employee;
+    public bool MustChangePassword { get; set; }
 
     public static CurrentUserSessionState? FromUser(User? user)
     {
@@ -21,7 +22,8 @@ public sealed class CurrentUserSessionState
             CompanyId = user.CompanyId,
             FullName = user.FullName,
             Login = user.Login,
-            Role = user.Role
+            Role = user.Role,
+            MustChangePassword = user.MustChangePassword
         };
     }
 
@@ -34,6 +36,7 @@ public sealed class CurrentUserSessionState
             FullName = FullName,
             Login = Login,
             Role = Role,
+            MustChangePassword = MustChangePassword,
             IsActive = true
         };
     }

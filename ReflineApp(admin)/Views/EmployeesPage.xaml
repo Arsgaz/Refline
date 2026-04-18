@@ -141,11 +141,12 @@
                                                 Binding="{Binding CreatedAtDisplay}"
                                                 Width="1.4*" />
                             <DataGridTemplateColumn Header="Действия"
-                                                    Width="340">
+                                                    Width="470">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Grid HorizontalAlignment="Left">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
@@ -167,6 +168,15 @@
                                                     Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}" />
                                             <Button Grid.Column="2"
+                                                    Height="34"
+                                                    Margin="0,0,8,0"
+                                                    MinWidth="138"
+                                                    Content="Сбросить пароль"
+                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
+                                                    Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Grid.Column="3"
                                                     Height="34"
                                                     MinWidth="126"
                                                     Content="{Binding ActivationActionDisplay}"

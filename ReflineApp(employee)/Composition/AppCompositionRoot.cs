@@ -127,6 +127,11 @@ public sealed class AppCompositionRoot
             CompanyActivityClassificationService);
     }
 
+    public ChangePasswordViewModel CreateChangePasswordViewModel()
+    {
+        return new ChangePasswordViewModel(AuthenticationService, _currentUserSessionStore);
+    }
+
     public Task<OperationResult> BootstrapIdentityAsync()
     {
         return BootstrapIdentityInternalAsync();

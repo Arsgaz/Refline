@@ -58,6 +58,11 @@ public sealed class AuthService(ReflineDbContext dbContext)
             return AuthResult.ValidationFailed("NewPassword is required.");
         }
 
+        if (!PasswordPolicy.IsValid(request.NewPassword, out var passwordValidationError))
+        {
+            return AuthResult.ValidationFailed(passwordValidationError!);
+        }
+
         if (string.Equals(request.CurrentPassword, request.NewPassword, StringComparison.Ordinal))
         {
             return AuthResult.ValidationFailed("New password must be different from the current password.");

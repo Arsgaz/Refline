@@ -5,19 +5,20 @@ using Refline.Api.Data;
 using Refline.Api.Entities;
 using Refline.Api.Enums;
 using Refline.Api.Security;
+using Refline.Api.Services.Auth;
 
 namespace Refline.Api.Services.Admin;
 
 public sealed class AdminUserManagementService(ReflineDbContext dbContext)
 {
-    public async Task<AdminUserManagementResult<AdminManagedUserDto>> CreateUserAsync(
+    public async Task<AdminUserManagementResult<CreateAdminUserResponseDto>> CreateUserAsync(
         AdminAccessContext accessContext,
         CreateAdminUserRequestDto request,
         CancellationToken cancellationToken)
     {
         if (accessContext.Role != UserRole.Admin)
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 AdminUserManagementErrorType.Forbidden,
                 "Only Admin can manage company users.");
         }
@@ -25,7 +26,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         var fullName = NormalizeRequired(request.FullName);
         if (string.IsNullOrWhiteSpace(fullName))
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 AdminUserManagementErrorType.Validation,
                 "FullName is required.");
         }
@@ -33,21 +34,14 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         var login = NormalizeRequired(request.Login);
         if (string.IsNullOrWhiteSpace(login))
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 AdminUserManagementErrorType.Validation,
                 "Login is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
-                AdminUserManagementErrorType.Validation,
-                "Password is required.");
-        }
-
         if (!Enum.IsDefined(request.Role))
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 AdminUserManagementErrorType.Validation,
                 "Role value is invalid.");
         }
@@ -60,7 +54,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
 
         if (loginInUse)
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 AdminUserManagementErrorType.Conflict,
                 "Login must be unique within the company.");
         }
@@ -74,21 +68,24 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
 
         if (!managerValidation.IsSuccess)
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
                 managerValidation.ErrorType!.Value,
                 managerValidation.ErrorMessage!);
         }
+
+        var temporaryPassword = PasswordPolicy.GenerateTemporaryPassword();
 
         var user = new User
         {
             CompanyId = accessContext.CompanyId,
             FullName = fullName,
             Login = login,
-            PasswordHash = PasswordHashHelper.ComputeHash(request.Password),
+            PasswordHash = PasswordHashHelper.ComputeHash(temporaryPassword),
             Role = request.Role,
             ManagerId = managerValidation.ManagerId,
             IsActive = true,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            MustChangePassword = true
         };
 
         dbContext.Users.Add(user);
@@ -99,10 +96,54 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         }
         catch (DbUpdateException exception)
         {
-            return HandlePersistenceError(exception);
+            return HandleCreatePersistenceError(exception);
         }
 
-        return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
+        return AdminUserManagementResult<CreateAdminUserResponseDto>.Success(
+            new CreateAdminUserResponseDto(
+                user.Id,
+                user.Login,
+                temporaryPassword,
+                user.Role,
+                user.MustChangePassword));
+    }
+
+    public async Task<AdminUserManagementResult<ResetPasswordResponseDto>> ResetPasswordAsync(
+        AdminAccessContext accessContext,
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        if (accessContext.Role != UserRole.Admin)
+        {
+            return AdminUserManagementResult<ResetPasswordResponseDto>.Failure(
+                AdminUserManagementErrorType.Forbidden,
+                "Only Admin can reset passwords.");
+        }
+
+        var user = await dbContext.Users
+            .SingleOrDefaultAsync(
+                existingUser => existingUser.Id == userId && existingUser.CompanyId == accessContext.CompanyId,
+                cancellationToken);
+
+        if (user is null)
+        {
+            return AdminUserManagementResult<ResetPasswordResponseDto>.Failure(
+                AdminUserManagementErrorType.NotFound,
+                "User was not found in the current company.");
+        }
+
+        var temporaryPassword = PasswordPolicy.GenerateTemporaryPassword();
+        user.PasswordHash = PasswordHashHelper.ComputeHash(temporaryPassword);
+        user.MustChangePassword = true;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return AdminUserManagementResult<ResetPasswordResponseDto>.Success(
+            new ResetPasswordResponseDto(
+                user.Id,
+                user.Login,
+                temporaryPassword,
+                user.MustChangePassword));
     }
 
     public async Task<AdminUserManagementResult<AdminManagedUserDto>> UpdateUserAsync(
@@ -400,6 +441,34 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
                     user.IsActive &&
                     user.Role == UserRole.Admin,
                 cancellationToken);
+    }
+
+    private static AdminUserManagementResult<CreateAdminUserResponseDto> HandleCreatePersistenceError(DbUpdateException exception)
+    {
+        if (exception.InnerException is PostgresException postgresException)
+        {
+            if (postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                return postgresException.ConstraintName == "IX_users_CompanyId_Login"
+                    ? AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
+                        AdminUserManagementErrorType.Conflict,
+                        "Login must be unique within the company.")
+                    : AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
+                        AdminUserManagementErrorType.Conflict,
+                        "Could not save the user because of a database uniqueness conflict.");
+            }
+
+            if (postgresException.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+            {
+                return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
+                    AdminUserManagementErrorType.Conflict,
+                    "Could not save the user because of a related data conflict.");
+            }
+        }
+
+        return AdminUserManagementResult<CreateAdminUserResponseDto>.Failure(
+            AdminUserManagementErrorType.Conflict,
+            "Could not save the user because of a database error.");
     }
 
     private static AdminUserManagementResult<AdminManagedUserDto> HandlePersistenceError(DbUpdateException exception)

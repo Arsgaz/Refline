@@ -1,6 +1,7 @@
 using System.Windows;
 using Refline.Composition;
 using Refline.Utils;
+using Refline.Views;
 
 namespace Refline;
 
@@ -20,7 +21,7 @@ public partial class App : Application
             AppLogger.Log($"Identity bootstrap warning: {bootstrapResult.Message}");
         }
 
-        if (ShouldOpenMainWindow())
+        if (ShouldOpenMainWindow() && CanProceedAfterPasswordChange())
         {
             OpenMainWindow();
             AppLogger.Log("Application started.");
@@ -31,7 +32,7 @@ public partial class App : Application
         var loginWindow = new LoginActivationWindow(loginViewModel);
         var loginResult = loginWindow.ShowDialog();
 
-        if (loginResult == true && ShouldOpenMainWindow())
+        if (loginResult == true && ShouldOpenMainWindow() && CanProceedAfterPasswordChange())
         {
             OpenMainWindow();
             AppLogger.Log("Application started after login activation.");
@@ -57,6 +58,28 @@ public partial class App : Application
 
         var currentUserResult = _composition.AuthenticationService.GetCurrentUserAsync().GetAwaiter().GetResult();
         return currentUserResult.IsSuccess && currentUserResult.Value != null;
+    }
+
+    private bool CanProceedAfterPasswordChange()
+    {
+        if (_composition == null)
+        {
+            return false;
+        }
+
+        var currentUserResult = _composition.AuthenticationService.GetCurrentUserAsync().GetAwaiter().GetResult();
+        if (!currentUserResult.IsSuccess || currentUserResult.Value == null)
+        {
+            return false;
+        }
+
+        if (!currentUserResult.Value.MustChangePassword)
+        {
+            return true;
+        }
+
+        var changePasswordWindow = new ChangePasswordWindow(_composition.CreateChangePasswordViewModel());
+        return changePasswordWindow.ShowDialog() == true;
     }
 
     private void OpenMainWindow()
@@ -93,7 +116,7 @@ public partial class App : Application
 
         currentWindow.Close();
 
-        if (loginResult == true && ShouldOpenMainWindow())
+        if (loginResult == true && ShouldOpenMainWindow() && CanProceedAfterPasswordChange())
         {
             OpenMainWindow();
             AppLogger.Log("Application restarted after logout/login.");

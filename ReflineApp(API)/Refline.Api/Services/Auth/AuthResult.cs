@@ -31,4 +31,7 @@ public sealed class AuthResult
 
     public static AuthResult ValidationFailed(string errorMessage)
         => new(AuthResultStatus.ValidationFailed, null, errorMessage);
+
+    public static AuthResult Forbidden(string errorMessage)
+        => new(AuthResultStatus.Forbidden, null, errorMessage);
 }

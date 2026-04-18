@@ -37,6 +37,9 @@ public sealed class AuthController(AuthService authService) : ControllerBase
             AuthResultStatus.Success => Ok(new { message = "Password changed successfully." }),
             AuthResultStatus.ValidationFailed => BadRequest(new { message = result.ErrorMessage }),
             AuthResultStatus.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            AuthResultStatus.Forbidden => StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { message = result.ErrorMessage }),
             AuthResultStatus.InactiveUser => StatusCode(
                 StatusCodes.Status403Forbidden,
                 new { message = result.ErrorMessage }),

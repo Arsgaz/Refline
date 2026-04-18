@@ -13,7 +13,7 @@ public sealed class AdminUsersController(
     ILogger<AdminUsersController> logger) : ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult<AdminManagedUserDto>> CreateUser(
+    public async Task<ActionResult<CreateAdminUserResponseDto>> CreateUser(
         [FromBody] CreateAdminUserRequestDto request,
         CancellationToken cancellationToken)
     {
@@ -31,6 +31,27 @@ public sealed class AdminUsersController(
 
         var result = await adminUserManagementService.CreateUserAsync(accessContextResult.Context!, request, cancellationToken);
         return ToActionResult(result, StatusCodes.Status201Created);
+    }
+
+    [HttpPost("{userId:long}/reset-password")]
+    public async Task<ActionResult<ResetPasswordResponseDto>> ResetPassword(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin password reset requested for user {UserId}.", userId);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin password reset request for user {UserId}: {Reason}",
+                userId,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var result = await adminUserManagementService.ResetPasswordAsync(accessContextResult.Context!, userId, cancellationToken);
+        return ToActionResult(result);
     }
 
     [HttpPut("{userId:long}")]
@@ -223,6 +244,44 @@ public sealed class AdminUsersController(
             AdminUserManagementErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
             AdminUserManagementErrorType.Conflict => Conflict(new { message = result.ErrorMessage }),
             _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = "Unexpected user management error." })
+        };
+    }
+
+    private ActionResult<CreateAdminUserResponseDto> ToActionResult(
+        AdminUserManagementResult<CreateAdminUserResponseDto> result,
+        int successStatusCode = StatusCodes.Status200OK)
+    {
+        if (result.IsSuccess)
+        {
+            return StatusCode(successStatusCode, result.Value);
+        }
+
+        return result.ErrorType switch
+        {
+            AdminUserManagementErrorType.Validation => BadRequest(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Conflict => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage ?? "Request failed." })
+        };
+    }
+
+    private ActionResult<ResetPasswordResponseDto> ToActionResult(
+        AdminUserManagementResult<ResetPasswordResponseDto> result,
+        int successStatusCode = StatusCodes.Status200OK)
+    {
+        if (result.IsSuccess)
+        {
+            return StatusCode(successStatusCode, result.Value);
+        }
+
+        return result.ErrorType switch
+        {
+            AdminUserManagementErrorType.Validation => BadRequest(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
+            AdminUserManagementErrorType.Conflict => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage ?? "Request failed." })
         };
     }
 }

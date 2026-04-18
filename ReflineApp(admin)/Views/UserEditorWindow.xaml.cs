@@ -29,7 +29,7 @@ public partial class UserEditorWindow : Window
         {
             Title = "Добавить сотрудника";
             DialogTitleText.Text = "Добавление сотрудника";
-            DialogSubtitleText.Text = "Создайте пользователя в компании. Пароль задается только на этом шаге.";
+            DialogSubtitleText.Text = "Создайте пользователя в компании. Временный пароль сгенерирует сервер и покажет один раз после сохранения.";
 
             RoleComboBox.SelectedValue = UserRole.Employee;
             ManagerComboBox.SelectedIndex = managerOptions.Count > 0 ? 0 : -1;
@@ -41,7 +41,6 @@ public partial class UserEditorWindow : Window
         DialogTitleText.Text = "Редактирование сотрудника";
         DialogSubtitleText.Text = "Изменяются только базовые учетные данные. Смена пароля вынесена из этого MVP.";
 
-        PasswordPanel.Visibility = Visibility.Collapsed;
         FullNameTextBox.Text = user!.FullName;
         LoginTextBox.Text = user.Login;
         RoleComboBox.SelectedValue = user.Role;
@@ -80,18 +79,10 @@ public partial class UserEditorWindow : Window
             return;
         }
 
-        var password = PasswordTextBox.Password;
-        if (_isCreateMode && string.IsNullOrWhiteSpace(password))
-        {
-            ValidationMessageText.Text = "Укажите пароль для нового пользователя.";
-            return;
-        }
-
         Result = new AdminUserEditorResult
         {
             FullName = fullName,
             Login = login,
-            Password = password,
             Role = role,
             ManagerId = role == UserRole.Employee && ManagerComboBox.SelectedValue is long selectedManagerId
                 ? selectedManagerId

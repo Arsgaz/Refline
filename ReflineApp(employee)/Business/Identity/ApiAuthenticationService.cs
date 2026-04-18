@@ -116,6 +116,65 @@ public sealed class ApiAuthenticationService : IAuthenticationService
         return Task.FromResult(OperationResult<User?>.Success(_sessionStore.GetCurrentUser()));
     }
 
+    public async Task<OperationResult> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword)
+    {
+        if (userId == Guid.Empty)
+        {
+            return OperationResult.Failure("Не удалось определить пользователя для смены пароля.");
+        }
+
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            return OperationResult.Failure("Текущий и новый пароль обязательны.");
+        }
+
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(
+                "api/auth/change-password",
+                new ChangePasswordRequestDto
+                {
+                    UserId = ApiIdentityIdMapper.ToServerId(userId),
+                    CurrentPassword = currentPassword,
+                    NewPassword = newPassword
+                },
+                _jsonOptions);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response);
+
+                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
+                {
+                    return OperationResult.Failure(errorMessage);
+                }
+
+                return OperationResult.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            var currentUser = _sessionStore.GetCurrentUser();
+            if (currentUser != null && currentUser.Id == userId)
+            {
+                currentUser.MustChangePassword = false;
+                var saveResult = await _sessionStore.SetCurrentUserAsync(currentUser);
+                if (!saveResult.IsSuccess)
+                {
+                    return OperationResult.Failure(saveResult.Message, saveResult.ErrorCode);
+                }
+            }
+
+            return OperationResult.Success();
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
     private static User MapUser(LoginResponseDto response)
     {
         var userId = ApiIdentityIdMapper.ToLocalGuid(response.UserId);
@@ -127,6 +186,7 @@ public sealed class ApiAuthenticationService : IAuthenticationService
             FullName = response.FullName ?? string.Empty,
             Login = response.Login ?? string.Empty,
             Role = response.Role,
+            MustChangePassword = response.MustChangePassword,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -176,6 +236,17 @@ public sealed class ApiAuthenticationService : IAuthenticationService
         public string Login { get; set; } = string.Empty;
 
         public UserRole Role { get; set; }
+
+        public bool MustChangePassword { get; set; }
+    }
+
+    private sealed class ChangePasswordRequestDto
+    {
+        public long UserId { get; set; }
+
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        public string NewPassword { get; set; } = string.Empty;
     }
 
     private sealed class ApiErrorResponse
