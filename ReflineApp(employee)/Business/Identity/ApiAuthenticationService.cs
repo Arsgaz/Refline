@@ -11,16 +11,19 @@ namespace Refline.Business.Identity;
 public sealed class ApiAuthenticationService : IAuthenticationService
 {
     private readonly HttpClient _httpClient;
+    private readonly ApiAuthorizationService _apiAuthorizationService;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ICurrentUserSessionStore _sessionStore;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ApiAuthenticationService(
         HttpClient httpClient,
+        ApiAuthorizationService apiAuthorizationService,
         ICurrentUserContext currentUserContext,
         ICurrentUserSessionStore sessionStore)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentUserContext = currentUserContext;
         _sessionStore = sessionStore;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -75,7 +78,15 @@ public sealed class ApiAuthenticationService : IAuthenticationService
                 }
 
                 var user = MapUser(loginResponse);
-                var saveSessionResult = await _sessionStore.SetCurrentUserAsync(user);
+                var saveSessionResult = await _sessionStore.SetCurrentUserAsync(
+                    user,
+                    new ApiTokenSet
+                    {
+                        AccessToken = loginResponse.AccessToken,
+                        AccessTokenExpiresAt = loginResponse.AccessTokenExpiresAt,
+                        RefreshToken = loginResponse.RefreshToken,
+                        RefreshTokenExpiresAt = loginResponse.RefreshTokenExpiresAt
+                    });
                 if (!saveSessionResult.IsSuccess)
                 {
                     _currentUserContext.Clear();
@@ -101,12 +112,10 @@ public sealed class ApiAuthenticationService : IAuthenticationService
         }
         catch (HttpRequestException ex)
         {
-            await ClearSessionAsync();
             return OperationResult<bool>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
         }
         catch (TaskCanceledException ex)
         {
-            await ClearSessionAsync();
             return OperationResult<bool>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
         }
     }
@@ -130,15 +139,25 @@ public sealed class ApiAuthenticationService : IAuthenticationService
 
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(
-                "api/auth/change-password",
-                new ChangePasswordRequestDto
-                {
-                    UserId = ApiIdentityIdMapper.ToServerId(userId),
-                    CurrentPassword = currentPassword,
-                    NewPassword = newPassword
-                },
-                _jsonOptions);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/change-password")
+            {
+                Content = JsonContent.Create(
+                    new ChangePasswordRequestDto
+                    {
+                        UserId = ApiIdentityIdMapper.ToServerId(userId),
+                        CurrentPassword = currentPassword,
+                        NewPassword = newPassword
+                    },
+                    options: _jsonOptions)
+            };
+
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -156,7 +175,16 @@ public sealed class ApiAuthenticationService : IAuthenticationService
             if (currentUser != null && currentUser.Id == userId)
             {
                 currentUser.MustChangePassword = false;
-                var saveResult = await _sessionStore.SetCurrentUserAsync(currentUser);
+                var session = _sessionStore.GetCurrentSession();
+                var saveResult = await _sessionStore.SetCurrentUserAsync(
+                    currentUser,
+                    new ApiTokenSet
+                    {
+                        AccessToken = session?.AccessToken ?? string.Empty,
+                        AccessTokenExpiresAt = session?.AccessTokenExpiresAt ?? DateTimeOffset.MinValue,
+                        RefreshToken = session?.RefreshToken ?? string.Empty,
+                        RefreshTokenExpiresAt = session?.RefreshTokenExpiresAt ?? DateTimeOffset.MinValue
+                    });
                 if (!saveResult.IsSuccess)
                 {
                     return OperationResult.Failure(saveResult.Message, saveResult.ErrorCode);
@@ -238,6 +266,14 @@ public sealed class ApiAuthenticationService : IAuthenticationService
         public UserRole Role { get; set; }
 
         public bool MustChangePassword { get; set; }
+
+        public string AccessToken { get; set; } = string.Empty;
+
+        public DateTimeOffset AccessTokenExpiresAt { get; set; }
+
+        public string RefreshToken { get; set; } = string.Empty;
+
+        public DateTimeOffset RefreshTokenExpiresAt { get; set; }
     }
 
     private sealed class ChangePasswordRequestDto

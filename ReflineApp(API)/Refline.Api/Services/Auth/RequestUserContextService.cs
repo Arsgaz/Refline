@@ -1,44 +1,61 @@
-using Microsoft.EntityFrameworkCore;
-using Refline.Api.Data;
-using Refline.Api.Services.Admin;
+using System.Security.Claims;
 
 namespace Refline.Api.Services.Auth;
 
-public sealed class RequestUserContextService(ReflineDbContext dbContext) : IRequestUserContextService
+public sealed class RequestUserContextService : IRequestUserContextService
 {
     public async Task<RequestUserContextResult> ResolveAsync(HttpContext httpContext, CancellationToken cancellationToken)
     {
-        if (!httpContext.Request.Headers.TryGetValue(AdminRequestHeaders.RequestingUserId, out var headerValues))
+        await Task.CompletedTask;
+
+        var principal = httpContext.User;
+        if (principal.Identity?.IsAuthenticated != true)
         {
-            return RequestUserContextResult.Failure(
-                $"Missing required header '{AdminRequestHeaders.RequestingUserId}'.");
+            return RequestUserContextResult.Failure("Authenticated user context is missing.");
         }
 
-        if (!long.TryParse(headerValues.ToString(), out var requestingUserId) || requestingUserId <= 0)
+        if (!TryReadLongClaim(principal, JwtClaimNames.UserIdCandidates, out var userId) || userId <= 0)
         {
-            return RequestUserContextResult.Failure(
-                $"Header '{AdminRequestHeaders.RequestingUserId}' must contain a valid positive user id.");
+            return RequestUserContextResult.Failure("JWT claim 'userId' is missing or invalid.");
         }
 
-        var requestingUser = await dbContext.Users
-            .AsNoTracking()
-            .Where(user => user.Id == requestingUserId && user.IsActive)
-            .Select(user => new
+        if (!TryReadLongClaim(principal, JwtClaimNames.CompanyIdCandidates, out var companyId) || companyId <= 0)
+        {
+            return RequestUserContextResult.Failure("JWT claim 'companyId' is missing or invalid.");
+        }
+
+        var roleValue = principal.FindFirstValue(ClaimTypes.Role);
+        if (!Enum.TryParse<Enums.UserRole>(roleValue, ignoreCase: true, out var role))
+        {
+            return RequestUserContextResult.Failure("JWT role claim is missing or invalid.");
+        }
+
+        var login = FindFirstValue(principal, JwtClaimNames.LoginCandidates);
+        if (string.IsNullOrWhiteSpace(login))
+        {
+            return RequestUserContextResult.Failure("JWT claim 'login' is missing or invalid.");
+        }
+
+        return RequestUserContextResult.Success(new RequestUserContext(userId, companyId, role, login));
+    }
+
+    private static bool TryReadLongClaim(ClaimsPrincipal principal, IEnumerable<string> claimTypes, out long value)
+    {
+        var rawValue = FindFirstValue(principal, claimTypes);
+        return long.TryParse(rawValue, out value);
+    }
+
+    private static string? FindFirstValue(ClaimsPrincipal principal, IEnumerable<string> claimTypes)
+    {
+        foreach (var claimType in claimTypes)
+        {
+            var value = principal.FindFirstValue(claimType);
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                user.Id,
-                user.CompanyId,
-                user.Role
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (requestingUser is null)
-        {
-            return RequestUserContextResult.Failure("Requesting user was not found or is inactive.");
+                return value;
+            }
         }
 
-        return RequestUserContextResult.Success(new RequestUserContext(
-            requestingUser.Id,
-            requestingUser.CompanyId,
-            requestingUser.Role));
+        return null;
     }
 }

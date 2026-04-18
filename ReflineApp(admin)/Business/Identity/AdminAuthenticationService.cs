@@ -11,12 +11,17 @@ namespace Refline.Admin.Business.Identity;
 public sealed class AdminAuthenticationService : IAuthenticationService
 {
     private readonly HttpClient _httpClient;
+    private readonly AdminApiAuthorizationService _apiAuthorizationService;
     private readonly CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public AdminAuthenticationService(HttpClient httpClient, CurrentSessionContext currentSessionContext)
+    public AdminAuthenticationService(
+        HttpClient httpClient,
+        AdminApiAuthorizationService apiAuthorizationService,
+        CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -27,7 +32,7 @@ public sealed class AdminAuthenticationService : IAuthenticationService
         var normalizedLogin = (login ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(normalizedLogin) || string.IsNullOrWhiteSpace(password))
         {
-            _currentSessionContext.Clear();
+            await _currentSessionContext.ClearAsync();
             return OperationResult<AdminUser>.Failure("Введите логин и пароль.");
         }
 
@@ -45,7 +50,7 @@ public sealed class AdminAuthenticationService : IAuthenticationService
 
             if (!response.IsSuccessStatusCode)
             {
-                _currentSessionContext.Clear();
+                await _currentSessionContext.ClearAsync();
                 var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
 
                 if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.BadRequest)
@@ -59,7 +64,7 @@ public sealed class AdminAuthenticationService : IAuthenticationService
             var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponseDto>(_jsonOptions, cancellationToken);
             if (loginResponse is null)
             {
-                _currentSessionContext.Clear();
+                await _currentSessionContext.ClearAsync();
                 return OperationResult<AdminUser>.Failure("API вернул пустой ответ авторизации.", "API_EMPTY_RESPONSE");
             }
 
@@ -75,21 +80,35 @@ public sealed class AdminAuthenticationService : IAuthenticationService
 
             if (!RoleAccessPolicy.CanAccessAdminApp(user.Role))
             {
-                _currentSessionContext.Clear();
+                await _currentSessionContext.ClearAsync();
                 return OperationResult<AdminUser>.Failure("У пользователя нет доступа к админскому приложению.");
             }
 
-            _currentSessionContext.SetCurrentUser(user);
+            var saveSessionResult = await _currentSessionContext.SetSessionAsync(
+                user,
+                new ApiTokenSet
+                {
+                    AccessToken = loginResponse.AccessToken,
+                    AccessTokenExpiresAt = loginResponse.AccessTokenExpiresAt,
+                    RefreshToken = loginResponse.RefreshToken,
+                    RefreshTokenExpiresAt = loginResponse.RefreshTokenExpiresAt
+                });
+
+            if (!saveSessionResult.IsSuccess)
+            {
+                return OperationResult<AdminUser>.Failure(saveSessionResult.Message, saveSessionResult.ErrorCode);
+            }
+
             return OperationResult<AdminUser>.Success(user);
         }
         catch (HttpRequestException ex)
         {
-            _currentSessionContext.Clear();
+            await _currentSessionContext.ClearAsync();
             return OperationResult<AdminUser>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
         }
         catch (TaskCanceledException ex)
         {
-            _currentSessionContext.Clear();
+            await _currentSessionContext.ClearAsync();
             return OperationResult<AdminUser>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
         }
     }
@@ -112,16 +131,25 @@ public sealed class AdminAuthenticationService : IAuthenticationService
 
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(
-                "api/auth/change-password",
-                new ChangePasswordRequestDto
-                {
-                    UserId = userId,
-                    CurrentPassword = currentPassword,
-                    NewPassword = newPassword
-                },
-                _jsonOptions,
-                cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/change-password")
+            {
+                Content = JsonContent.Create(
+                    new ChangePasswordRequestDto
+                    {
+                        UserId = userId,
+                        CurrentPassword = currentPassword,
+                        NewPassword = newPassword
+                    },
+                    options: _jsonOptions)
+            };
+
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -138,6 +166,18 @@ public sealed class AdminAuthenticationService : IAuthenticationService
             if (_currentSessionContext.CurrentUser is not null && _currentSessionContext.CurrentUser.Id == userId)
             {
                 _currentSessionContext.CurrentUser.MustChangePassword = false;
+                if (_currentSessionContext.CurrentSession is not null)
+                {
+                    await _currentSessionContext.SetSessionAsync(
+                        _currentSessionContext.CurrentUser,
+                        new ApiTokenSet
+                        {
+                            AccessToken = _currentSessionContext.CurrentSession.AccessToken,
+                            AccessTokenExpiresAt = _currentSessionContext.CurrentSession.AccessTokenExpiresAt,
+                            RefreshToken = _currentSessionContext.CurrentSession.RefreshToken,
+                            RefreshTokenExpiresAt = _currentSessionContext.CurrentSession.RefreshTokenExpiresAt
+                        });
+                }
             }
 
             return OperationResult.Success();
@@ -181,6 +221,14 @@ public sealed class AdminAuthenticationService : IAuthenticationService
 
     private sealed class LoginResponseDto
     {
+        public string AccessToken { get; set; } = string.Empty;
+
+        public DateTimeOffset AccessTokenExpiresAt { get; set; }
+
+        public string RefreshToken { get; set; } = string.Empty;
+
+        public DateTimeOffset RefreshTokenExpiresAt { get; set; }
+
         public long UserId { get; set; }
 
         public long CompanyId { get; set; }

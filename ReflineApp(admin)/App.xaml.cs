@@ -15,6 +15,24 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         _compositionRoot = new AppCompositionRoot();
 
+        var restoreResult = _compositionRoot.CurrentSessionContext.RestoreAsync().GetAwaiter().GetResult();
+        if (restoreResult.IsSuccess && _compositionRoot.CurrentSessionContext.CurrentUser is not null)
+        {
+            if (_compositionRoot.CurrentSessionContext.CurrentUser.MustChangePassword)
+            {
+                var passwordChanged = ShowChangePasswordWindow();
+                if (!passwordChanged)
+                {
+                    _compositionRoot.CurrentSessionContext.ClearAsync().GetAwaiter().GetResult();
+                    ShowLoginWindow();
+                    return;
+                }
+            }
+
+            ShowMainWindow();
+            return;
+        }
+
         ShowLoginWindow();
     }
 
@@ -49,7 +67,7 @@ public partial class App : Application
                 var passwordChanged = ShowChangePasswordWindow();
                 if (!passwordChanged)
                 {
-                    _compositionRoot.CurrentSessionContext.Clear();
+                    _compositionRoot.CurrentSessionContext.ClearAsync().GetAwaiter().GetResult();
                     ShowLoginWindow();
                     return;
                 }

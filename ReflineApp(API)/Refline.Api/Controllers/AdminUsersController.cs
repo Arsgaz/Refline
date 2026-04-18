@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Refline.Api.Contracts.Admin;
 using Refline.Api.Services.Admin;
@@ -5,6 +6,7 @@ using Refline.Api.Services.Admin;
 namespace Refline.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/admin/users")]
 public sealed class AdminUsersController(
     IAdminAccessService adminAccessService,

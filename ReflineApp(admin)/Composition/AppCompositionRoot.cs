@@ -23,13 +23,15 @@ public sealed class AppCompositionRoot
             Timeout = TimeSpan.FromSeconds(15)
         };
 
-        CurrentSessionContext = new CurrentSessionContext();
-        AuthenticationService = new AdminAuthenticationService(httpClient, CurrentSessionContext);
-        AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
-        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
+        var sessionStateStore = new LocalCurrentSessionStateStore();
+        CurrentSessionContext = new CurrentSessionContext(sessionStateStore);
+        var apiAuthorizationService = new AdminApiAuthorizationService(httpClient, CurrentSessionContext);
+        AuthenticationService = new AdminAuthenticationService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        AdminUsersService = new AdminUsersApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
         TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
-        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, CurrentSessionContext);
-        CompanyLicenseService = new CompanyLicenseApiService(httpClient, CurrentSessionContext);
+        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        CompanyLicenseService = new CompanyLicenseApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Refline.Api.Contracts.ClassificationRules;
 using Refline.Api.Services.Auth;
@@ -6,6 +7,7 @@ using Refline.Api.Services.ClassificationRules;
 namespace Refline.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/classification-rules")]
 public sealed class ClassificationRulesController(
     IRequestUserContextService requestUserContextService,

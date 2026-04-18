@@ -10,14 +10,17 @@ namespace Refline.Admin.Services.Api;
 public sealed class AdminUsersApiService : IAdminUsersService
 {
     private readonly HttpClient _httpClient;
+    private readonly Business.Identity.AdminApiAuthorizationService _apiAuthorizationService;
     private readonly Business.Identity.CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public AdminUsersApiService(
         HttpClient httpClient,
+        Business.Identity.AdminApiAuthorizationService apiAuthorizationService,
         Business.Identity.CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -33,7 +36,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"api/admin/companies/{companyId}/users");
-            request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<CompanyUserListItem>>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -61,6 +68,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, "api/admin/users");
             httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<CreatedUserCredentials>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -95,6 +107,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Put, $"api/admin/users/{userId}");
             httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<CompanyUserListItem>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -128,6 +145,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         try
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/deactivate");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -157,6 +179,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         try
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/activate");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -186,6 +213,11 @@ public sealed class AdminUsersApiService : IAdminUsersService
         try
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/users/{userId}/reset-password");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<ResetPasswordResult>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -210,9 +242,7 @@ public sealed class AdminUsersApiService : IAdminUsersService
 
     private HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string requestUri)
     {
-        var request = new HttpRequestMessage(method, requestUri);
-        request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
-        return request;
+        return new HttpRequestMessage(method, requestUri);
     }
 
     private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response, CancellationToken cancellationToken)

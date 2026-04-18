@@ -7,5 +7,6 @@ public enum AuthResultStatus
     InactiveUser,
     UserNotFound,
     ValidationFailed,
-    Forbidden
+    Forbidden,
+    TokenExpired
 }

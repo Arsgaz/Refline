@@ -50,23 +50,27 @@ public sealed class AppCompositionRoot
 
         CurrentUserContext = new CurrentUserContext();
         _currentUserSessionStore = new CurrentUserSessionStore(currentUserSessionStateStore);
+        var apiAuthorizationService = new ApiAuthorizationService(apiHttpClient, _currentUserSessionStore);
         CompanyActivityClassificationService = new CompanyActivityClassificationService(
             activityClassificationRuleStore,
-            new ActivityClassificationRulesApiService(apiHttpClient, _currentUserSessionStore));
+            new ActivityClassificationRulesApiService(apiHttpClient, apiAuthorizationService, _currentUserSessionStore));
 
         WindowTracker = new WindowTracker();
         ActivitySyncService = new ApiActivitySyncService(
             apiHttpClient,
+            apiAuthorizationService,
             pendingActivityStore,
             _currentUserSessionStore,
             CompanyActivityClassificationService);
 
         AuthenticationService = new ApiAuthenticationService(
             apiHttpClient,
+            apiAuthorizationService,
             CurrentUserContext,
             _currentUserSessionStore);
         LicenseActivationService = new ApiLicenseActivationService(
             apiHttpClient,
+            apiAuthorizationService,
             _localActivationStateStore,
             deviceIdentityProvider,
             CurrentUserContext);

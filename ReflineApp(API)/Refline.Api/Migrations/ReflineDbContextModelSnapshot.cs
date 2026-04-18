@@ -290,6 +290,50 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             });
         });
 
+        modelBuilder.Entity("Refline.Api.Entities.RefreshToken", b =>
+        {
+            b.Property<long>("Id")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bigint");
+
+            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+            b.Property<DateTimeOffset>("CreatedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("ExpiresAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<long?>("ReplacedByTokenId")
+                .HasColumnType("bigint");
+
+            b.Property<long?>("ReplacedTokenId")
+                .HasColumnType("bigint");
+
+            b.Property<DateTimeOffset?>("RevokedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<string>("TokenHash")
+                .IsRequired()
+                .HasMaxLength(128)
+                .HasColumnType("character varying(128)");
+
+            b.Property<long>("UserId")
+                .HasColumnType("bigint");
+
+            b.HasKey("Id");
+
+            b.HasIndex("ReplacedByTokenId")
+                .IsUnique();
+
+            b.HasIndex("TokenHash")
+                .IsUnique();
+
+            b.HasIndex("UserId", "ExpiresAt");
+
+            b.ToTable("refresh_tokens", (string)null);
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.User", b =>
         {
             b.Property<long>("Id")
@@ -442,6 +486,23 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Navigation("Company");
         });
 
+        modelBuilder.Entity("Refline.Api.Entities.RefreshToken", b =>
+        {
+            b.HasOne("Refline.Api.Entities.RefreshToken", "ReplacedByToken")
+                .WithOne("ReplacedToken")
+                .HasForeignKey("Refline.Api.Entities.RefreshToken", "ReplacedByTokenId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne("Refline.Api.Entities.User", "User")
+                .WithMany("RefreshTokens")
+                .HasForeignKey("UserId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("ReplacedByToken");
+            b.Navigation("User");
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.User", b =>
         {
             b.HasOne("Refline.Api.Entities.Company", "Company")
@@ -475,6 +536,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
         {
             b.Navigation("ActivityRecords");
             b.Navigation("DeviceActivations");
+            b.Navigation("RefreshTokens");
             b.Navigation("Subordinates");
         });
 #pragma warning restore 612, 618

@@ -12,12 +12,17 @@ namespace Refline.Admin.Services.Api;
 public sealed class CompanyLicenseApiService : ICompanyLicenseService
 {
     private readonly HttpClient _httpClient;
+    private readonly Business.Identity.AdminApiAuthorizationService _apiAuthorizationService;
     private readonly CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public CompanyLicenseApiService(HttpClient httpClient, CurrentSessionContext currentSessionContext)
+    public CompanyLicenseApiService(
+        HttpClient httpClient,
+        Business.Identity.AdminApiAuthorizationService apiAuthorizationService,
+        CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -38,7 +43,11 @@ public sealed class CompanyLicenseApiService : ICompanyLicenseService
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"api/admin/companies/{companyId}/license");
-            request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser.Id.ToString());
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<CompanyLicense?>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)

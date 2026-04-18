@@ -11,12 +11,17 @@ namespace Refline.Admin.Services.Api;
 public sealed class ActivityClassificationRulesApiService : IActivityClassificationRulesService
 {
     private readonly HttpClient _httpClient;
+    private readonly Business.Identity.AdminApiAuthorizationService _apiAuthorizationService;
     private readonly CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public ActivityClassificationRulesApiService(HttpClient httpClient, CurrentSessionContext currentSessionContext)
+    public ActivityClassificationRulesApiService(
+        HttpClient httpClient,
+        Business.Identity.AdminApiAuthorizationService apiAuthorizationService,
+        CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -32,6 +37,11 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
         try
         {
             using var request = CreateAuthorizedRequest(HttpMethod.Get, $"api/admin/companies/{companyId}/classification-rules");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<ActivityClassificationRule>>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
             using var response = await _httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -59,6 +69,11 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, "api/admin/classification-rules");
             httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<ActivityClassificationRule>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -93,6 +108,11 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Put, $"api/admin/classification-rules/{ruleId}");
             httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<ActivityClassificationRule>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -127,6 +147,11 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Post, $"api/admin/classification-rules/{ruleId}/toggle");
             httpRequest.Content = JsonContent.Create(new ActivityClassificationRuleToggleRequest { IsEnabled = isEnabled }, options: _jsonOptions);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<ActivityClassificationRule>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -160,6 +185,11 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
         try
         {
             using var httpRequest = CreateAuthorizedRequest(HttpMethod.Delete, $"api/admin/classification-rules/{ruleId}");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(httpRequest, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -181,9 +211,7 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
 
     private HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string requestUri)
     {
-        var request = new HttpRequestMessage(method, requestUri);
-        request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
-        return request;
+        return new HttpRequestMessage(method, requestUri);
     }
 
     private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response, CancellationToken cancellationToken)
