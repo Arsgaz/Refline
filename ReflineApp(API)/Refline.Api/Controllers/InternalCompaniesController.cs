@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Refline.Api.Contracts.Common;
 using Refline.Api.Contracts.InternalCompanies;
 using Refline.Api.Services.Internal;
 using Refline.Api.Services.InternalCompanies;
@@ -13,6 +14,12 @@ public sealed class InternalCompaniesController(
     ILogger<InternalCompaniesController> logger) : ControllerBase
 {
     [HttpPost("provision")]
+    [ProducesResponseType(typeof(ProvisionCompanyResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiErrorResponseDto), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponseDto), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResponseDto), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponseDto), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiErrorResponseDto), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProvisionCompanyResponseDto>> Provision(
         [FromBody] ProvisionCompanyRequestDto request,
         CancellationToken cancellationToken)
@@ -24,7 +31,7 @@ public sealed class InternalCompaniesController(
                 "Rejected internal company provisioning request for company name {CompanyName}: {Reason}",
                 request.CompanyName,
                 authorizationResult.ErrorMessage);
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = authorizationResult.ErrorMessage });
+            return StatusCode(StatusCodes.Status403Forbidden, ErrorResponse(authorizationResult.ErrorMessage));
         }
 
         var result = await companyProvisioningService.ProvisionAsync(request, cancellationToken);
@@ -35,11 +42,19 @@ public sealed class InternalCompaniesController(
 
         return result.ErrorType switch
         {
-            CompanyProvisioningErrorType.Validation => BadRequest(new { message = result.ErrorMessage }),
-            CompanyProvisioningErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
-            CompanyProvisioningErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
-            CompanyProvisioningErrorType.Conflict => Conflict(new { message = result.ErrorMessage }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = "Unexpected company provisioning error." })
+            CompanyProvisioningErrorType.Validation => BadRequest(ErrorResponse(result.ErrorMessage)),
+            CompanyProvisioningErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, ErrorResponse(result.ErrorMessage)),
+            CompanyProvisioningErrorType.NotFound => NotFound(ErrorResponse(result.ErrorMessage)),
+            CompanyProvisioningErrorType.Conflict => Conflict(ErrorResponse(result.ErrorMessage)),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, ErrorResponse("Unexpected company provisioning error."))
+        };
+    }
+
+    private static ApiErrorResponseDto ErrorResponse(string? message)
+    {
+        return new ApiErrorResponseDto
+        {
+            Message = message ?? string.Empty
         };
     }
 }
