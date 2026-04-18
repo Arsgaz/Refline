@@ -69,7 +69,8 @@ public sealed class AdminAuthenticationService : IAuthenticationService
                 CompanyId = loginResponse.CompanyId,
                 FullName = loginResponse.FullName,
                 Login = loginResponse.Login,
-                Role = loginResponse.Role
+                Role = loginResponse.Role,
+                MustChangePassword = loginResponse.MustChangePassword
             };
 
             if (!RoleAccessPolicy.CanAccessAdminApp(user.Role))
@@ -90,6 +91,64 @@ public sealed class AdminAuthenticationService : IAuthenticationService
         {
             _currentSessionContext.Clear();
             return OperationResult<AdminUser>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    public async Task<OperationResult> ChangePasswordAsync(
+        long userId,
+        string currentPassword,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId <= 0)
+        {
+            return OperationResult.Failure("Не удалось определить пользователя для смены пароля.");
+        }
+
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            return OperationResult.Failure("Текущий и новый пароль обязательны.");
+        }
+
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(
+                "api/auth/change-password",
+                new ChangePasswordRequestDto
+                {
+                    UserId = userId,
+                    CurrentPassword = currentPassword,
+                    NewPassword = newPassword
+                },
+                _jsonOptions,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+
+                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
+                {
+                    return OperationResult.Failure(errorMessage);
+                }
+
+                return OperationResult.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            if (_currentSessionContext.CurrentUser is not null && _currentSessionContext.CurrentUser.Id == userId)
+            {
+                _currentSessionContext.CurrentUser.MustChangePassword = false;
+            }
+
+            return OperationResult.Success();
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
         }
     }
 
@@ -131,6 +190,17 @@ public sealed class AdminAuthenticationService : IAuthenticationService
         public string Login { get; set; } = string.Empty;
 
         public UserRole Role { get; set; }
+
+        public bool MustChangePassword { get; set; }
+    }
+
+    private sealed class ChangePasswordRequestDto
+    {
+        public long UserId { get; set; }
+
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        public string NewPassword { get; set; } = string.Empty;
     }
 
     private sealed class ApiErrorResponse

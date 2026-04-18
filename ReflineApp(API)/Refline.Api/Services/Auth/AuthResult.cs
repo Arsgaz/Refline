@@ -25,4 +25,10 @@ public sealed class AuthResult
 
     public static AuthResult InactiveUser(string errorMessage)
         => new(AuthResultStatus.InactiveUser, null, errorMessage);
+
+    public static AuthResult UserNotFound(string errorMessage)
+        => new(AuthResultStatus.UserNotFound, null, errorMessage);
+
+    public static AuthResult ValidationFailed(string errorMessage)
+        => new(AuthResultStatus.ValidationFailed, null, errorMessage);
 }

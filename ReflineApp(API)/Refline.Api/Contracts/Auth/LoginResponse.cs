@@ -13,4 +13,6 @@ public sealed class LoginResponse
     public string Login { get; set; } = string.Empty;
 
     public UserRole Role { get; set; }
+
+    public bool MustChangePassword { get; set; }
 }

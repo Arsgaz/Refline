@@ -35,6 +35,11 @@ public sealed class AppCompositionRoot
         return new LoginViewModel(AuthenticationService);
     }
 
+    public ChangePasswordViewModel CreateChangePasswordViewModel()
+    {
+        return new ChangePasswordViewModel(AuthenticationService, CurrentSessionContext);
+    }
+
     public MainViewModel CreateMainViewModel()
     {
         EmployeeAnalyticsViewModel? analyticsViewModel = null;

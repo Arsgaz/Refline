@@ -44,10 +44,33 @@ public partial class App : Application
 
         if (result == true && _compositionRoot.CurrentSessionContext.CurrentUser is not null)
         {
+            if (_compositionRoot.CurrentSessionContext.CurrentUser.MustChangePassword)
+            {
+                var passwordChanged = ShowChangePasswordWindow();
+                if (!passwordChanged)
+                {
+                    _compositionRoot.CurrentSessionContext.Clear();
+                    ShowLoginWindow();
+                    return;
+                }
+            }
+
             ShowMainWindow();
             return;
         }
 
         Shutdown();
+    }
+
+    private bool ShowChangePasswordWindow()
+    {
+        if (_compositionRoot is null)
+        {
+            return false;
+        }
+
+        var changePasswordWindow = new ChangePasswordWindow(_compositionRoot.CreateChangePasswordViewModel());
+        var result = changePasswordWindow.ShowDialog();
+        return result == true;
     }
 }
