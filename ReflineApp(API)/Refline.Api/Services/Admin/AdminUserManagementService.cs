@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Refline.Api.Contracts.Admin;
 using Refline.Api.Data;
 using Refline.Api.Entities;
@@ -96,11 +97,9 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException exception)
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
-                AdminUserManagementErrorType.Conflict,
-                "Login must be unique within the company.");
+            return HandlePersistenceError(exception);
         }
 
         return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
@@ -205,11 +204,9 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException exception)
         {
-            return AdminUserManagementResult<AdminManagedUserDto>.Failure(
-                AdminUserManagementErrorType.Conflict,
-                "Login must be unique within the company.");
+            return HandlePersistenceError(exception);
         }
 
         return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));
@@ -403,6 +400,34 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
                     user.IsActive &&
                     user.Role == UserRole.Admin,
                 cancellationToken);
+    }
+
+    private static AdminUserManagementResult<AdminManagedUserDto> HandlePersistenceError(DbUpdateException exception)
+    {
+        if (exception.InnerException is PostgresException postgresException)
+        {
+            if (postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                return postgresException.ConstraintName == "IX_users_CompanyId_Login"
+                    ? AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                        AdminUserManagementErrorType.Conflict,
+                        "Login must be unique within the company.")
+                    : AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                        AdminUserManagementErrorType.Conflict,
+                        "Could not save the user because of a database uniqueness conflict.");
+            }
+
+            if (postgresException.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+            {
+                return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+                    AdminUserManagementErrorType.Conflict,
+                    "Could not save the user because of a related data conflict.");
+            }
+        }
+
+        return AdminUserManagementResult<AdminManagedUserDto>.Failure(
+            AdminUserManagementErrorType.Conflict,
+            "Could not save the user because of a database error.");
     }
 
     private static string NormalizeRequired(string? value)
