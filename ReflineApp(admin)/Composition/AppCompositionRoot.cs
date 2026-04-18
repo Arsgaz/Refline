@@ -13,6 +13,7 @@ public sealed class AppCompositionRoot
     public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
     public ITeamDashboardService TeamDashboardService { get; }
     public IActivityClassificationRulesService ActivityClassificationRulesService { get; }
+    public ICompanyLicenseService CompanyLicenseService { get; }
 
     public AppCompositionRoot()
     {
@@ -28,6 +29,7 @@ public sealed class AppCompositionRoot
         AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
         TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
         ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, CurrentSessionContext);
+        CompanyLicenseService = new CompanyLicenseApiService(httpClient, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -45,6 +47,7 @@ public sealed class AppCompositionRoot
         EmployeeAnalyticsViewModel? analyticsViewModel = null;
         TeamDashboardViewModel? teamDashboardViewModel = null;
         ActivityClassificationRulesViewModel? rulesViewModel = null;
+        LicensesViewModel? licensesViewModel = null;
         MainViewModel? mainViewModel = null;
 
         analyticsViewModel = new EmployeeAnalyticsViewModel(
@@ -59,6 +62,10 @@ public sealed class AppCompositionRoot
             ActivityClassificationRulesService,
             CurrentSessionContext);
 
+        licensesViewModel = new LicensesViewModel(
+            CompanyLicenseService,
+            CurrentSessionContext);
+
         var employeesViewModel = new EmployeesViewModel(
             AdminUsersService,
             CurrentSessionContext,
@@ -69,7 +76,7 @@ public sealed class AppCompositionRoot
             employeesViewModel,
             analyticsViewModel,
             teamDashboardViewModel,
-            new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
+            licensesViewModel,
             rulesViewModel);
 
         return mainViewModel;

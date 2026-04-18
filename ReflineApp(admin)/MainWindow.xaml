@@ -25,6 +25,10 @@
             <views:ActivityClassificationRulesPage />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type viewModels:LicensesViewModel}">
+            <views:LicensesPage />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
             <views:PlaceholderPage />
         </DataTemplate>

@@ -37,6 +37,7 @@ builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
 builder.Services.AddScoped<InternalApiAuthorizationService>();
 builder.Services.AddScoped<CompanyProvisioningService>();
 builder.Services.AddScoped<AdminAnalyticsService>();
+builder.Services.AddScoped<AdminCompanyLicenseService>();
 builder.Services.AddScoped<AdminUserManagementService>();
 builder.Services.AddScoped<AdminClassificationRuleManagementService>();
 builder.Services.AddScoped<ClassificationRuleReadService>();

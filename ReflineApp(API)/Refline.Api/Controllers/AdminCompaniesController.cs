@@ -9,6 +9,7 @@ namespace Refline.Api.Controllers;
 public sealed class AdminCompaniesController(
     IAdminAccessService adminAccessService,
     AdminAnalyticsService adminAnalyticsService,
+    AdminCompanyLicenseService adminCompanyLicenseService,
     AdminClassificationRuleManagementService classificationRuleManagementService,
     ILogger<AdminCompaniesController> logger) : ControllerBase
 {
@@ -51,6 +52,50 @@ public sealed class AdminCompaniesController(
 
         var users = await adminAnalyticsService.GetCompanyUsersAsync(companyId, managerFilter, cancellationToken);
         return Ok(users);
+    }
+
+    [HttpGet("{companyId:long}/license")]
+    public async Task<ActionResult<CompanyLicenseDto>> GetCompanyLicense(
+        long companyId,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Admin company license requested for company {CompanyId}.", companyId);
+
+        var accessContextResult = await adminAccessService.ResolveAccessContextAsync(HttpContext, cancellationToken);
+        if (!accessContextResult.IsSuccess)
+        {
+            logger.LogWarning(
+                "Rejected admin license request for company {CompanyId}: {Reason}",
+                companyId,
+                accessContextResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = accessContextResult.ErrorMessage });
+        }
+
+        var accessContext = accessContextResult.Context!;
+        if (accessContext.Role != Enums.UserRole.Admin)
+        {
+            logger.LogWarning(
+                "Rejected admin license request: requesting user {RequestingUserId} is not Admin.",
+                accessContext.UserId);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only Admin can view company license." });
+        }
+
+        if (accessContext.CompanyId != companyId)
+        {
+            logger.LogWarning(
+                "Rejected admin license request: requesting user {RequestingUserId} cannot access company {CompanyId}.",
+                accessContext.UserId,
+                companyId);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Access to the requested company is forbidden." });
+        }
+
+        var license = await adminCompanyLicenseService.GetActiveCompanyLicenseAsync(companyId, cancellationToken);
+        if (license is null)
+        {
+            return NotFound(new { message = $"Active license for company {companyId} was not found." });
+        }
+
+        return Ok(license);
     }
 
     [HttpGet("{companyId:long}/classification-rules")]
