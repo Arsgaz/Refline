@@ -1,10 +1,8 @@
-using Refline.Api.Contracts.Auth;
-
 namespace Refline.Api.Services.Auth;
 
-public sealed class AuthResult
+public sealed class AuthResult<T>
 {
-    private AuthResult(AuthResultStatus status, LoginResponse? response, string? errorMessage)
+    private AuthResult(AuthResultStatus status, T? response, string? errorMessage)
     {
         Status = status;
         Response = response;
@@ -13,22 +11,28 @@ public sealed class AuthResult
 
     public AuthResultStatus Status { get; }
 
-    public LoginResponse? Response { get; }
+    public T? Response { get; }
 
     public string? ErrorMessage { get; }
 
-    public static AuthResult Success(LoginResponse response)
+    public static AuthResult<T> Success(T response)
         => new(AuthResultStatus.Success, response, null);
 
-    public static AuthResult InvalidCredentials(string errorMessage)
-        => new(AuthResultStatus.InvalidCredentials, null, errorMessage);
+    public static AuthResult<T> InvalidCredentials(string errorMessage)
+        => new(AuthResultStatus.InvalidCredentials, default, errorMessage);
 
-    public static AuthResult InactiveUser(string errorMessage)
-        => new(AuthResultStatus.InactiveUser, null, errorMessage);
+    public static AuthResult<T> InactiveUser(string errorMessage)
+        => new(AuthResultStatus.InactiveUser, default, errorMessage);
 
-    public static AuthResult UserNotFound(string errorMessage)
-        => new(AuthResultStatus.UserNotFound, null, errorMessage);
+    public static AuthResult<T> UserNotFound(string errorMessage)
+        => new(AuthResultStatus.UserNotFound, default, errorMessage);
 
-    public static AuthResult ValidationFailed(string errorMessage)
-        => new(AuthResultStatus.ValidationFailed, null, errorMessage);
+    public static AuthResult<T> ValidationFailed(string errorMessage)
+        => new(AuthResultStatus.ValidationFailed, default, errorMessage);
+
+    public static AuthResult<T> Forbidden(string errorMessage)
+        => new(AuthResultStatus.Forbidden, default, errorMessage);
+
+    public static AuthResult<T> TokenExpired(string errorMessage)
+        => new(AuthResultStatus.TokenExpired, default, errorMessage);
 }

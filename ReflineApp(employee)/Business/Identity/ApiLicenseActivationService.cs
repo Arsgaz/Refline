@@ -10,6 +10,7 @@ namespace Refline.Business.Identity;
 public sealed class ApiLicenseActivationService : ILicenseActivationService
 {
     private readonly HttpClient _httpClient;
+    private readonly ApiAuthorizationService _apiAuthorizationService;
     private readonly ILocalActivationStateStore _activationStateStore;
     private readonly IDeviceIdentityProvider _deviceIdentityProvider;
     private readonly ICurrentUserContext _currentUserContext;
@@ -17,11 +18,13 @@ public sealed class ApiLicenseActivationService : ILicenseActivationService
 
     public ApiLicenseActivationService(
         HttpClient httpClient,
+        ApiAuthorizationService apiAuthorizationService,
         ILocalActivationStateStore activationStateStore,
         IDeviceIdentityProvider deviceIdentityProvider,
         ICurrentUserContext currentUserContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _activationStateStore = activationStateStore;
         _deviceIdentityProvider = deviceIdentityProvider;
         _currentUserContext = currentUserContext;
@@ -56,16 +59,26 @@ public sealed class ApiLicenseActivationService : ILicenseActivationService
 
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(
-                "api/licenses/activate",
-                new ActivateLicenseRequestDto
-                {
-                    UserId = serverUserId,
-                    LicenseKey = (licenseKey ?? string.Empty).Trim(),
-                    DeviceId = deviceIdResult.Value,
-                    MachineName = Environment.MachineName
-                },
-                _jsonOptions);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/licenses/activate")
+            {
+                Content = JsonContent.Create(
+                    new ActivateLicenseRequestDto
+                    {
+                        UserId = serverUserId,
+                        LicenseKey = (licenseKey ?? string.Empty).Trim(),
+                        DeviceId = deviceIdResult.Value,
+                        MachineName = Environment.MachineName
+                    },
+                    options: _jsonOptions)
+            };
+
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<DeviceActivation>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {

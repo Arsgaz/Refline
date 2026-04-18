@@ -7,11 +7,13 @@ public interface IAdminUsersService
 {
     Task<OperationResult<IReadOnlyList<CompanyUserListItem>>> GetCompanyUsersAsync(long companyId, CancellationToken cancellationToken = default);
 
-    Task<OperationResult<CompanyUserListItem>> CreateUserAsync(AdminUserCreateRequest request, CancellationToken cancellationToken = default);
+    Task<OperationResult<CreatedUserCredentials>> CreateUserAsync(AdminUserCreateRequest request, CancellationToken cancellationToken = default);
 
     Task<OperationResult<CompanyUserListItem>> UpdateUserAsync(long userId, AdminUserUpdateRequest request, CancellationToken cancellationToken = default);
 
     Task<OperationResult> DeactivateUserAsync(long userId, CancellationToken cancellationToken = default);
 
     Task<OperationResult> ActivateUserAsync(long userId, CancellationToken cancellationToken = default);
+
+    Task<OperationResult<ResetPasswordResult>> ResetPasswordAsync(long userId, CancellationToken cancellationToken = default);
 }

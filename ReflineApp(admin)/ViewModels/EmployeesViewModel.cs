@@ -41,6 +41,13 @@ public sealed class EmployeesViewModel : ViewModelBase
                 var user = parameter as CompanyUserListItem ?? SelectedUser;
                 return !IsLoading && CanManageUsers && user is not null;
             });
+        ResetPasswordCommand = new RelayCommand(
+            async parameter => await ResetPasswordAsync(parameter as CompanyUserListItem ?? SelectedUser),
+            parameter =>
+            {
+                var user = parameter as CompanyUserListItem ?? SelectedUser;
+                return !IsLoading && CanManageUsers && user is not null;
+            });
         OpenEmployeeAnalyticsCommand = new RelayCommand(
             async parameter => await OpenEmployeeAnalyticsAsync(parameter as CompanyUserListItem ?? SelectedUser),
             _ => !IsLoading);
@@ -55,6 +62,8 @@ public sealed class EmployeesViewModel : ViewModelBase
     public ICommand EditUserCommand { get; }
 
     public ICommand ToggleUserActivationCommand { get; }
+
+    public ICommand ResetPasswordCommand { get; }
 
     public ICommand OpenEmployeeAnalyticsCommand { get; }
 
@@ -197,12 +206,11 @@ public sealed class EmployeesViewModel : ViewModelBase
             {
                 FullName = dialogResult.FullName,
                 Login = normalizedLogin,
-                Password = dialogResult.Password,
                 Role = dialogResult.Role,
                 ManagerId = dialogResult.ManagerId
             });
 
-            if (!result.IsSuccess)
+            if (!result.IsSuccess || result.Value is null)
             {
                 MessageBox.Show(
                     string.IsNullOrWhiteSpace(result.Message) ? "Не удалось создать пользователя." : result.Message,
@@ -214,11 +222,11 @@ public sealed class EmployeesViewModel : ViewModelBase
 
             IsLoading = false;
             await LoadAsync(forceReload: true);
-            MessageBox.Show(
-                $"Пользователь \"{dialogResult.FullName}\" создан.",
+            ShowTemporaryPassword(
                 "Пользователь создан",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                $"Пользователь \"{dialogResult.FullName}\" создан. Передайте пользователю временный пароль. При следующем входе он должен будет сменить его.",
+                result.Value.Login,
+                result.Value.TemporaryPassword);
         }
         finally
         {
@@ -346,6 +354,52 @@ public sealed class EmployeesViewModel : ViewModelBase
         }
     }
 
+    private async Task ResetPasswordAsync(CompanyUserListItem? user)
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            $"Сбросить пароль для пользователя \"{user.FullName}\"?",
+            "Сброс пароля",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Warning);
+
+        if (confirmation != MessageBoxResult.OK)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var result = await _adminUsersService.ResetPasswordAsync(user.Id);
+            if (!result.IsSuccess || result.Value is null)
+            {
+                MessageBox.Show(
+                    string.IsNullOrWhiteSpace(result.Message) ? "Не удалось сбросить пароль." : result.Message,
+                    "Ошибка сброса",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            ShowTemporaryPassword(
+                "Пароль сброшен",
+                $"Для пользователя \"{user.FullName}\" сгенерирован новый временный пароль. При следующем входе пользователь обязан сменить его.",
+                result.Value.Login,
+                result.Value.TemporaryPassword);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
     private AdminUserEditorResult? ShowEditorDialog(CompanyUserListItem? user)
     {
         var managerOptions = BuildManagerOptions(user);
@@ -381,5 +435,18 @@ public sealed class EmployeesViewModel : ViewModelBase
         });
 
         return managerOptions;
+    }
+
+    private static void ShowTemporaryPassword(string title, string subtitle, string login, string temporaryPassword)
+    {
+        var owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
+            ?? Application.Current.MainWindow;
+
+        var window = new TemporaryPasswordWindow(title, subtitle, login, temporaryPassword)
+        {
+            Owner = owner
+        };
+
+        window.ShowDialog();
     }
 }

@@ -12,14 +12,17 @@ namespace Refline.Admin.Services.Api;
 public sealed class AdminUserAnalyticsApiService : IAdminUserAnalyticsService
 {
     private readonly HttpClient _httpClient;
+    private readonly AdminApiAuthorizationService _apiAuthorizationService;
     private readonly CurrentSessionContext _currentSessionContext;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public AdminUserAnalyticsApiService(
         HttpClient httpClient,
+        AdminApiAuthorizationService apiAuthorizationService,
         CurrentSessionContext currentSessionContext)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentSessionContext = currentSessionContext;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -83,7 +86,11 @@ public sealed class AdminUserAnalyticsApiService : IAdminUserAnalyticsService
     private async Task<OperationResult<T>> SendAndReadAsync<T>(string relativeUrl, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
-        request.Headers.Add(AdminApiRequestHeaders.RequestingUserId, _currentSessionContext.CurrentUser!.Id.ToString());
+        var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+        if (!authorizeResult.IsSuccess)
+        {
+            return OperationResult<T>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+        }
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)

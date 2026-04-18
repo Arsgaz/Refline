@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Refline.Api.Contracts.Activities;
@@ -9,14 +10,25 @@ using Refline.Api.Features.Activities;
 namespace Refline.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/activities")]
 public sealed class ActivitiesController(
     ReflineDbContext dbContext,
+    Services.Auth.IRequestUserContextService requestUserContextService,
     ILogger<ActivitiesController> logger) : ControllerBase
 {
     [HttpPost("batch")]
-    public async Task<IActionResult> UploadBatch([FromBody] ActivityBatchRequestDto request)
+    public async Task<IActionResult> UploadBatch([FromBody] ActivityBatchRequestDto request, CancellationToken cancellationToken)
     {
+        var requestUserResult = await requestUserContextService.ResolveAsync(HttpContext, cancellationToken);
+        if (!requestUserResult.IsSuccess)
+        {
+            logger.LogWarning("Rejected activity batch: {Reason}", requestUserResult.ErrorMessage);
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = requestUserResult.ErrorMessage });
+        }
+
+        var requestUser = requestUserResult.Context!;
+
         if (request is null)
         {
             logger.LogWarning("Rejected activity batch: request body is null.");
@@ -77,6 +89,7 @@ public sealed class ActivitiesController(
 
         var invalidRecord = normalizedRecords.FirstOrDefault(item =>
             item.Record.UserId <= 0 ||
+            item.Record.UserId != requestUser.UserId ||
             string.IsNullOrWhiteSpace(item.Record.DeviceId) ||
             string.IsNullOrWhiteSpace(item.Record.AppName) ||
             item.Record.DurationSeconds < 0 ||
@@ -116,7 +129,7 @@ public sealed class ActivitiesController(
                 userIds.Contains(record.UserId) &&
                 deviceIds.Contains(record.DeviceId) &&
                 activityDates.Contains(record.ActivityDate))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var recordsByKey = existingRecords
             .GroupBy(ActivityAggregationKey.FromRecord)
@@ -155,7 +168,7 @@ public sealed class ActivitiesController(
                     : "DefaultWithoutWindowTitle");
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
             "Processed activity batch: received {ReceivedCount}, created {CreatedCount}, merged {MergedCount}.",

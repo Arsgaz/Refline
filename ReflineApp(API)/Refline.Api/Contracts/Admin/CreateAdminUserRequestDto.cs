@@ -8,8 +8,6 @@ public sealed class CreateAdminUserRequestDto
 
     public string Login { get; set; } = string.Empty;
 
-    public string Password { get; set; } = string.Empty;
-
     public UserRole Role { get; set; }
 
     public long? ManagerId { get; set; }

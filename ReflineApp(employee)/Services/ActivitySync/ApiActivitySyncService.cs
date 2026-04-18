@@ -16,6 +16,7 @@ public sealed class ApiActivitySyncService : IActivitySyncService
     private const int MaxBatchSize = 500;
 
     private readonly HttpClient _httpClient;
+    private readonly ApiAuthorizationService _apiAuthorizationService;
     private readonly IPendingActivityStore _pendingActivityStore;
     private readonly ICurrentUserSessionStore _currentUserSessionStore;
     private readonly ICompanyActivityClassificationService _companyClassificationService;
@@ -26,11 +27,13 @@ public sealed class ApiActivitySyncService : IActivitySyncService
 
     public ApiActivitySyncService(
         HttpClient httpClient,
+        ApiAuthorizationService apiAuthorizationService,
         IPendingActivityStore pendingActivityStore,
         ICurrentUserSessionStore currentUserSessionStore,
         ICompanyActivityClassificationService companyClassificationService)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _pendingActivityStore = pendingActivityStore;
         _currentUserSessionStore = currentUserSessionStore;
         _companyClassificationService = companyClassificationService;
@@ -76,14 +79,23 @@ public sealed class ApiActivitySyncService : IActivitySyncService
 
                 try
                 {
-                    using var response = await _httpClient.PostAsJsonAsync(
-                        "api/activities/batch",
-                        new ActivityBatchRequestDto
-                        {
-                            Records = batchList.Select(MapToDto).ToList()
-                        },
-                        _jsonOptions,
-                        cancellationToken);
+                    using var request = new HttpRequestMessage(HttpMethod.Post, "api/activities/batch")
+                    {
+                        Content = JsonContent.Create(
+                            new ActivityBatchRequestDto
+                            {
+                                Records = batchList.Select(MapToDto).ToList()
+                            },
+                            options: _jsonOptions)
+                    };
+
+                    var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+                    if (!authorizeResult.IsSuccess)
+                    {
+                        return OperationResult<int>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+                    }
+
+                    using var response = await _httpClient.SendAsync(request, cancellationToken);
 
                     if (!response.IsSuccessStatusCode)
                     {

@@ -19,6 +19,8 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
 
     public DbSet<ActivityClassificationRule> ActivityClassificationRules => Set<ActivityClassificationRule>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReflineDbContext).Assembly);

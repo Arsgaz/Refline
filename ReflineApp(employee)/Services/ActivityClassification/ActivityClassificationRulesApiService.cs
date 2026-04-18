@@ -10,15 +10,18 @@ namespace Refline.Services.ActivityClassification;
 
 public sealed class ActivityClassificationRulesApiService : IActivityClassificationRulesApiService
 {
-    private const string RequestingUserIdHeader = "X-Refline-User-Id";
-
     private readonly HttpClient _httpClient;
+    private readonly ApiAuthorizationService _apiAuthorizationService;
     private readonly ICurrentUserSessionStore _currentUserSessionStore;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public ActivityClassificationRulesApiService(HttpClient httpClient, ICurrentUserSessionStore currentUserSessionStore)
+    public ActivityClassificationRulesApiService(
+        HttpClient httpClient,
+        ApiAuthorizationService apiAuthorizationService,
+        ICurrentUserSessionStore currentUserSessionStore)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _currentUserSessionStore = currentUserSessionStore;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -34,18 +37,16 @@ public sealed class ActivityClassificationRulesApiService : IActivityClassificat
                 "CLASSIFICATION_RULES_SESSION_MISSING");
         }
 
-        var serverUserId = ApiIdentityIdMapper.ToServerId(currentUser.Id);
-        if (serverUserId <= 0)
-        {
-            return OperationResult<IReadOnlyList<ActivityClassificationRule>>.Failure(
-                "Не удалось определить серверный идентификатор пользователя для загрузки classification rules.",
-                "CLASSIFICATION_RULES_INVALID_SERVER_IDS");
-        }
-
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "api/classification-rules/me");
-            request.Headers.Add(RequestingUserIdHeader, serverUserId.ToString());
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<ActivityClassificationRule>>.Failure(
+                    authorizeResult.Message,
+                    authorizeResult.ErrorCode);
+            }
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)

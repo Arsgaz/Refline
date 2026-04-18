@@ -10,5 +10,6 @@ public class User
     public UserRole Role { get; set; } = UserRole.Employee;
     public Guid? ManagerId { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool MustChangePassword { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

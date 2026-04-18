@@ -33,4 +33,6 @@ public sealed class User
     public ICollection<DeviceActivation> DeviceActivations { get; set; } = new List<DeviceActivation>();
 
     public ICollection<ActivityRecord> ActivityRecords { get; set; } = new List<ActivityRecord>();
+
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

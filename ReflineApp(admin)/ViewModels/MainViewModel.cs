@@ -13,6 +13,7 @@ public sealed class MainViewModel : ViewModelBase
     private string _currentSectionTitle;
     private readonly EmployeeAnalyticsViewModel _employeeAnalyticsViewModel;
     private readonly TeamDashboardViewModel _teamDashboardViewModel;
+    private readonly LicensesViewModel _licensesViewModel;
     private readonly ActivityClassificationRulesViewModel _rulesViewModel;
 
     public MainViewModel(
@@ -20,13 +21,14 @@ public sealed class MainViewModel : ViewModelBase
         EmployeesViewModel employeesViewModel,
         EmployeeAnalyticsViewModel employeeAnalyticsViewModel,
         TeamDashboardViewModel teamDashboardViewModel,
-        PlaceholderViewModel licensesViewModel,
+        LicensesViewModel licensesViewModel,
         ActivityClassificationRulesViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
         EmployeesViewModel = employeesViewModel;
         _employeeAnalyticsViewModel = employeeAnalyticsViewModel;
         _teamDashboardViewModel = teamDashboardViewModel;
+        _licensesViewModel = licensesViewModel;
         _rulesViewModel = rulesViewModel;
         LicensesViewModel = licensesViewModel;
         RulesViewModel = rulesViewModel;
@@ -46,7 +48,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public TeamDashboardViewModel TeamDashboardViewModel => _teamDashboardViewModel;
 
-    public PlaceholderViewModel LicensesViewModel { get; }
+    public LicensesViewModel LicensesViewModel { get; }
 
     public ActivityClassificationRulesViewModel RulesViewModel { get; }
 
@@ -80,7 +82,7 @@ public sealed class MainViewModel : ViewModelBase
         "Сотрудники" => "Пользователи компании, роли и базовый статус аккаунтов.",
         "Карточка сотрудника" => "Сводная аналитика выбранного сотрудника за период.",
         "Аналитика" => "Сводная аналитика по команде или по всей компании.",
-        "Лицензии" => "Будущий раздел управления лицензиями компании.",
+        "Лицензии" => "Текущая лицензия компании, ключ и состояние активаций устройств.",
         "Правила классификации" => "Company-specific правила классификации активности для приложений и окон.",
         _ => "Административная консоль компании."
     };
@@ -101,6 +103,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         await EmployeesViewModel.EnsureLoadedAsync();
         await TeamDashboardViewModel.EnsureLoadedAsync();
+        await LicensesViewModel.EnsureLoadedAsync();
         await RulesViewModel.EnsureLoadedAsync();
     }
 
@@ -126,11 +129,17 @@ public sealed class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentSectionSubtitle));
     }
 
-    private void ShowLicenses()
+    private async void ShowLicenses()
     {
+        if (!CanViewLicensesSection)
+        {
+            return;
+        }
+
         CurrentPageViewModel = LicensesViewModel;
         CurrentSectionTitle = "Лицензии";
         OnPropertyChanged(nameof(CurrentSectionSubtitle));
+        await _licensesViewModel.EnsureLoadedAsync();
     }
 
     private void ShowRules()

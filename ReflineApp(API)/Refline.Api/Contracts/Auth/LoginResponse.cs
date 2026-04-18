@@ -4,6 +4,14 @@ namespace Refline.Api.Contracts.Auth;
 
 public sealed class LoginResponse
 {
+    public string AccessToken { get; set; } = string.Empty;
+
+    public DateTimeOffset AccessTokenExpiresAt { get; set; }
+
+    public string RefreshToken { get; set; } = string.Empty;
+
+    public DateTimeOffset RefreshTokenExpiresAt { get; set; }
+
     public long UserId { get; set; }
 
     public long CompanyId { get; set; }

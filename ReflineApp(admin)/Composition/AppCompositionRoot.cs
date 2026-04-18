@@ -13,6 +13,7 @@ public sealed class AppCompositionRoot
     public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
     public ITeamDashboardService TeamDashboardService { get; }
     public IActivityClassificationRulesService ActivityClassificationRulesService { get; }
+    public ICompanyLicenseService CompanyLicenseService { get; }
 
     public AppCompositionRoot()
     {
@@ -22,12 +23,15 @@ public sealed class AppCompositionRoot
             Timeout = TimeSpan.FromSeconds(15)
         };
 
-        CurrentSessionContext = new CurrentSessionContext();
-        AuthenticationService = new AdminAuthenticationService(httpClient, CurrentSessionContext);
-        AdminUsersService = new AdminUsersApiService(httpClient, CurrentSessionContext);
-        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, CurrentSessionContext);
+        var sessionStateStore = new LocalCurrentSessionStateStore();
+        CurrentSessionContext = new CurrentSessionContext(sessionStateStore);
+        var apiAuthorizationService = new AdminApiAuthorizationService(httpClient, CurrentSessionContext);
+        AuthenticationService = new AdminAuthenticationService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        AdminUsersService = new AdminUsersApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
         TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
-        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, CurrentSessionContext);
+        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        CompanyLicenseService = new CompanyLicenseApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -45,6 +49,7 @@ public sealed class AppCompositionRoot
         EmployeeAnalyticsViewModel? analyticsViewModel = null;
         TeamDashboardViewModel? teamDashboardViewModel = null;
         ActivityClassificationRulesViewModel? rulesViewModel = null;
+        LicensesViewModel? licensesViewModel = null;
         MainViewModel? mainViewModel = null;
 
         analyticsViewModel = new EmployeeAnalyticsViewModel(
@@ -59,6 +64,10 @@ public sealed class AppCompositionRoot
             ActivityClassificationRulesService,
             CurrentSessionContext);
 
+        licensesViewModel = new LicensesViewModel(
+            CompanyLicenseService,
+            CurrentSessionContext);
+
         var employeesViewModel = new EmployeesViewModel(
             AdminUsersService,
             CurrentSessionContext,
@@ -69,7 +78,7 @@ public sealed class AppCompositionRoot
             employeesViewModel,
             analyticsViewModel,
             teamDashboardViewModel,
-            new PlaceholderViewModel("Лицензии", "Раздел лицензий пока не реализован."),
+            licensesViewModel,
             rulesViewModel);
 
         return mainViewModel;
