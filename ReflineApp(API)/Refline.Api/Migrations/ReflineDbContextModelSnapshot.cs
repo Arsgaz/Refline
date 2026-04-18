@@ -322,6 +322,11 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Property<long?>("ManagerId")
                 .HasColumnType("bigint");
 
+            b.Property<bool>("MustChangePassword")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("boolean")
+                .HasDefaultValue(false);
+
             b.Property<string>("PasswordHash")
                 .IsRequired()
                 .HasMaxLength(512)
@@ -354,6 +359,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     FullName = "System Admin",
                     IsActive = true,
                     Login = "admin",
+                    MustChangePassword = false,
                     PasswordHash = "240BE518FABD2724DDB6F04EEB1DA5967448D7E831C08C8FA822809F74C720A9",
                     Role = "Admin"
                 },
@@ -366,6 +372,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "manager",
                     ManagerId = 1L,
+                    MustChangePassword = false,
                     PasswordHash = "866485796CFA8D7C0CF7111640205B83076433547577511D81F8030AE99ECEA5",
                     Role = "Manager"
                 },
@@ -378,6 +385,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "employee",
                     ManagerId = 2L,
+                    MustChangePassword = false,
                     PasswordHash = "5B2F8E27E2E5B4081C03CE70B288C87BD1263140CBD1BD9AE078123509B7CAFF",
                     Role = "Employee"
                 });

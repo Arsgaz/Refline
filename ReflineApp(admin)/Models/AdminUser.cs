@@ -11,4 +11,6 @@ public sealed class AdminUser
     public string Login { get; init; } = string.Empty;
 
     public UserRole Role { get; init; }
+
+    public bool MustChangePassword { get; set; }
 }

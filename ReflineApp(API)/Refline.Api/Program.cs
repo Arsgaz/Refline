@@ -3,6 +3,8 @@ using Refline.Api.Data;
 using Refline.Api.Services.Admin;
 using Refline.Api.Services.Auth;
 using Refline.Api.Services.ClassificationRules;
+using Refline.Api.Services.Internal;
+using Refline.Api.Services.InternalCompanies;
 using Refline.Api.Services.Licenses;
 using System.Text.Json.Serialization;
 
@@ -15,8 +17,12 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.Configure<InternalApiOptions>(
+    builder.Configuration.GetSection(InternalApiOptions.SectionName));
 builder.Services.AddScoped<IRequestUserContextService, RequestUserContextService>();
 builder.Services.AddScoped<IAdminAccessService, AdminAccessService>();
+builder.Services.AddScoped<InternalApiAuthorizationService>();
+builder.Services.AddScoped<CompanyProvisioningService>();
 builder.Services.AddScoped<AdminAnalyticsService>();
 builder.Services.AddScoped<AdminUserManagementService>();
 builder.Services.AddScoped<AdminClassificationRuleManagementService>();
