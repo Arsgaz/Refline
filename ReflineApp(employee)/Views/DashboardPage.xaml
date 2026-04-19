@@ -10,30 +10,29 @@
             <!-- ===== Заголовки ===== -->
             <TextBlock Text="Трекер времени"
                        FontSize="32"
-                       FontWeight="Bold"
-                       Foreground="#2DC7FF"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource AppAccentBrush}"
                        Margin="0,0,0,10"/>
 
             <TextBlock Text="Запускайте трекинг, чтобы фиксировать рабочую активность и получать отчёты."
                        FontSize="16"
-                       Foreground="#9BAEC2"
+                       Foreground="{StaticResource AppMutedTextBrush}"
                        Margin="0,0,0,30"
                        TextWrapping="Wrap" />
 
             <!-- ===== Центральный блок с таймером ===== -->
-            <Border Background="#111827"
-                    CornerRadius="14"
-                    Padding="30"
+            <Border Style="{StaticResource CardBorderStyle}"
                     HorizontalAlignment="Center"
                     Width="680"
-                    Margin="0,0,0,40">
+                    Margin="0,0,0,40"
+                    Padding="30">
 
                 <StackPanel HorizontalAlignment="Center">
 
                     <!-- Статус -->
                     <TextBlock x:Name="StatusText"
                                Text="{Binding StatusText}"
-                               Foreground="#FF6B6B"
+                               Foreground="{StaticResource AppErrorBrush}"
                                FontSize="18"
                                FontWeight="SemiBold"
                                Margin="0,0,0,12"
@@ -42,7 +41,7 @@
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsTracking}" Value="True">
-                                        <Setter Property="Foreground" Value="#00FFC8" />
+                                        <Setter Property="Foreground" Value="{StaticResource AppSuccessBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -54,142 +53,78 @@
                                Text="{Binding SessionTimeString}"
                                FontSize="56"
                                FontWeight="Bold"
-                               Foreground="#2DC7FF"
+                               Foreground="{StaticResource AppAccentBrush}"
                                Margin="0,0,0,20"
                                HorizontalAlignment="Center"/>
 
                     <!-- Кнопки -->
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center">
-
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="ToggleTrackingButton"
                                 Content="{Binding StartStopButtonContent}"
                                 Command="{Binding ToggleTrackingCommand}"
                                 Width="180"
                                 Height="50"
-                                FontSize="18"
-                                Style="{DynamicResource MaterialDesignOutlinedButton}">
-                            <Button.Foreground>
-                                <SolidColorBrush Color="#2DC7FF"/>
-                            </Button.Foreground>
-                            <Button.BorderBrush>
-                                <SolidColorBrush Color="#2DC7FF"/>
-                            </Button.BorderBrush>
-                        </Button>
-
+                                FontSize="18" />
                     </StackPanel>
 
                 </StackPanel>
 
             </Border>
 
-
             <!-- ===== НИЖНИЕ МЕТРИКИ ===== -->
-            <UniformGrid Columns="3" Margin="0,0,0,0" HorizontalAlignment="Center">
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260"
-                        Margin="0,0,20,20">
+            <UniformGrid Columns="3" HorizontalAlignment="Center">
+
+                <Border Style="{StaticResource CardBorderStyle}" Width="260" Margin="0,0,20,20">
                     <StackPanel>
-                        <TextBlock Text="Общее время"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"/>
-                        <TextBlock Text="{Binding TotalTrackedTimeText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"/>
+                        <TextBlock Text="Общее время" Foreground="{StaticResource AppMutedTextBrush}" FontSize="15"/>
+                        <TextBlock Text="{Binding TotalTrackedTimeText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260"
-                        Margin="0,0,20,20">
+                <Border Style="{StaticResource CardBorderStyle}" Width="260" Margin="0,0,20,20">
                     <StackPanel>
-                        <TextBlock Text="Активное время"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"/>
-                        <TextBlock Text="{Binding ActiveTimeText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"/>
+                        <TextBlock Text="Активное время" Foreground="{StaticResource AppMutedTextBrush}" FontSize="15"/>
+                        <TextBlock Text="{Binding ActiveTimeText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260"
-                        Margin="0,0,0,20">
+                <Border Style="{StaticResource CardBorderStyle}" Width="260" Margin="0,0,0,20">
                     <StackPanel>
-                        <TextBlock Text="Время бездействия"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"/>
-                        <TextBlock Text="{Binding IdleTimeText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"/>
+                        <TextBlock Text="Время бездействия" Foreground="{StaticResource AppMutedTextBrush}" FontSize="15"/>
+                        <TextBlock Text="{Binding IdleTimeText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260"
-                        Margin="0,0,20,0">
+                <Border Style="{StaticResource CardBorderStyle}" Width="260" Margin="0,0,20,0">
                     <StackPanel>
-                        <TextBlock Text="Продуктивное время"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"/>
-                        <TextBlock Text="{Binding ProductiveTimeText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"/>
+                        <TextBlock Text="Продуктивное время" Foreground="{StaticResource AppMutedTextBrush}"
+                                   FontSize="15" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ProductiveTimeText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="28" FontWeight="Bold" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260"
-                        Margin="0,0,20,0">
+                <Border Style="{StaticResource CardBorderStyle}" Width="260" Margin="0,0,20,0">
                     <StackPanel>
-                        <TextBlock Text="Топ приложение"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"
-                                   TextWrapping="Wrap"/>
-                        <TextBlock Text="{Binding TopApplicationText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"
-                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Топ приложение" Foreground="{StaticResource AppMutedTextBrush}"
+                                   FontSize="15" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TopApplicationText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="24" FontWeight="Bold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Width="260">
+                <Border Style="{StaticResource CardBorderStyle}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Ведущая категория"
-                                   Foreground="#9BAEC2"
-                                   FontSize="15"
-                                   TextWrapping="Wrap"/>
-                        <TextBlock Text="{Binding TopCategoryText}"
-                                   Foreground="#2DC7FF"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,0"
-                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Ведущая категория" Foreground="{StaticResource AppMutedTextBrush}"
+                                   FontSize="15" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TopCategoryText}" Foreground="{StaticResource AppAccentBrush}"
+                                   FontSize="24" FontWeight="Bold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
+
             </UniformGrid>
 
         </StackPanel>
