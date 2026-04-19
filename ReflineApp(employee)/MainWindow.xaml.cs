@@ -100,6 +100,12 @@ public partial class MainWindow : Window
     {
         _reportsPage ??= new ReportsPage { DataContext = _mainViewModel };
         MainFrame.Navigate(_reportsPage);
+        // Принудительно обновляем данные после перехода, чтобы LiveCharts получил данные
+        // уже ПОСЛЕ того как получил реальный размер на экране (Layout pass)
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            _mainViewModel.RefreshReportData();
+        });
     }
 
     private void SettingsBtn_Click(object sender, RoutedEventArgs e)

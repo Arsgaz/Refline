@@ -55,16 +55,16 @@ public class MainViewModel : ViewModelBase
     private string _reportTopCategoryText = "Нет данных";
     private bool _hasCategoryChartData;
     private string _categoryChartPlaceholderText = "Категории пока не определены";
-    private ISeries[] _categoryTimeSeries = Array.Empty<ISeries>();
-    private ISeries[] _topApplicationsSeries = Array.Empty<ISeries>();
-    private Axis[] _topApplicationsXAxes = Array.Empty<Axis>();
-    private Axis[] _topApplicationsYAxes = Array.Empty<Axis>();
+    private ObservableCollection<ISeries> _categoryTimeSeries = new();
+    private ObservableCollection<ISeries> _topApplicationsSeries = new();
+    private ObservableCollection<Axis> _topApplicationsXAxes = new();
+    private ObservableCollection<Axis> _topApplicationsYAxes = new();
     private bool _showDailyTrendChart;
     private bool _hasDailyTrendChartData;
     private string _dailyTrendChartPlaceholderText = "График по дням доступен для недели и месяца";
-    private ISeries[] _dailyTrendSeries = Array.Empty<ISeries>();
-    private Axis[] _dailyTrendXAxes = Array.Empty<Axis>();
-    private Axis[] _dailyTrendYAxes = Array.Empty<Axis>();
+    private ObservableCollection<ISeries> _dailyTrendSeries = new();
+    private ObservableCollection<Axis> _dailyTrendXAxes = new();
+    private ObservableCollection<Axis> _dailyTrendYAxes = new();
 
     private bool _isRefreshingReportData;
     private bool _hasPendingReportRefresh;
@@ -272,25 +272,17 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _categoryChartPlaceholderText, value);
     }
 
-    public ISeries[] CategoryTimeSeries
-    {
-        get => _categoryTimeSeries;
-        set => SetProperty(ref _categoryTimeSeries, value);
-    }
+    public ObservableCollection<ISeries> CategoryTimeSeries => _categoryTimeSeries;
 
-    public ISeries[] TopApplicationsSeries
-    {
-        get => _topApplicationsSeries;
-        set => SetProperty(ref _topApplicationsSeries, value);
-    }
+    public ObservableCollection<ISeries> TopApplicationsSeries => _topApplicationsSeries;
 
-    public Axis[] TopApplicationsXAxes
+    public ObservableCollection<Axis> TopApplicationsXAxes
     {
         get => _topApplicationsXAxes;
         set => SetProperty(ref _topApplicationsXAxes, value);
     }
 
-    public Axis[] TopApplicationsYAxes
+    public ObservableCollection<Axis> TopApplicationsYAxes
     {
         get => _topApplicationsYAxes;
         set => SetProperty(ref _topApplicationsYAxes, value);
@@ -314,19 +306,15 @@ public class MainViewModel : ViewModelBase
         private set => SetProperty(ref _dailyTrendChartPlaceholderText, value);
     }
 
-    public ISeries[] DailyTrendSeries
-    {
-        get => _dailyTrendSeries;
-        private set => SetProperty(ref _dailyTrendSeries, value);
-    }
+    public ObservableCollection<ISeries> DailyTrendSeries => _dailyTrendSeries;
 
-    public Axis[] DailyTrendXAxes
+    public ObservableCollection<Axis> DailyTrendXAxes
     {
         get => _dailyTrendXAxes;
         private set => SetProperty(ref _dailyTrendXAxes, value);
     }
 
-    public Axis[] DailyTrendYAxes
+    public ObservableCollection<Axis> DailyTrendYAxes
     {
         get => _dailyTrendYAxes;
         private set => SetProperty(ref _dailyTrendYAxes, value);
@@ -723,19 +711,22 @@ public class MainViewModel : ViewModelBase
             ? new[] { 0 }
             : topApps.Select(item => item.TotalSeconds).ToArray();
 
-        CategoryTimeSeries = pieSeries;
-        TopApplicationsSeries = new ISeries[]
+        CategoryTimeSeries.Clear();
+        foreach (var series in pieSeries)
         {
-            new ColumnSeries<int>
-            {
-                Name = "Время",
-                Values = appValues,
-                Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
-                Stroke = null,
-                MaxBarWidth = 42
-            }
-        };
-        TopApplicationsXAxes = new[]
+            CategoryTimeSeries.Add(series);
+        }
+
+        TopApplicationsSeries.Clear();
+        TopApplicationsSeries.Add(new ColumnSeries<int>
+        {
+            Name = "Время",
+            Values = appValues,
+            Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
+            Stroke = null,
+            MaxBarWidth = 42
+        });
+        TopApplicationsXAxes = new ObservableCollection<Axis>
         {
             new Axis
             {
@@ -745,7 +736,7 @@ public class MainViewModel : ViewModelBase
                 SeparatorsPaint = new SolidColorPaint(new SKColor(31, 41, 55))
             }
         };
-        TopApplicationsYAxes = CreateDurationAxes();
+        TopApplicationsYAxes = new ObservableCollection<Axis>(CreateDurationAxes());
 
         ApplyDailyTrendChart(period, dailyBuckets);
     }
@@ -757,9 +748,9 @@ public class MainViewModel : ViewModelBase
         {
             HasDailyTrendChartData = false;
             DailyTrendChartPlaceholderText = "График по дням доступен для недели и месяца";
-            DailyTrendSeries = Array.Empty<ISeries>();
-            DailyTrendXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
-            DailyTrendYAxes = CreateDurationAxes();
+            DailyTrendSeries.Clear();
+            DailyTrendXAxes = new ObservableCollection<Axis>(CreateChartLabelAxis(new[] { "Нет данных" }));
+            DailyTrendYAxes = new ObservableCollection<Axis>(CreateDurationAxes());
             return;
         }
 
@@ -771,32 +762,31 @@ public class MainViewModel : ViewModelBase
         HasDailyTrendChartData = hasValues;
         DailyTrendChartPlaceholderText = "Нет данных за выбранный период";
 
-        DailyTrendSeries = hasValues
-            ? new ISeries[]
+        DailyTrendSeries.Clear();
+        if (hasValues)
+        {
+            DailyTrendSeries.Add(new ColumnSeries<int>
             {
-                new ColumnSeries<int>
-                {
-                    Name = "Общее время",
-                    Values = totalValues,
-                    Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
-                    Stroke = null,
-                    MaxBarWidth = 32
-                },
-                new LineSeries<int>
-                {
-                    Name = "Продуктивное время",
-                    Values = productiveValues,
-                    Stroke = new SolidColorPaint(new SKColor(0, 255, 200)) { StrokeThickness = 3 },
-                    Fill = null,
-                    GeometrySize = 10,
-                    GeometryFill = new SolidColorPaint(new SKColor(0, 255, 200)),
-                    GeometryStroke = null
-                }
-            }
-            : Array.Empty<ISeries>();
+                Name = "Общее время",
+                Values = totalValues,
+                Fill = new SolidColorPaint(new SKColor(45, 199, 255)),
+                Stroke = null,
+                MaxBarWidth = 32
+            });
+            DailyTrendSeries.Add(new LineSeries<int>
+            {
+                Name = "Продуктивное время",
+                Values = productiveValues,
+                Stroke = new SolidColorPaint(new SKColor(0, 255, 200)) { StrokeThickness = 3 },
+                Fill = null,
+                GeometrySize = 10,
+                GeometryFill = new SolidColorPaint(new SKColor(0, 255, 200)),
+                GeometryStroke = null
+            });
+        }
 
-        DailyTrendXAxes = CreateChartLabelAxis(labels.Length == 0 ? new[] { "Нет данных" } : labels);
-        DailyTrendYAxes = CreateDurationAxes();
+        DailyTrendXAxes = new ObservableCollection<Axis>(CreateChartLabelAxis(labels.Length == 0 ? new[] { "Нет данных" } : labels));
+        DailyTrendYAxes = new ObservableCollection<Axis>(CreateDurationAxes());
     }
 
     private void ClearReportState()
@@ -815,18 +805,18 @@ public class MainViewModel : ViewModelBase
     {
         HasCategoryChartData = false;
         CategoryChartPlaceholderText = "Категории пока не определены";
-        CategoryTimeSeries = Array.Empty<ISeries>();
-        TopApplicationsSeries = Array.Empty<ISeries>();
-        TopApplicationsXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
-        TopApplicationsYAxes = CreateDurationAxes();
+        CategoryTimeSeries.Clear();
+        TopApplicationsSeries.Clear();
+        TopApplicationsXAxes = new ObservableCollection<Axis>(CreateChartLabelAxis(new[] { "Нет данных" }));
+        TopApplicationsYAxes = new ObservableCollection<Axis>(CreateDurationAxes());
 
         HasDailyTrendChartData = false;
         DailyTrendChartPlaceholderText = ShowDailyTrendChart
             ? "Нет данных за выбранный период"
             : "График по дням доступен для недели и месяца";
-        DailyTrendSeries = Array.Empty<ISeries>();
-        DailyTrendXAxes = CreateChartLabelAxis(new[] { "Нет данных" });
-        DailyTrendYAxes = CreateDurationAxes();
+        DailyTrendSeries.Clear();
+        DailyTrendXAxes = new ObservableCollection<Axis>(CreateChartLabelAxis(new[] { "Нет данных" }));
+        DailyTrendYAxes = new ObservableCollection<Axis>(CreateDurationAxes());
     }
 
     private bool IsTodayDaySelection()
