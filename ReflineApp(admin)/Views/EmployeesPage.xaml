@@ -195,7 +195,7 @@
                             </Border>
                         </DockPanel>
 
-                        <Grid Grid.Row="1" Margin="16,0,16,16">
+                        <Grid Grid.Row="1" Margin="10,0,10,10">
                             <DataGrid ItemsSource="{Binding Users}"
                                       SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
                                 <DataGrid.Resources>
@@ -253,7 +253,7 @@
                                                         Binding="{Binding CreatedAtDisplay}"
                                                         Width="1.4*" />
                                     <DataGridTemplateColumn Header="Действия"
-                                                            Width="500">
+                                                            Width="460">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Left">

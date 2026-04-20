@@ -257,7 +257,7 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
             <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource AppBorderBrush}" />
-            <Setter Property="VerticalGridLinesBrush" Value="{StaticResource AppBorderBrush}" />
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
             <Setter Property="RowBackground" Value="{StaticResource AppPanelBrush}" />
             <Setter Property="AlternatingRowBackground" Value="{StaticResource AppPanelElevatedBrush}" />
             <Setter Property="HeadersVisibility" Value="Column" />
@@ -277,47 +277,45 @@
             <Setter Property="Background" Value="{StaticResource AppPanelElevatedBrush}" />
             <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
-            <Setter Property="BorderThickness" Value="0,0,1,1" />
-            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="14,10" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="12.5" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
-                        <Grid Background="{TemplateBinding Background}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="18" />
-                                <ColumnDefinition Width="6" />
-                            </Grid.ColumnDefinitions>
-
-                            <Border Grid.ColumnSpan="3"
+                        <Grid SnapsToDevicePixels="True">
+                            <Border
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}" />
 
-                            <ContentPresenter Grid.Column="0"
+                            <ContentPresenter
                                               Margin="{TemplateBinding Padding}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               RecognizesAccessKey="True" />
 
                             <Path x:Name="SortArrow"
-                                  Grid.Column="1"
                                   Width="8"
                                   Height="5"
-                                  Margin="0,0,6,0"
+                                  Margin="0,0,10,0"
                                   VerticalAlignment="Center"
-                                  HorizontalAlignment="Center"
+                                  HorizontalAlignment="Right"
                                   Fill="{StaticResource AppAccentBrush}"
                                   Data="M 0 5 L 4 0 L 8 5 Z"
                                   Visibility="Collapsed" />
 
-                            <Thumb x:Name="HeaderGripper"
-                                   Grid.Column="2"
-                                   Width="6"
+                            <Thumb x:Name="PART_LeftHeaderGripper"
+                                   Width="8"
+                                   HorizontalAlignment="Left"
+                                   Background="Transparent"
+                                   Cursor="SizeWE" />
+                            <Thumb x:Name="PART_RightHeaderGripper"
+                                   Width="8"
+                                   HorizontalAlignment="Right"
                                    Background="Transparent"
                                    Cursor="SizeWE" />
                         </Grid>
@@ -350,8 +348,8 @@
         <Style TargetType="DataGridCell">
             <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
-            <Setter Property="Padding" Value="14,16" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
