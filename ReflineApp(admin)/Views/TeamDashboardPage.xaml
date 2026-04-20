@@ -180,6 +180,53 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
+        <Style x:Key="DarkDatePickerTextBoxStyle" TargetType="{x:Type DatePickerTextBox}">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DatePickerTextBox}">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10,0,0,10">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              Margin="0"
+                                              Padding="14,10"
+                                              VerticalAlignment="Center"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden"
+                                              Foreground="{TemplateBinding Foreground}" />
+                                <TextBlock x:Name="Watermark"
+                                           Margin="14,10"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Opacity="0.8"
+                                           Visibility="Collapsed"
+                                           Text="{TemplateBinding Tag}" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource PanelHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="DarkDatePickerStyle" TargetType="DatePicker">
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
             <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
@@ -198,11 +245,11 @@
 
                             <DatePickerTextBox x:Name="PART_TextBox"
                                                Grid.Column="0"
+                                               Style="{StaticResource DarkDatePickerTextBoxStyle}"
                                                Background="{TemplateBinding Background}"
                                                Foreground="{TemplateBinding Foreground}"
                                                BorderBrush="{TemplateBinding BorderBrush}"
                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                               Padding="14,10"
                                                VerticalContentAlignment="Center" />
 
                             <Button x:Name="PART_Button"
