@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Refline.Admin.Business.Identity;
 using Refline.Admin.Models;
 using Refline.Admin.Services.Api;
@@ -16,6 +17,7 @@ public sealed class LicensesViewModel : ViewModelBase
     private string _copyStatusMessage = string.Empty;
     private bool _isLoading;
     private bool _hasLoaded;
+    private readonly DispatcherTimer _autoRefreshTimer;
 
     public LicensesViewModel(ICompanyLicenseService companyLicenseService, CurrentSessionContext currentSessionContext)
     {
@@ -24,6 +26,13 @@ public sealed class LicensesViewModel : ViewModelBase
 
         RefreshCommand = new RelayCommand(async () => await LoadAsync(forceReload: true), () => !IsLoading && CanViewLicenses);
         CopyLicenseKeyCommand = new RelayCommand(CopyLicenseKey, () => !IsLoading && HasLicense);
+
+        _autoRefreshTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(60)
+        };
+        _autoRefreshTimer.Tick += AutoRefreshTimer_Tick;
+        _autoRefreshTimer.Start();
     }
 
     public ICommand RefreshCommand { get; }
@@ -246,6 +255,16 @@ public sealed class LicensesViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+    }
+
+    private async void AutoRefreshTimer_Tick(object? sender, EventArgs e)
+    {
+        if (!CanViewLicenses || IsLoading)
+        {
+            return;
+        }
+
+        await LoadAsync(forceReload: true);
     }
 
     private void CopyLicenseKey()
