@@ -106,14 +106,10 @@
                                FontSize="15"
                                FontWeight="Bold"
                                Foreground="{StaticResource AppAccentBrush}" />
-                    <TextBlock Text="Admin Console"
+                    <TextBlock Text="Админ панель"
                                Margin="0,4,0,0"
                                FontSize="24"
                                FontWeight="SemiBold"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="Управление компанией"
-                               Margin="0,8,0,0"
-                               Foreground="#94A3B8"
                                HorizontalAlignment="Center" />
                 </StackPanel>
 
