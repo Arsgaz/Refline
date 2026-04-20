@@ -18,12 +18,13 @@ public partial class App : Application
         var restoreResult = _compositionRoot.CurrentSessionContext.RestoreAsync().GetAwaiter().GetResult();
         if (restoreResult.IsSuccess && _compositionRoot.CurrentSessionContext.CurrentUser is not null)
         {
+            _compositionRoot.ApiAuthorizationService.SetAuthorizationHeader(_compositionRoot.CurrentSessionContext.CurrentSession?.AccessToken);
             if (_compositionRoot.CurrentSessionContext.CurrentUser.MustChangePassword)
             {
                 var passwordChanged = ShowChangePasswordWindow();
                 if (!passwordChanged)
                 {
-                    _compositionRoot.CurrentSessionContext.ClearAsync().GetAwaiter().GetResult();
+                    _compositionRoot.AuthenticationService.LogoutAsync().GetAwaiter().GetResult();
                     ShowLoginWindow();
                     return;
                 }
@@ -44,7 +45,7 @@ public partial class App : Application
             return;
         }
 
-        var mainWindow = new MainWindow(_compositionRoot.CreateMainViewModel());
+        var mainWindow = new MainWindow(_compositionRoot.CreateMainViewModel(LogoutAndReturnToLoginAsync));
         MainWindow = mainWindow;
         mainWindow.Show();
     }
@@ -62,12 +63,13 @@ public partial class App : Application
 
         if (result == true && _compositionRoot.CurrentSessionContext.CurrentUser is not null)
         {
+            _compositionRoot.ApiAuthorizationService.SetAuthorizationHeader(_compositionRoot.CurrentSessionContext.CurrentSession?.AccessToken);
             if (_compositionRoot.CurrentSessionContext.CurrentUser.MustChangePassword)
             {
                 var passwordChanged = ShowChangePasswordWindow();
                 if (!passwordChanged)
                 {
-                    _compositionRoot.CurrentSessionContext.ClearAsync().GetAwaiter().GetResult();
+                    _compositionRoot.AuthenticationService.LogoutAsync().GetAwaiter().GetResult();
                     ShowLoginWindow();
                     return;
                 }
@@ -90,5 +92,30 @@ public partial class App : Application
         var changePasswordWindow = new ChangePasswordWindow(_compositionRoot.CreateChangePasswordViewModel());
         var result = changePasswordWindow.ShowDialog();
         return result == true;
+    }
+
+    private async Task LogoutAndReturnToLoginAsync()
+    {
+        if (_compositionRoot is null)
+        {
+            Shutdown();
+            return;
+        }
+
+        var logoutResult = await _compositionRoot.AuthenticationService.LogoutAsync();
+        if (!logoutResult.IsSuccess)
+        {
+            MessageBox.Show(
+                logoutResult.Message,
+                "Не удалось завершить сессию",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var currentMainWindow = MainWindow;
+        MainWindow = null;
+        currentMainWindow?.Close();
+        ShowLoginWindow();
     }
 }

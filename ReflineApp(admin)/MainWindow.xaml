@@ -197,11 +197,11 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Content="Выход"
+                    <Button Content="Выйти из аккаунта"
                             Margin="0,14,0,0"
                             Width="180"
                             Style="{StaticResource AdminSidebarPrimaryButton}"
-                            Command="{Binding ExitCommand}" />
+                            Command="{Binding LogoutCommand}" />
                 </StackPanel>
             </Grid>
         </Border>

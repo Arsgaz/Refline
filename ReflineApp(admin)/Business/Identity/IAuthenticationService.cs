@@ -7,6 +7,8 @@ public interface IAuthenticationService
 {
     Task<OperationResult<AdminUser>> LoginAsync(string login, string password, CancellationToken cancellationToken = default);
 
+    Task<OperationResult> LogoutAsync(CancellationToken cancellationToken = default);
+
     Task<OperationResult> ChangePasswordAsync(
         long userId,
         string currentPassword,

@@ -22,6 +22,18 @@ public sealed class AdminApiAuthorizationService
         _currentSessionContext = currentSessionContext;
     }
 
+    public void SetAuthorizationHeader(string? accessToken)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = string.IsNullOrWhiteSpace(accessToken)
+            ? null
+            : new AuthenticationHeaderValue("Bearer", accessToken);
+    }
+
+    public void ClearAuthorizationHeader()
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = null;
+    }
+
     public async Task<OperationResult> AuthorizeRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
     {
         var tokenResult = await GetValidAccessTokenAsync(cancellationToken);
@@ -30,6 +42,7 @@ public sealed class AdminApiAuthorizationService
             return OperationResult.Failure(tokenResult.Message, tokenResult.ErrorCode);
         }
 
+        SetAuthorizationHeader(tokenResult.Value);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Value);
         return OperationResult.Success();
     }
@@ -50,6 +63,7 @@ public sealed class AdminApiAuthorizationService
 
         if (string.IsNullOrWhiteSpace(session.RefreshToken) || session.RefreshTokenExpiresAt <= DateTimeOffset.UtcNow)
         {
+            ClearAuthorizationHeader();
             await _currentSessionContext.ClearAsync();
             return OperationResult<string>.Failure("Сессия истекла. Выполните вход снова.", "AUTH_RELOGIN_REQUIRED");
         }
@@ -76,6 +90,7 @@ public sealed class AdminApiAuthorizationService
                 var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
                 if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 {
+                    ClearAuthorizationHeader();
                     await _currentSessionContext.ClearAsync();
                     return OperationResult<string>.Failure("Сессия истекла. Выполните вход снова.", "AUTH_RELOGIN_REQUIRED");
                 }
@@ -102,6 +117,7 @@ public sealed class AdminApiAuthorizationService
                 return OperationResult<string>.Failure(updateResult.Message, updateResult.ErrorCode);
             }
 
+            SetAuthorizationHeader(refreshResponse.AccessToken);
             return OperationResult<string>.Success(refreshResponse.AccessToken);
         }
         catch (HttpRequestException ex)

@@ -9,15 +9,18 @@ namespace Refline.Admin.ViewModels;
 public sealed class MainViewModel : ViewModelBase
 {
     private readonly CurrentSessionContext _currentSessionContext;
+    private readonly Func<Task> _logoutAndReturnToLoginAsync;
     private object _currentPageViewModel;
     private string _currentSectionTitle;
     private readonly EmployeeAnalyticsViewModel _employeeAnalyticsViewModel;
     private readonly TeamDashboardViewModel _teamDashboardViewModel;
     private readonly LicensesViewModel _licensesViewModel;
     private readonly ActivityClassificationRulesViewModel _rulesViewModel;
+    private bool _isLoggingOut;
 
     public MainViewModel(
         CurrentSessionContext currentSessionContext,
+        Func<Task> logoutAndReturnToLoginAsync,
         EmployeesViewModel employeesViewModel,
         EmployeeAnalyticsViewModel employeeAnalyticsViewModel,
         TeamDashboardViewModel teamDashboardViewModel,
@@ -25,6 +28,7 @@ public sealed class MainViewModel : ViewModelBase
         ActivityClassificationRulesViewModel rulesViewModel)
     {
         _currentSessionContext = currentSessionContext;
+        _logoutAndReturnToLoginAsync = logoutAndReturnToLoginAsync;
         EmployeesViewModel = employeesViewModel;
         _employeeAnalyticsViewModel = employeeAnalyticsViewModel;
         _teamDashboardViewModel = teamDashboardViewModel;
@@ -39,7 +43,7 @@ public sealed class MainViewModel : ViewModelBase
         ShowAnalyticsCommand = new RelayCommand(ShowAnalytics);
         ShowLicensesCommand = new RelayCommand(ShowLicenses);
         ShowRulesCommand = new RelayCommand(ShowRules);
-        ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
+        LogoutCommand = new RelayCommand(async () => await LogoutAsync(), () => !IsLoggingOut);
     }
 
     public EmployeesViewModel EmployeesViewModel { get; }
@@ -60,7 +64,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public ICommand ShowRulesCommand { get; }
 
-    public ICommand ExitCommand { get; }
+    public ICommand LogoutCommand { get; }
 
     public string CurrentUserDisplayName => _currentSessionContext.CurrentUser?.FullName ?? "Неизвестный пользователь";
 
@@ -76,6 +80,18 @@ public sealed class MainViewModel : ViewModelBase
     public bool CanViewLicensesSection => _currentSessionContext.Role == Models.UserRole.Admin;
 
     public bool CanViewRulesSection => _currentSessionContext.Role == Models.UserRole.Admin;
+
+    public bool IsLoggingOut
+    {
+        get => _isLoggingOut;
+        private set
+        {
+            if (SetProperty(ref _isLoggingOut, value))
+            {
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
 
     public string CurrentSectionSubtitle => CurrentSectionTitle switch
     {
@@ -153,5 +169,34 @@ public sealed class MainViewModel : ViewModelBase
         CurrentSectionTitle = "Правила классификации";
         OnPropertyChanged(nameof(CurrentSectionSubtitle));
         _ = _rulesViewModel.EnsureLoadedAsync();
+    }
+
+    private async Task LogoutAsync()
+    {
+        if (IsLoggingOut)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            "Выйти из аккаунта?",
+            "Подтверждение выхода",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        IsLoggingOut = true;
+        try
+        {
+            await _logoutAndReturnToLoginAsync();
+        }
+        finally
+        {
+            IsLoggingOut = false;
+        }
     }
 }
