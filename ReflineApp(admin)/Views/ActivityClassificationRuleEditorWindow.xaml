@@ -45,7 +45,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
-                               Text="AppNamePattern"
+                               Text="Название приложения"
                                Style="{StaticResource InputLabelStyle}" />
                     <TextBox Grid.Row="1"
                              x:Name="AppNamePatternTextBox"
@@ -53,7 +53,7 @@
                              MinHeight="44" />
 
                     <TextBlock Grid.Row="2"
-                               Text="WindowTitlePattern"
+                               Text="Название окна"
                                Margin="0,18,0,6"
                                Style="{StaticResource InputLabelStyle}" />
                     <TextBox Grid.Row="3"
@@ -104,7 +104,7 @@
                                Margin="0,18,0,0"
                                Foreground="{StaticResource AppMutedTextBrush}"
                                TextWrapping="Wrap"
-                               Text="Категория выбирается только из фиксированного системного списка. Пустой WindowTitlePattern означает совпадение по любому заголовку окна." />
+                               Text="Категория выбирается только из фиксированного списка. Пустое название окна означает совпадение по любому заголовку окна." />
                 </Grid>
             </ScrollViewer>
 

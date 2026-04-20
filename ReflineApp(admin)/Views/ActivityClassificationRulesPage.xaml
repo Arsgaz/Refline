@@ -117,11 +117,12 @@
         </Style>
 
         <Style x:Key="CompactActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ReflineActionButton}">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="16,8" />
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="MinWidth" Value="104" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="RulesDataGridStyle" TargetType="DataGrid">
@@ -396,30 +397,33 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
                                     <DataGridTemplateColumn Header="Действия"
-                                                            Width="388">
+                                                            Width="428">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Left"
                                                       VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="100" />
-                                                        <ColumnDefinition Width="128" />
-                                                        <ColumnDefinition Width="96" />
+                                                        <ColumnDefinition Width="112" />
+                                                        <ColumnDefinition Width="144" />
+                                                        <ColumnDefinition Width="108" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <Button Grid.Column="0"
                                                             Margin="0,0,8,0"
+                                                            MinWidth="104"
                                                             Content="Изменить"
                                                             Style="{StaticResource CompactActionButtonStyle}"
                                                             Command="{Binding DataContext.EditRuleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}" />
                                                     <Button Grid.Column="1"
                                                             Margin="0,0,8,0"
+                                                            MinWidth="136"
                                                             Content="{Binding ToggleActionDisplay}"
                                                             Style="{StaticResource CompactActionButtonStyle}"
                                                             Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}" />
                                                     <Button Grid.Column="2"
+                                                            MinWidth="104"
                                                             Content="Удалить"
                                                             Style="{StaticResource CompactActionButtonStyle}"
                                                             BorderBrush="#4B2430"
