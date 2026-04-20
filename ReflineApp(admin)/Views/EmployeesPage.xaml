@@ -107,44 +107,38 @@
                 <Border Grid.Row="1"
                         Style="{StaticResource PagePanelBorderStyle}"
                         Margin="0,0,0,20">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <DockPanel Grid.Row="0" Margin="0,0,0,18">
-                            <StackPanel DockPanel.Dock="Left"
-                                        MaxWidth="640">
-                                <TextBlock Text="Сотрудники"
-                                           Style="{StaticResource SectionTitleTextStyle}" />
-                                <TextBlock Text="Быстрый обзор списка сотрудников и основные действия по управлению."
-                                           Style="{StaticResource SectionDescriptionTextStyle}" />
+                    <DockPanel LastChildFill="False">
+                        <Border DockPanel.Dock="Left"
+                                Style="{StaticResource PagePanelBorderStyle}"
+                                Background="{StaticResource PanelActiveBrush}"
+                                Padding="18"
+                                Margin="0,0,18,0"
+                                MinWidth="240">
+                            <StackPanel>
+                                <TextBlock Text="Найдено сотрудников"
+                                           Style="{StaticResource MetricLabelTextStyle}" />
+                                <TextBlock Text="{Binding Users.Count}"
+                                           Style="{StaticResource MetricValueTextStyle}"
+                                           Foreground="{StaticResource AccentBrush}" />
                             </StackPanel>
+                        </Border>
 
-                            <StackPanel DockPanel.Dock="Right"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right">
-                                <Button Width="188"
-                                        Margin="0,0,12,0"
-                                        Content="Добавить сотрудника"
-                                        Style="{StaticResource PagePrimaryButtonStyle}"
-                                        Command="{Binding CreateUserCommand}"
-                                        Visibility="{Binding CanManageUsers, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                <Button Width="140"
-                                        Content="Обновить"
-                                        Style="{StaticResource PageSecondaryButtonStyle}"
-                                        Command="{Binding RefreshCommand}" />
-                            </StackPanel>
-                        </DockPanel>
-
-                        <Grid Grid.Row="1">
-                            <TextBlock Text="{Binding UsersCountText}"
-                                       FontSize="15"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       TextWrapping="Wrap" />
-                        </Grid>
-                    </Grid>
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Right">
+                            <Button Width="188"
+                                    Margin="0,0,12,0"
+                                    Content="Добавить сотрудника"
+                                    Style="{StaticResource PagePrimaryButtonStyle}"
+                                    Command="{Binding CreateUserCommand}"
+                                    Visibility="{Binding CanManageUsers, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <Button Width="140"
+                                    Content="Обновить"
+                                    Style="{StaticResource PageSecondaryButtonStyle}"
+                                    Command="{Binding RefreshCommand}" />
+                        </StackPanel>
+                    </DockPanel>
                 </Border>
 
                 <Border Grid.Row="2"
@@ -181,12 +175,7 @@
                                 <DockPanel LastChildFill="False">
                                     <StackPanel DockPanel.Dock="Left"
                                                 MaxWidth="720">
-                                        <TextBlock Text="Список сотрудников"
-                                                   FontSize="18"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Полный список сотрудников компании с доступными действиями по каждой записи."
-                                                   Margin="0,6,0,0"
+                                        <TextBlock Text="Пользователи компании, роли и базовый статус аккаунтов"
                                                    FontSize="14"
                                                    Foreground="{StaticResource TextSecondaryBrush}"
                                                    TextWrapping="Wrap" />

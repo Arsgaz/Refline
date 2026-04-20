@@ -264,7 +264,7 @@
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
             <Setter Property="CanUserResizeRows" Value="False" />
-            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="CanUserResizeColumns" Value="False" />
             <Setter Property="CanUserSortColumns" Value="True" />
             <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="AutoGenerateColumns" Value="False" />
@@ -307,17 +307,6 @@
                                   Fill="{StaticResource AppAccentBrush}"
                                   Data="M 0 5 L 4 0 L 8 5 Z"
                                   Visibility="Collapsed" />
-
-                            <Thumb x:Name="PART_LeftHeaderGripper"
-                                   Width="8"
-                                   HorizontalAlignment="Left"
-                                   Background="Transparent"
-                                   Cursor="SizeWE" />
-                            <Thumb x:Name="PART_RightHeaderGripper"
-                                   Width="8"
-                                   HorizontalAlignment="Right"
-                                   Background="Transparent"
-                                   Cursor="SizeWE" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="SortDirection" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
