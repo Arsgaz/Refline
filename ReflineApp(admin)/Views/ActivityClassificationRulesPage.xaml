@@ -117,9 +117,10 @@
         </Style>
 
         <Style x:Key="CompactActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ReflineActionButton}">
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="14,7" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="MinWidth" Value="92" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
@@ -395,15 +396,15 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
                                     <DataGridTemplateColumn Header="Действия"
-                                                            Width="352">
+                                                            Width="388">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Left"
                                                       VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="88" />
-                                                        <ColumnDefinition Width="116" />
-                                                        <ColumnDefinition Width="84" />
+                                                        <ColumnDefinition Width="100" />
+                                                        <ColumnDefinition Width="128" />
+                                                        <ColumnDefinition Width="96" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <Button Grid.Column="0"
