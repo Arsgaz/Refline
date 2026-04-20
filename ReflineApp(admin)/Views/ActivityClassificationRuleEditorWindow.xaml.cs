@@ -29,7 +29,7 @@ public partial class ActivityClassificationRuleEditorWindow : Window
         {
             Title = "Добавить правило";
             DialogTitleText.Text = "Добавление правила";
-            DialogSubtitleText.Text = "Создайте company-specific правило классификации для приложений и заголовков окон.";
+            DialogSubtitleText.Text = "Создайте правило классификации для приложений и заголовков окон.";
             CategoryComboBox.SelectedValue = ActivityCategory.Work;
             PriorityTextBox.Text = "100";
             IsEnabledCheckBox.IsChecked = true;

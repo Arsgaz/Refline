@@ -352,10 +352,6 @@
                                 BorderThickness="1"
                                 CornerRadius="10"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Rules.Count, StringFormat=Записей: {0}}"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="13"
-                                       FontWeight="SemiBold" />
                         </Border>
                     </Grid>
                 </Border>
