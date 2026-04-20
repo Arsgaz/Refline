@@ -95,10 +95,6 @@
                 <Border Grid.Row="0"
                         Background="Transparent"
                         Margin="0,0,0,12">
-                    <TextBlock Text="Управляйте сотрудниками компании, быстро находите нужные записи и выполняйте основные действия из одного списка."
-                               FontSize="15"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap" />
                 </Border>
 
                 <Border Grid.Row="1"
@@ -240,7 +236,7 @@
                                                         Binding="{Binding CreatedAtDisplay}"
                                                         Width="1.4*" />
                                     <DataGridTemplateColumn Header="Действия"
-                                                            Width="484">
+                                                            Width="500">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Left">
@@ -282,6 +278,14 @@
                                                 </Grid>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellStyle>
+                                            <Style TargetType="DataGridCell">
+                                                <Setter Property="Padding" Value="10,10" />
+                                                <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
+                                                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                                <Setter Property="Background" Value="Transparent" />
+                                            </Style>
+                                        </DataGridTemplateColumn.CellStyle>
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
