@@ -9,6 +9,7 @@ public sealed class AppCompositionRoot
 {
     public CurrentSessionContext CurrentSessionContext { get; }
     public IAuthenticationService AuthenticationService { get; }
+    public AdminApiAuthorizationService ApiAuthorizationService { get; }
     public IAdminUsersService AdminUsersService { get; }
     public IAdminUserAnalyticsService AdminUserAnalyticsService { get; }
     public ITeamDashboardService TeamDashboardService { get; }
@@ -25,13 +26,13 @@ public sealed class AppCompositionRoot
 
         var sessionStateStore = new LocalCurrentSessionStateStore();
         CurrentSessionContext = new CurrentSessionContext(sessionStateStore);
-        var apiAuthorizationService = new AdminApiAuthorizationService(httpClient, CurrentSessionContext);
-        AuthenticationService = new AdminAuthenticationService(httpClient, apiAuthorizationService, CurrentSessionContext);
-        AdminUsersService = new AdminUsersApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
-        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        ApiAuthorizationService = new AdminApiAuthorizationService(httpClient, CurrentSessionContext);
+        AuthenticationService = new AdminAuthenticationService(httpClient, ApiAuthorizationService, CurrentSessionContext);
+        AdminUsersService = new AdminUsersApiService(httpClient, ApiAuthorizationService, CurrentSessionContext);
+        AdminUserAnalyticsService = new AdminUserAnalyticsApiService(httpClient, ApiAuthorizationService, CurrentSessionContext);
         TeamDashboardService = new TeamDashboardService(AdminUsersService, AdminUserAnalyticsService, CurrentSessionContext);
-        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
-        CompanyLicenseService = new CompanyLicenseApiService(httpClient, apiAuthorizationService, CurrentSessionContext);
+        ActivityClassificationRulesService = new ActivityClassificationRulesApiService(httpClient, ApiAuthorizationService, CurrentSessionContext);
+        CompanyLicenseService = new CompanyLicenseApiService(httpClient, ApiAuthorizationService, CurrentSessionContext);
     }
 
     public LoginViewModel CreateLoginViewModel()
@@ -44,7 +45,7 @@ public sealed class AppCompositionRoot
         return new ChangePasswordViewModel(AuthenticationService, CurrentSessionContext);
     }
 
-    public MainViewModel CreateMainViewModel()
+    public MainViewModel CreateMainViewModel(Func<Task> logoutAndReturnToLoginAsync)
     {
         EmployeeAnalyticsViewModel? analyticsViewModel = null;
         TeamDashboardViewModel? teamDashboardViewModel = null;
@@ -75,6 +76,7 @@ public sealed class AppCompositionRoot
 
         mainViewModel = new MainViewModel(
             CurrentSessionContext,
+            logoutAndReturnToLoginAsync,
             employeesViewModel,
             analyticsViewModel,
             teamDashboardViewModel,
