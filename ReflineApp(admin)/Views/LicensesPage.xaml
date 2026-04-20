@@ -116,18 +116,6 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Grid.Row="0" Margin="0,0,0,20">
-                    <StackPanel DockPanel.Dock="Left" MaxWidth="760">
-                        <TextBlock Text="Лицензия компании"
-                                   FontSize="30"
-                                   FontWeight="Bold"
-                                   Foreground="{StaticResource AccentBrush}" />
-                    </StackPanel>
-
-                    <Button DockPanel.Dock="Right"
-                            Width="140"
-                            Style="{StaticResource SecondaryActionButtonStyle}"
-                            Content="Обновить"
-                            Command="{Binding RefreshCommand}" />
                 </DockPanel>
 
                 <WrapPanel Grid.Row="1" Margin="0,0,0,20">
@@ -203,8 +191,20 @@
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                    <TextBlock Text="Ключ лицензии"
-                                               Style="{StaticResource SectionTitleTextStyle}" />
+                                    <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                                        <TextBlock Text="Ключ лицензии"
+                                                   Style="{StaticResource SectionTitleTextStyle}"
+                                                   DockPanel.Dock="Left"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0" />
+
+                                        <Button DockPanel.Dock="Right"
+                                                MinWidth="132"
+                                                Style="{StaticResource SecondaryActionButtonStyle}"
+                                                Content="Обновить"
+                                                Command="{Binding RefreshCommand}" />
+                                    </DockPanel>
+
                                     <TextBlock Text="Используйте ключ для проверки и передачи лицензии в пределах компании."
                                                Style="{StaticResource SectionDescriptionTextStyle}"
                                                Margin="0,0,0,14" />
@@ -217,7 +217,7 @@
                                                  Background="{StaticResource PanelActiveBrush}"
                                                  BorderBrush="{StaticResource BorderBrushNeutral}"
                                                  Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <Button MinWidth="164"
+                                        <Button MinWidth="176"
                                                 Margin="12,0,0,0"
                                                 Style="{StaticResource SecondaryActionButtonStyle}"
                                                 Content="Скопировать ключ"
