@@ -83,8 +83,8 @@ public sealed class TeamDashboardViewModel : ViewModelBase
         : "Сводка по компании";
 
     public string ScopeSubtitle => _currentSessionContext.Role == UserRole.Manager
-        ? "Показывает вас и ваших сотрудников, доступных по текущей role-based модели."
-        : "Показывает всех сотрудников компании, доступных администратору.";
+        ? "Показывает вас и ваших сотрудников"
+        : "Показывает всех сотрудников компании";
 
     public string ErrorMessage
     {

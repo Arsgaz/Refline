@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -9,6 +10,18 @@ namespace Refline.Services
 {
     public class WindowTracker
     {
+        private static readonly HashSet<string> ReflineProcessNames = new(StringComparer.Ordinal)
+        {
+            "Refline",
+            "ReflineAdmin"
+        };
+
+        private static readonly HashSet<string> ReflineExecutableNames = new(StringComparer.Ordinal)
+        {
+            "Refline.exe",
+            "ReflineAdmin.exe"
+        };
+
         // Импорт функции GetForegroundWindow из библиотеки user32.dll
         // Эта функция возвращает дескриптор (handle) активного окна, с которым в данный момент работает пользователь.
         [DllImport("user32.dll")]
@@ -136,7 +149,7 @@ namespace Refline.Services
             }
 
             string titleToReport = string.IsNullOrWhiteSpace(currentTitle) ? "Unknown/Desktop" : currentTitle;
-            var ignoreReason = GetReflineIgnoreReason(titleToReport, processName, executableName);
+            var ignoreReason = GetReflineIgnoreReason(processName, executableName);
 
             return new TrackedWindowInfo
             {
@@ -149,34 +162,20 @@ namespace Refline.Services
             };
         }
 
-        private static string? GetReflineIgnoreReason(string windowTitle, string processName, string executableName)
+        private static string? GetReflineIgnoreReason(string processName, string executableName)
         {
-            var title = windowTitle ?? string.Empty;
             var process = processName ?? string.Empty;
             var executable = executableName ?? string.Empty;
 
-            if (ContainsReflineMarker(process) || ContainsReflineMarker(executable))
+            // Служебные окна Refline определяем только по имени процесса/EXE.
+            // Заголовок окна использовать нельзя: IDE и другие приложения могут
+            // содержать "Refline" в WindowTitle и должны корректно трекаться.
+            if (ReflineProcessNames.Contains(process) || ReflineExecutableNames.Contains(executable))
             {
                 return "process/exe относится к Refline";
             }
 
-            if (ContainsReflineMarker(title) ||
-                title.Contains("Admin Console", StringComparison.OrdinalIgnoreCase) ||
-                title.Contains("логин", StringComparison.OrdinalIgnoreCase) ||
-                title.Contains("активац", StringComparison.OrdinalIgnoreCase) ||
-                title.Contains("редакт", StringComparison.OrdinalIgnoreCase))
-            {
-                return "заголовок окна относится к Refline";
-            }
-
             return null;
-        }
-
-        private static bool ContainsReflineMarker(string value)
-        {
-            return !string.IsNullOrWhiteSpace(value) &&
-                (value.Contains("refline", StringComparison.OrdinalIgnoreCase) ||
-                 value.Contains("аналитика рабочего времени", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

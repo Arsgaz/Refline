@@ -38,31 +38,40 @@
                            Stretch="Uniform"
                            Opacity="0.95"/>
                 </StackPanel>
-
                 <!-- ▬▬▬ КНОПКИ ОСНОВНОГО МЕНЮ ▬▬▬ -->
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center">
 
                     <Button x:Name="DashboardBtn"
                             Style="{StaticResource SidebarNavButton}"
-                            Click="DashboardBtn_Click">
-                        <StackPanel Orientation="Horizontal">
+                            Click="DashboardBtn_Click"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="ViewDashboardOutline"
-                                                     Width="20" Height="20"
-                                                     Margin="0,0,8,0"
-                                                     Foreground="{StaticResource AppTextBrush}"/>
-                            <TextBlock Text="Главная" Foreground="{StaticResource AppTextBrush}"/>
+                                                    Width="20"
+                                                    Height="20"
+                                                    Margin="0,0,8,0"
+                                                    Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Главная"
+                                    Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
                     <Button x:Name="ReportsBtn"
                             Style="{StaticResource SidebarNavButton}"
-                            Click="ReportsBtn_Click">
-                        <StackPanel Orientation="Horizontal">
+                            Click="ReportsBtn_Click"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="ChartLine"
-                                                     Width="20" Height="20"
-                                                     Margin="0,0,8,0"
-                                                     Foreground="{StaticResource AppTextBrush}"/>
-                            <TextBlock Text="Отчёты" Foreground="{StaticResource AppTextBrush}"/>
+                                                    Width="20"
+                                                    Height="20"
+                                                    Margin="0,0,8,0"
+                                                    Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Отчёты"
+                                    Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
@@ -75,30 +84,39 @@
 
                     <Button x:Name="SettingsBtn"
                             Style="{StaticResource SidebarNavButton}"
-                            Click="SettingsBtn_Click">
-                        <StackPanel Orientation="Horizontal">
+                            Click="SettingsBtn_Click"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="CogOutline"
-                                                     Width="20" Height="20"
-                                                     Margin="0,0,8,0"
-                                                     Foreground="{StaticResource AppTextBrush}"/>
-                            <TextBlock Text="Настройки" Foreground="{StaticResource AppTextBrush}"/>
+                                                    Width="20"
+                                                    Height="20"
+                                                    Margin="0,0,8,0"
+                                                    Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Настройки"
+                                    Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
                     <Button x:Name="ExitBtn"
                             Style="{StaticResource SidebarNavButton}"
-                            Click="ExitBtn_Click">
-                        <StackPanel Orientation="Horizontal">
+                            Click="ExitBtn_Click"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="Logout"
-                                                     Width="20" Height="20"
-                                                     Margin="0,0,8,0"
-                                                     Foreground="{StaticResource AppTextBrush}"/>
-                            <TextBlock Text="Выход" Foreground="{StaticResource AppTextBrush}"/>
+                                                    Width="20"
+                                                    Height="20"
+                                                    Margin="0,0,8,0"
+                                                    Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Выход"
+                                    Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
                 </StackPanel>
-
             </Grid>
         </DockPanel>
 
@@ -112,4 +130,4 @@
 </Window>
 
 
-
+

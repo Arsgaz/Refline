@@ -32,6 +32,53 @@
         <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
             <views:PlaceholderPage />
         </DataTemplate>
+
+        <Style x:Key="AdminSidebarNavButton" TargetType="Button">
+            <Setter Property="Width" Value="180" />
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#162033" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#2DC7FF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#11263A" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#2DC7FF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AdminSidebarPrimaryButton" TargetType="Button" BasedOn="{StaticResource AdminSidebarNavButton}">
+            <Setter Property="Background" Value="#11263A" />
+            <Setter Property="BorderBrush" Value="#2DC7FF" />
+            <Setter Property="Foreground" Value="#2DC7FF" />
+        </Style>
     </Window.Resources>
 
     <Grid Background="{StaticResource AppBackgroundBrush}">
@@ -42,10 +89,10 @@
 
         <Border Grid.Column="0"
                 Margin="0"
-                Background="{StaticResource AppPanelBrush}"
-                BorderBrush="{StaticResource AppBorderBrush}"
+                Background="#111827"
+                BorderBrush="#1E2A3D"
                 BorderThickness="0,0,1,0">
-            <Grid Margin="16,24,16,20">
+            <Grid Margin="18,28,18,20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -53,85 +100,107 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0"
-                            Margin="0,6,0,30">
+                            Margin="0,8,0,28"
+                            HorizontalAlignment="Center">
                     <TextBlock Text="Refline"
                                FontSize="15"
                                FontWeight="Bold"
                                Foreground="{StaticResource AppAccentBrush}" />
-                    <TextBlock Text="Admin Console"
+                    <TextBlock Text="Админ панель"
                                Margin="0,4,0,0"
-                               FontSize="26"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="Управление компанией"
-                               Margin="0,8,0,0"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
+                               FontSize="24"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1"
                             HorizontalAlignment="Center">
-                    <Button Style="{StaticResource NavButtonStyle}"
+                    <Button Style="{StaticResource AdminSidebarNavButton}"
                             Command="{Binding ShowEmployeesCommand}">
-                        <DockPanel>
-                            <TextBlock Text="Сотрудники" />
-                            <TextBlock Text="01"
-                                       DockPanel.Dock="Right"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
-                        </DockPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE716;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="17"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <TextBlock Text="Сотрудники"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource NavButtonStyle}"
+                    <Button Style="{StaticResource AdminSidebarNavButton}"
                             Command="{Binding ShowAnalyticsCommand}">
                         <Button.Visibility>
                             <Binding Path="CanViewAnalyticsSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
                         </Button.Visibility>
-                        <DockPanel>
-                            <TextBlock Text="Аналитика" />
-                            <TextBlock Text="02"
-                                       DockPanel.Dock="Right"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
-                        </DockPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE9D2;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="17"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <TextBlock Text="Аналитика"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource NavButtonStyle}"
+                    <Button Style="{StaticResource AdminSidebarNavButton}"
                             Command="{Binding ShowLicensesCommand}">
                         <Button.Visibility>
                             <Binding Path="CanViewLicensesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
                         </Button.Visibility>
-                        <DockPanel>
-                            <TextBlock Text="Лицензии" />
-                            <TextBlock Text="03"
-                                       DockPanel.Dock="Right"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
-                        </DockPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE192;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="17"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <TextBlock Text="Лицензии"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource NavButtonStyle}"
+                    <Button Style="{StaticResource AdminSidebarNavButton}"
                             Command="{Binding ShowRulesCommand}">
                         <Button.Visibility>
                             <Binding Path="CanViewRulesSection" Converter="{StaticResource BooleanToVisibilityConverter}" />
                         </Button.Visibility>
-                        <DockPanel>
-                            <TextBlock Text="Правила" />
-                            <TextBlock Text="04"
-                                       DockPanel.Dock="Right"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
-                        </DockPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE713;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="17"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            <TextBlock Text="Правила"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
                     </Button>
                 </StackPanel>
 
-                <StackPanel Grid.Row="2">
+                <StackPanel Grid.Row="2"
+                            HorizontalAlignment="Center">
                     <Border Style="{StaticResource CardBorderStyle}"
-                            Background="{StaticResource AppPanelElevatedBrush}"
-                            Padding="14">
+                            Background="#162033"
+                            BorderBrush="#1E2A3D"
+                            Padding="14"
+                            Width="180">
                         <StackPanel>
                             <TextBlock Text="{Binding CurrentUserDisplayName}"
                                        FontWeight="SemiBold"
-                                       TextWrapping="Wrap" />
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center" />
                             <TextBlock Text="{Binding CurrentUserRoleDisplay}"
                                        Margin="0,6,0,0"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                                       Foreground="#94A3B8"
+                                       TextAlignment="Center" />
                         </StackPanel>
                     </Border>
 
                     <Button Content="Выход"
                             Margin="0,14,0,0"
+                            Width="180"
+                            Style="{StaticResource AdminSidebarPrimaryButton}"
                             Command="{Binding ExitCommand}" />
                 </StackPanel>
             </Grid>
