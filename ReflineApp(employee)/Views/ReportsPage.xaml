@@ -299,18 +299,7 @@
                             <lvc:PieChart Series="{Binding CategoryTimeSeries}"
                                           LegendPosition="Right"
                                           LegendTextPaint="{Binding LegendTextPaint}"
-                                          Background="Transparent">
-                                <lvc:PieChart.Style>
-                                    <Style TargetType="lvc:PieChart">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasCategoryChartData}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </lvc:PieChart.Style>
-                            </lvc:PieChart>
+                                          Background="Transparent" />
 
                             <TextBlock Text="{Binding CategoryChartPlaceholderText}"
                                        Foreground="#9BAEC2"
@@ -354,20 +343,11 @@
                 </Border>
             </Grid>
 
-            <Border Background="#111827"
+            <Border x:Name="DailyTrendBorder"
+                    Background="#111827"
                     CornerRadius="12"
                     Padding="20"
                     Margin="0,0,0,28">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ShowDailyTrendChart}" Value="True">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
 
                 <StackPanel>
                     <TextBlock Text="Динамика по дням"
@@ -376,36 +356,29 @@
                                FontWeight="SemiBold"
                                Margin="0,0,0,16"/>
                     <Grid Height="320">
-                        <lvc:CartesianChart Series="{Binding DailyTrendSeries}"
+                        <lvc:CartesianChart x:Name="DailyTrendChart"
+                                            Series="{Binding DailyTrendSeries}"
                                             XAxes="{Binding DailyTrendXAxes}"
                                             YAxes="{Binding DailyTrendYAxes}"
                                             LegendPosition="Top"
                                             LegendTextPaint="{Binding LegendTextPaint}"
-                                            Background="Transparent">
-                            <lvc:CartesianChart.Style>
-                                <Style TargetType="lvc:CartesianChart">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDailyTrendChartData}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </lvc:CartesianChart.Style>
-                        </lvc:CartesianChart>
+                                            Background="Transparent" />
 
-                        <TextBlock Text="{Binding DailyTrendChartPlaceholderText}"
-                                   Foreground="#9BAEC2"
+                        <TextBlock Foreground="#9BAEC2"
                                    FontSize="16"
                                    TextAlignment="Center"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Setter Property="Text" Value="График по дням доступен для недели и месяца"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDailyTrendChartData}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        <DataTrigger Binding="{Binding ShowDailyTrendChart}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding HasDailyTrendChartData}" Value="False">
+                                            <Setter Property="Text" Value="{Binding DailyTrendChartPlaceholderText}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

@@ -17,67 +17,279 @@
 
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- ══════════════════════════════════════════
+                 ЕДИНАЯ ЦВЕТОВАЯ ПАЛИТРА REFLINE
+                 Синхронизирована с ReflineApp(admin)
+            ══════════════════════════════════════════ -->
+            <SolidColorBrush x:Key="AppBackgroundBrush"     Color="#0D1117" />
+            <SolidColorBrush x:Key="AppPanelBrush"          Color="#111827" />
+            <SolidColorBrush x:Key="AppPanelElevatedBrush"  Color="#172033" />
+            <SolidColorBrush x:Key="AppBorderBrush"         Color="#243244" />
+            <SolidColorBrush x:Key="AppBorderActiveBrush"   Color="#2DC7FF" />
+            <SolidColorBrush x:Key="AppAccentBrush"         Color="#2DC7FF" />
+            <SolidColorBrush x:Key="AppAccentPressedBrush"  Color="#1FA1CD" />
+            <SolidColorBrush x:Key="AppTextBrush"           Color="#DDE6F1" />
+            <SolidColorBrush x:Key="AppMutedTextBrush"      Color="#9BAEC2" />
+            <SolidColorBrush x:Key="AppSuccessBrush"        Color="#30D158" />
+            <SolidColorBrush x:Key="AppWarningBrush"        Color="#F5A524" />
+            <SolidColorBrush x:Key="AppErrorBrush"          Color="#FF6B6B" />
+            <SolidColorBrush x:Key="AppOverlayBrush"        Color="#CC111827" />
+
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
 
-            <Style x:Key="AnimatedButton"
-                   TargetType="Button"
-                   BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <!-- ══════════════════════════════════════════
+                 СТИЛЬ КАРТОЧЕК
+            ══════════════════════════════════════════ -->
+            <Style x:Key="CardBorderStyle" TargetType="Border">
+                <Setter Property="Background"       Value="{StaticResource AppPanelBrush}" />
+                <Setter Property="BorderBrush"      Value="{StaticResource AppBorderBrush}" />
+                <Setter Property="BorderThickness"  Value="1" />
+                <Setter Property="CornerRadius"     Value="12" />
+                <Setter Property="Padding"          Value="20" />
+            </Style>
 
-                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-                <Setter Property="RenderTransform">
+            <!-- ══════════════════════════════════════════
+                 КНОПКИ
+            ══════════════════════════════════════════ -->
+            <Style TargetType="Button">
+                <Setter Property="Background"        Value="{StaticResource AppAccentBrush}" />
+                <Setter Property="Foreground"        Value="#F8FBFF" />
+                <Setter Property="BorderBrush"       Value="{StaticResource AppAccentBrush}" />
+                <Setter Property="BorderThickness"   Value="1" />
+                <Setter Property="Padding"           Value="16,10" />
+                <Setter Property="Cursor"            Value="Hand" />
+                <Setter Property="FontFamily"        Value="Segoe UI" />
+                <Setter Property="FontSize"          Value="14" />
+                <Setter Property="FontWeight"        Value="SemiBold" />
+                <Setter Property="Template">
                     <Setter.Value>
-                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Margin="{TemplateBinding Padding}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AppBorderActiveBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AppAccentPressedBrush}" />
+                                    <Setter TargetName="ButtonBorder" Property="BorderBrush"  Value="{StaticResource AppAccentPressedBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.55" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
 
+            <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background"   Value="{StaticResource AppPanelElevatedBrush}" />
+                <Setter Property="BorderBrush"  Value="{StaticResource AppBorderBrush}" />
+                <Setter Property="Foreground"   Value="{StaticResource AppTextBrush}" />
+            </Style>
+
+            <!-- Кнопка боковой навигации -->
+            <Style x:Key="SidebarNavButton" TargetType="Button">
+                <Setter Property="Background"               Value="Transparent" />
+                <Setter Property="BorderBrush"              Value="{StaticResource AppBorderActiveBrush}" />
+                <Setter Property="BorderThickness"          Value="1" />
+                <Setter Property="Foreground"               Value="{StaticResource AppTextBrush}" />
+                <Setter Property="FontFamily"               Value="Segoe UI" />
+                <Setter Property="FontSize"                 Value="15" />
+                <Setter Property="FontWeight"               Value="SemiBold" />
+                <Setter Property="Width"                    Value="180" />
+                <Setter Property="Margin"                   Value="20,6,0,6" />
+                <Setter Property="Cursor"                   Value="Hand" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="6"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,10" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" Value="#4DE0FF" />
+                                    <Setter Property="Foreground"  Value="#4DE0FF" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="BorderBrush" Value="{StaticResource AppAccentPressedBrush}" />
+                                    <Setter Property="Foreground"  Value="{StaticResource AppAccentPressedBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ══════════════════════════════════════════
+                 INPUTS
+            ══════════════════════════════════════════ -->
+            <Style TargetType="TextBox">
+                <Setter Property="Background"       Value="{StaticResource AppPanelElevatedBrush}" />
+                <Setter Property="Foreground"       Value="{StaticResource AppTextBrush}" />
+                <Setter Property="BorderBrush"      Value="{StaticResource AppBorderBrush}" />
+                <Setter Property="BorderThickness"  Value="1" />
+                <Setter Property="Padding"          Value="14,10" />
+                <Setter Property="FontFamily"       Value="Segoe UI" />
+                <Setter Property="FontSize"         Value="14" />
+                <Setter Property="SelectionBrush"   Value="{StaticResource AppAccentPressedBrush}" />
+                <Setter Property="CaretBrush"       Value="{StaticResource AppAccentBrush}" />
+            </Style>
+
+            <Style TargetType="PasswordBox">
+                <Setter Property="Background"       Value="{StaticResource AppPanelElevatedBrush}" />
+                <Setter Property="Foreground"       Value="{StaticResource AppTextBrush}" />
+                <Setter Property="BorderBrush"      Value="{StaticResource AppBorderBrush}" />
+                <Setter Property="BorderThickness"  Value="1" />
+                <Setter Property="Padding"          Value="14,10" />
+                <Setter Property="FontFamily"       Value="Segoe UI" />
+                <Setter Property="FontSize"         Value="14" />
+                <Setter Property="SelectionBrush"   Value="{StaticResource AppAccentPressedBrush}" />
+                <Setter Property="CaretBrush"       Value="{StaticResource AppAccentBrush}" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground"  Value="{StaticResource AppTextBrush}" />
+                <Setter Property="FontFamily"  Value="Segoe UI" />
+                <Setter Property="FontSize"    Value="14" />
+            </Style>
+
+            <!-- ══════════════════════════════════════════
+                 СОВРЕМЕННЫЕ ПОЛОСЫ ПРОКРУТКИ (SCROLLBAR)
+            ══════════════════════════════════════════ -->
+            <Style x:Key="ModernScrollBarThumb" TargetType="{x:Type Thumb}">
+                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                <Setter Property="IsTabStop" Value="false"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Thumb}">
+                            <Border x:Name="rectangle"
+                                    Background="#4A5C70"
+                                    CornerRadius="4"
+                                    SnapsToDevicePixels="True"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="rectangle" Property="Background" Value="#6A7D94" />
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="true">
+                                    <Setter TargetName="rectangle" Property="Background" Value="{StaticResource AppAccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="{x:Type ScrollBar}">
+                <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+                <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Width" Value="10"/>
+                <Setter Property="Opacity" Value="0.8"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Grid x:Name="Bg" SnapsToDevicePixels="true">
+                                <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsMouseOver}">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" Focusable="false"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" Focusable="false"/>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource ModernScrollBarThumb}" Margin="2,0,2,0"/>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
-                    <EventTrigger RoutedEvent="MouseEnter">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)"
-                                                 To="1.05" Duration="0:0:0.15"
-                                                 AccelerationRatio="0.2"/>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)"
-                                                 To="1.05" Duration="0:0:0.15"
-                                                 AccelerationRatio="0.2"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-
-                    <EventTrigger RoutedEvent="MouseLeave">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)"
-                                                 To="1" Duration="0:0:0.15"/>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)"
-                                                 To="1" Duration="0:0:0.15"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-
-                    <EventTrigger RoutedEvent="PreviewMouseDown">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)"
-                                                 To="0.92" Duration="0:0:0.1"/>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)"
-                                                 To="0.92" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-
-                    <EventTrigger RoutedEvent="PreviewMouseUp">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)"
-                                                 To="1.05" Duration="0:0:0.15"/>
-                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)"
-                                                 To="1.05" Duration="0:0:0.15"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto"/>
+                        <Setter Property="Height" Value="10"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                    <Grid x:Name="Bg" SnapsToDevicePixels="true">
+                                        <Track x:Name="PART_Track" IsEnabled="{TemplateBinding IsMouseOver}">
+                                            <Track.DecreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}" Opacity="0" Focusable="false"/>
+                                            </Track.DecreaseRepeatButton>
+                                            <Track.IncreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}" Opacity="0" Focusable="false"/>
+                                            </Track.IncreaseRepeatButton>
+                                            <Track.Thumb>
+                                                <Thumb Style="{StaticResource ModernScrollBarThumb}" Margin="0,2,0,2"/>
+                                            </Track.Thumb>
+                                        </Track>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
                 </Style.Triggers>
             </Style>
+
+            <!-- ══════════════════════════════════════════
+                 TOOLTIP И CONTEXT MENU
+            ══════════════════════════════════════════ -->
+            <Style TargetType="ToolTip">
+                <Setter Property="Background" Value="{StaticResource AppPanelElevatedBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="FontSize" Value="12"/>
+            </Style>
+
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background" Value="{StaticResource AppPanelBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            
+            <Style TargetType="MenuItem">
+                <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Padding" Value="10,-2"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Border" Background="{TemplateBinding Background}" BorderThickness="0" Margin="2">
+                                <Grid>
+                                    <ContentPresenter ContentSource="Header" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource AppPanelElevatedBrush}"/>
+                                    <Setter TargetName="Border" Property="CornerRadius" Value="4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 

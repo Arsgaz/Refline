@@ -1,185 +1,104 @@
 <Page x:Class="Refline.Views.SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       Background="Transparent">
 
-	<Page.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="40">
 
-		<!-- 🔵 Фирменная кнопка Refline -->
-		<Style x:Key="ReflineButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-			<Setter Property="Foreground" Value="#2DC7FF"/>
-			<Setter Property="FontSize" Value="16"/>
-			<Setter Property="FontWeight" Value="SemiBold"/>
-			<Setter Property="Padding" Value="10 6"/>
-			<Setter Property="Margin" Value="0 8 0 0"/>
-			<Setter Property="BorderBrush" Value="#2DC7FF"/>
-			<Setter Property="BorderThickness" Value="1.4"/>
-			<Setter Property="Cursor" Value="Hand"/>
-			<Setter Property="Background" Value="#0D1117"/>
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="border"
-                                CornerRadius="6"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-							<ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-						</Border>
-
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter Property="Foreground" Value="#4DE0FF"/>
-								<Setter TargetName="border" Property="BorderBrush" Value="#4DE0FF"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter Property="Foreground" Value="#1FA1CD"/>
-								<Setter TargetName="border" Property="BorderBrush" Value="#1FA1CD"/>
-								<Setter TargetName="border" Property="Background" Value="#111827"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
-
-	</Page.Resources>
-
-
-
-	<ScrollViewer VerticalScrollBarVisibility="Auto">
-		<StackPanel Margin="40">
-
-			<!-- ===== Заголовок ===== -->
-			<TextBlock Text="Настройки"
+            <!-- ===== Заголовок ===== -->
+            <TextBlock Text="Настройки"
                        FontSize="32"
-                       FontWeight="Bold"
-                       Foreground="#2DC7FF"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource AppAccentBrush}"
                        Margin="0,0,0,10"/>
 
-			<TextBlock Text="Управляйте параметрами приложения, путями сохранения и корпоративным доступом."
+            <TextBlock Text="Управляйте параметрами приложения, путями сохранения и корпоративным доступом."
                        FontSize="16"
-                       Foreground="#9BAEC2"
+                       Foreground="{StaticResource AppMutedTextBrush}"
                        Margin="0,0,0,25"
                        TextWrapping="Wrap" />
 
+            <StackPanel Width="620" HorizontalAlignment="Center">
 
-			<!-- ===== Основной контейнер ===== -->
-			<StackPanel Width="620" HorizontalAlignment="Center">
-
-
-				<!-- ░░ БЛОК 2: Пути сохранения отчётов ░░ -->
-				<Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Margin="0,0,0,25">
-
-					<StackPanel>
-
-						<TextBlock Text="Путь сохранения отчётов"
+                <!-- ░░ БЛОК: Пути сохранения отчётов ░░ -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,25">
+                    <StackPanel>
+                        <TextBlock Text="Путь сохранения отчётов"
                                    FontSize="20"
-                                   Foreground="#2DC7FF"
+                                   Foreground="{StaticResource AppAccentBrush}"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,10"/>
 
-						<TextBlock Text="Укажите папку, куда будут сохраняться PDF и XLS отчёты."
+                        <TextBlock Text="Укажите папку, куда будут сохраняться PDF и XLS отчёты."
                                    FontSize="14"
-                                   Foreground="#9BAEC2"
+                                   Foreground="{StaticResource AppMutedTextBrush}"
                                    Margin="0,0,0,15"
                                    TextWrapping="Wrap"/>
 
-						<StackPanel Orientation="Horizontal">
-							<TextBox x:Name="PathBox"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="PathBox"
                                      Text="{Binding ReportsPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      Width="420"
-                                     Height="42"
-                                     FontSize="16"
-                                     Padding="10"
-                                     Background="#0D1117"
-                                     BorderBrush="#2DC7FF"
-                                     BorderThickness="1.2"
-                                     Foreground="#DDE6F1"/>
+                                     Height="44" />
 
-							<Button Content="📂"
+                            <Button Content="📂"
                                     Command="{Binding SelectFolderCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
                                     Width="50"
-                                    Height="42"
-                                    Margin="10,0,0,0"
-                                    Style="{StaticResource ReflineButton}"/>
-						</StackPanel>
+                                    Height="44"
+                                    Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
-					</StackPanel>
-				</Border>
-
-
-
-				<!-- ░░ БЛОК 3: Системные параметры ░░ -->
-				<Border Background="#111827"
-                        CornerRadius="12"
-                        Padding="20"
-                        Margin="0,0,0,25">
-
-					<StackPanel>
-
-						<TextBlock Text="Системные параметры"
+                <!-- ░░ БЛОК: Системные параметры ░░ -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,25">
+                    <StackPanel>
+                        <TextBlock Text="Системные параметры"
                                    FontSize="20"
-                                   Foreground="#2DC7FF"
+                                   Foreground="{StaticResource AppAccentBrush}"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,10"/>
 
-						<TextBlock Text="Настройка автозапуска, фонового режима и логирования."
+                        <TextBlock Text="Настройка автозапуска, фонового режима и логирования."
                                    FontSize="14"
-                                   Foreground="#9BAEC2"
+                                   Foreground="{StaticResource AppMutedTextBrush}"
                                    Margin="0,0,0,15"
                                    TextWrapping="Wrap"/>
 
-						<CheckBox Content="Запускать Refline при старте Windows"
-                                  IsChecked="{Binding AutoStartWindows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Foreground="#DDE6F1"
-                                  FontSize="16"
+                        <CheckBox Content="Запускать Refline при старте Windows"
+                                  IsChecked="{Binding AutoStartWindows, Mode=TwoWay}"
                                   Margin="0,0,0,8"/>
 
-						<CheckBox Content="Разрешить фоновый сбор активности"
-                                  IsChecked="{Binding AllowBackgroundTracking, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Foreground="#DDE6F1"
-                                  FontSize="16"
+                        <CheckBox Content="Разрешить фоновый сбор активности"
+                                  IsChecked="{Binding AllowBackgroundTracking, Mode=TwoWay}"
                                   Margin="0,0,0,8"/>
 
-						<CheckBox Content="Вести локальный лог работы приложения"
-                                  IsChecked="{Binding EnableLocalLog, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Foreground="#DDE6F1"
-                                  FontSize="16"
+                        <CheckBox Content="Вести локальный лог работы приложения"
+                                  IsChecked="{Binding EnableLocalLog, Mode=TwoWay}"
                                   Margin="0,0,0,8"/>
-					</StackPanel>
+                    </StackPanel>
+                </Border>
 
-				</Border>
-
-
-
-				<!-- ░░ Кнопка сохранить ░░ -->
-				<Button Content="💾 Сохранить настройки"
+                <!-- ░░ Кнопка сохранить ░░ -->
+                <Button Content="💾  Сохранить настройки"
                         Command="{Binding SaveSettingsCommand}"
                         Width="260"
                         Height="50"
-                        Style="{StaticResource ReflineButton}"
-                        Background="#2DC7FF"
-                        Foreground="#0D1117"
-                        BorderBrush="#2DC7FF"
                         HorizontalAlignment="Center"/>
 
-				<Button Content="Выйти из аккаунта"
+                <Button Content="Выйти из аккаунта"
                         Command="{Binding LogoutCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
                         Width="260"
                         Height="50"
-                        Style="{StaticResource ReflineButton}"
                         HorizontalAlignment="Center"
                         Margin="0,16,0,0"/>
 
-			</StackPanel>
+            </StackPanel>
 
-		</StackPanel>
-	</ScrollViewer>
+        </StackPanel>
+    </ScrollViewer>
 
 </Page>

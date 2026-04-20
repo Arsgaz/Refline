@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Refline.ViewModels;
@@ -15,6 +15,7 @@ namespace Refline.Views
 
         private void ReportsPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
+            // Первый тик: дать WPF завершить Layout pass страницы
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
             {
                 if (DataContext is MainViewModel mainViewModel)
@@ -22,8 +23,14 @@ namespace Refline.Views
                     mainViewModel.RefreshReportData();
                 }
 
-                UpdateLayout();
-                InvalidateVisual();
+                // Второй тик: принудительно заставить LiveCharts пересчитать размеры
+                // после того как данные уже установлены
+                Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
+                    DailyTrendChart.InvalidateMeasure();
+                    DailyTrendChart.InvalidateVisual();
+                    DailyTrendChart.UpdateLayout();
+                }));
             }));
         }
     }

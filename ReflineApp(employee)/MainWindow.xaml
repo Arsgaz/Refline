@@ -8,53 +8,6 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI">
 
-    <Window.Resources>
-
-        <!-- ======= Стиль боковых кнопок меню ======= -->
-        <Style x:Key="SidebarButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
-            <Setter Property="Foreground" Value="#DDE6F1"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderBrush" Value="#2DC7FF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-
-            <!-- ВОТ! Фикс ширины кнопок -->
-            <Setter Property="Width" Value="180"/>
-            <Setter Property="Margin" Value="20,6,0,6"/>
-
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="6"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="#4DE0FF"/>
-                                <Setter Property="Foreground" Value="#4DE0FF"/>
-                            </Trigger>
-
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="BorderBrush" Value="#1FA1CD"/>
-                                <Setter Property="Foreground" Value="#1FA1CD"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-    </Window.Resources>
-
     <Grid>
 
         <!-- ======= СИСТЕМНЫЙ ТРЕЙ ======= -->
@@ -90,26 +43,26 @@
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center">
 
                     <Button x:Name="DashboardBtn"
-                            Style="{StaticResource SidebarButton}"
+                            Style="{StaticResource SidebarNavButton}"
                             Click="DashboardBtn_Click">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ViewDashboardOutline"
                                                      Width="20" Height="20"
                                                      Margin="0,0,8,0"
-                                                     Foreground="#DDE6F1"/>
-                            <TextBlock Text="Главная" Foreground="#DDE6F1"/>
+                                                     Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Главная" Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
                     <Button x:Name="ReportsBtn"
-                            Style="{StaticResource SidebarButton}"
+                            Style="{StaticResource SidebarNavButton}"
                             Click="ReportsBtn_Click">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ChartLine"
                                                      Width="20" Height="20"
                                                      Margin="0,0,8,0"
-                                                     Foreground="#DDE6F1"/>
-                            <TextBlock Text="Отчёты" Foreground="#DDE6F1"/>
+                                                     Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Отчёты" Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
@@ -121,26 +74,26 @@
                     <Separator Margin="0,10"/>
 
                     <Button x:Name="SettingsBtn"
-                            Style="{StaticResource SidebarButton}"
+                            Style="{StaticResource SidebarNavButton}"
                             Click="SettingsBtn_Click">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="CogOutline"
                                                      Width="20" Height="20"
                                                      Margin="0,0,8,0"
-                                                     Foreground="#DDE6F1"/>
-                            <TextBlock Text="Настройки" Foreground="#DDE6F1"/>
+                                                     Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Настройки" Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
                     <Button x:Name="ExitBtn"
-                            Style="{StaticResource SidebarButton}"
+                            Style="{StaticResource SidebarNavButton}"
                             Click="ExitBtn_Click">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Logout"
                                                      Width="20" Height="20"
                                                      Margin="0,0,8,0"
-                                                     Foreground="#DDE6F1"/>
-                            <TextBlock Text="Выход" Foreground="#DDE6F1"/>
+                                                     Foreground="{StaticResource AppTextBrush}"/>
+                            <TextBlock Text="Выход" Foreground="{StaticResource AppTextBrush}"/>
                         </StackPanel>
                     </Button>
 
@@ -157,3 +110,6 @@
     </Grid>
 
 </Window>
+
+
+
