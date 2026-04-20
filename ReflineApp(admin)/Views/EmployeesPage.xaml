@@ -139,45 +139,10 @@
                         </DockPanel>
 
                         <Grid Grid.Row="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="260" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0"
-                                    Style="{StaticResource PagePanelBorderStyle}"
-                                    Background="{StaticResource PanelActiveBrush}"
-                                    Padding="18"
-                                    Margin="0,0,16,0">
-                                <StackPanel>
-                                    <TextBlock Text="Найдено сотрудников"
-                                               Style="{StaticResource MetricLabelTextStyle}" />
-                                    <TextBlock Text="{Binding Users.Count}"
-                                               Style="{StaticResource MetricValueTextStyle}"
-                                               Foreground="{StaticResource AccentBrush}" />
-                                </StackPanel>
-                            </Border>
-
-                            <Border Grid.Column="1"
-                                    Style="{StaticResource PagePanelBorderStyle}"
-                                    Padding="18"
-                                    Margin="0">
-                                <StackPanel>
-                                    <TextBlock Text="Управление списком"
-                                               Style="{StaticResource MetricLabelTextStyle}" />
-                                    <TextBlock Text="Добавляйте новых сотрудников, обновляйте список и переходите к действиям прямо из таблицы ниже."
-                                               Margin="0,8,0,0"
-                                               FontSize="14"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap" />
-                                    <TextBlock Text="{Binding UsersCountText}"
-                                               Margin="0,10,0,0"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
+                            <TextBlock Text="{Binding UsersCountText}"
+                                       FontSize="15"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
                         </Grid>
                     </Grid>
                 </Border>
