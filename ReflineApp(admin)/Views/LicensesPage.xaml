@@ -115,17 +115,6 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Margin="0,0,0,20" MaxWidth="760">
-                    <TextBlock Text="Лицензия компании"
-                               FontSize="30"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}" />
-                    <TextBlock Text="Проверяйте статус лицензии, лимиты устройств и ключ компании в одном месте."
-                               Margin="0,8,0,0"
-                               FontSize="15"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap" />
-                </StackPanel>
 
                 <WrapPanel Grid.Row="1" Margin="0,0,0,20">
                     <Border Style="{StaticResource PagePanelBorderStyle}"
