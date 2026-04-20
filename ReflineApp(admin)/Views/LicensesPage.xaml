@@ -116,7 +116,7 @@
                 </Grid.RowDefinitions>
 
 
-                <WrapPanel Grid.Row="1" Margin="0,0,0,20">
+                <WrapPanel Grid.Row="1" Margin="4,4,0,20">
                     <Border Style="{StaticResource PagePanelBorderStyle}"
                             Width="260"
                             Height="142"
