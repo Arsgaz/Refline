@@ -124,6 +124,13 @@
         </Style>
 
         <Style x:Key="RulesDataGridStyle" TargetType="DataGrid">
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#16314A" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#16314A" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#DDE6F1" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#DDE6F1" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#DDE6F1" />
+            </Style.Resources>
             <Setter Property="AutoGenerateColumns" Value="False" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
@@ -157,6 +164,7 @@
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -370,33 +378,22 @@
                                     <DataGridTextColumn Header="Приоритет"
                                                         Binding="{Binding Priority}"
                                                         Width="0.8*" />
-                                    <DataGridTemplateColumn Header="Статус"
-                                                            Width="1.0*">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Border x:Name="StatusPill"
-                                                        Padding="12,6"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center"
-                                                        Background="#152A1D"
-                                                        BorderBrush="{StaticResource SuccessBrush}"
-                                                        BorderThickness="1"
-                                                        CornerRadius="999">
-                                                    <TextBlock x:Name="StatusText"
-                                                               Text="{Binding StatusDisplay}"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{StaticResource SuccessBrush}" />
-                                                </Border>
-                                                <DataTemplate.Triggers>
+                                    <DataGridTextColumn Header="Статус"
+                                                        Binding="{Binding StatusDisplay}"
+                                                        Width="1.0*">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsEnabled}" Value="False">
-                                                        <Setter TargetName="StatusPill" Property="Background" Value="#3B1F24" />
-                                                        <Setter TargetName="StatusPill" Property="BorderBrush" Value="{StaticResource WarningBrush}" />
-                                                        <Setter TargetName="StatusText" Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
                                                     </DataTrigger>
-                                                </DataTemplate.Triggers>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
                                     <DataGridTemplateColumn Header="Действия"
                                                             Width="352">
                                         <DataGridTemplateColumn.CellTemplate>
