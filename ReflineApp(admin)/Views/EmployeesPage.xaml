@@ -1,232 +1,383 @@
 <UserControl x:Class="Refline.Admin.Views.EmployeesPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#0B1220">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="PageBaseBrush" Color="#0B1220" />
+        <SolidColorBrush x:Key="PageSecondaryBrush" Color="#10192B" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#111827" />
+        <SolidColorBrush x:Key="PanelHoverBrush" Color="#162033" />
+        <SolidColorBrush x:Key="PanelActiveBrush" Color="#11263A" />
+        <SolidColorBrush x:Key="BorderBrushNeutral" Color="#1E2A3D" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#DDE6F1" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#2DC7FF" />
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#63D8FF" />
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left"
-                        MaxWidth="620">
-                <TextBlock Text="Список сотрудников компании"
-                           FontSize="22"
-                           FontWeight="SemiBold" />
-                <TextBlock Text="Список пользователей компании с безопасным CRUD для администратора."
-                           Margin="0,8,0,0"
-                           Foreground="{StaticResource AppMutedTextBrush}" />
-            </StackPanel>
+        <LinearGradientBrush x:Key="PageBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0B1220" Offset="0" />
+            <GradientStop Color="#10192B" Offset="1" />
+        </LinearGradientBrush>
 
-            <StackPanel DockPanel.Dock="Right"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right">
-                <Button Width="170"
-                        Height="42"
-                        Margin="0,0,12,0"
-                        Content="Добавить сотрудника"
-                        Command="{Binding CreateUserCommand}"
-                        Visibility="{Binding CanManageUsers, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <Button Width="148"
-                        Height="42"
-                        HorizontalAlignment="Right"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Content="Обновить"
-                        Command="{Binding RefreshCommand}" />
-            </StackPanel>
-        </DockPanel>
+        <Style x:Key="PagePanelBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
 
-        <Grid Grid.Row="1"
-              Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <Style x:Key="SectionTitleTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
 
-            <Border Grid.Column="0"
-                    Style="{StaticResource CardBorderStyle}"
-                    Margin="0,0,14,0">
-                <StackPanel>
+        <Style x:Key="SectionDescriptionTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="MetricLabelTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="MetricValueTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style x:Key="PageSecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style x:Key="PagePrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <Style x:Key="TableActionButtonStyle" TargetType="Button" BasedOn="{StaticResource CompactSecondaryButtonStyle}">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource PageBackgroundBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="32">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,28">
                     <TextBlock Text="Сотрудники"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
-                    <TextBlock Text="{Binding Users.Count}"
-                               Margin="0,10,0,0"
-                               FontSize="28"
-                               FontWeight="SemiBold" />
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="1"
-                    Style="{StaticResource CardBorderStyle}">
-                <StackPanel>
-                    <TextBlock Text="Статус загрузки"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
-                    <TextBlock Text="{Binding UsersCountText}"
-                               Margin="0,10,0,0"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               TextWrapping="Wrap" />
-                    <TextBlock Text="Список обновляется после создания, редактирования и деактивации пользователя."
-                               Margin="0,10,0,0"
-                               Foreground="{StaticResource AppMutedTextBrush}"
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}" />
+                    <TextBlock Text="Управляйте сотрудниками компании, быстро находите нужные записи и выполняйте основные действия из одного списка."
+                               Margin="0,8,0,0"
+                               FontSize="15"
+                               Foreground="{StaticResource TextSecondaryBrush}"
                                TextWrapping="Wrap" />
                 </StackPanel>
-            </Border>
-        </Grid>
 
-        <Border Grid.Row="2"
-                Margin="0,0,0,16"
-                Padding="12,10"
-                Background="{StaticResource AppPanelElevatedBrush}"
-                BorderBrush="{StaticResource AppBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Загрузка сотрудников..."
-                       Foreground="{StaticResource AppMutedTextBrush}" />
-        </Border>
+                <Border Grid.Row="1"
+                        Style="{StaticResource PagePanelBorderStyle}"
+                        Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-        <Grid Grid.Row="3">
-            <Border Style="{StaticResource SectionCardBorderStyle}">
-                <Grid>
-                    <DataGrid ItemsSource="{Binding Users}"
-                              SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="ФИО"
-                                                Binding="{Binding FullName}"
-                                                Width="2.3*" />
-                            <DataGridTextColumn Header="Логин"
-                                                Binding="{Binding Login}"
-                                                Width="1.3*" />
-                            <DataGridTemplateColumn Header="Роль"
-                                                    Width="1.2*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Style="{StaticResource PillBorderStyle}"
-                                                Background="#16263A"
-                                                BorderBrush="{StaticResource AppBorderActiveBrush}">
-                                            <TextBlock Text="{Binding RoleDisplay}"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource AppAccentBrush}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Статус"
-                                                    Width="1.1*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border x:Name="StatusPill"
-                                                Style="{StaticResource PillBorderStyle}"
-                                                Background="#152A1D"
-                                                BorderBrush="{StaticResource AppSuccessBrush}">
-                                            <TextBlock x:Name="StatusText"
-                                                       Text="{Binding StatusDisplay}"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource AppSuccessBrush}" />
-                                        </Border>
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                <Setter TargetName="StatusPill" Property="Background" Value="#3B1F24" />
-                                                <Setter TargetName="StatusPill" Property="BorderBrush" Value="{StaticResource AppErrorBrush}" />
-                                                <Setter TargetName="StatusText" Property="Foreground" Value="{StaticResource AppErrorBrush}" />
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Создан"
-                                                Binding="{Binding CreatedAtDisplay}"
-                                                Width="1.4*" />
-                            <DataGridTemplateColumn Header="Действия"
-                                                    Width="470">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Grid HorizontalAlignment="Left">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                        <DockPanel Grid.Row="0" Margin="0,0,0,18">
+                            <StackPanel DockPanel.Dock="Left"
+                                        MaxWidth="640">
+                                <TextBlock Text="Обзор и действия"
+                                           Style="{StaticResource SectionTitleTextStyle}" />
+                                <TextBlock Text="Следите за количеством сотрудников и обновляйте список после изменений."
+                                           Style="{StaticResource SectionDescriptionTextStyle}" />
+                            </StackPanel>
 
-                                            <Button Grid.Column="0"
-                                                    Height="34"
-                                                    Margin="0,0,8,0"
-                                                    Content="Открыть"
-                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
-                                                    Command="{Binding DataContext.OpenEmployeeAnalyticsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}" />
-                                            <Button Grid.Column="1"
-                                                    Height="34"
-                                                    Margin="0,0,8,0"
-                                                    Content="Изменить"
-                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
-                                                    Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}" />
-                                            <Button Grid.Column="2"
-                                                    Height="34"
-                                                    Margin="0,0,8,0"
-                                                    MinWidth="138"
-                                                    Content="Сбросить пароль"
-                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
-                                                    Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}" />
-                                            <Button Grid.Column="3"
-                                                    Height="34"
-                                                    MinWidth="126"
-                                                    Content="{Binding ActivationActionDisplay}"
-                                                    Style="{StaticResource CompactSecondaryButtonStyle}"
-                                                    Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Command="{Binding DataContext.ToggleUserActivationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                            <StackPanel DockPanel.Dock="Right"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right">
+                                <Button Width="188"
+                                        Margin="0,0,12,0"
+                                        Content="Добавить сотрудника"
+                                        Style="{StaticResource PagePrimaryButtonStyle}"
+                                        Command="{Binding CreateUserCommand}"
+                                        Visibility="{Binding CanManageUsers, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button Width="140"
+                                        Content="Обновить"
+                                        Style="{StaticResource PageSecondaryButtonStyle}"
+                                        Command="{Binding RefreshCommand}" />
+                            </StackPanel>
+                        </DockPanel>
 
-                    <Border Padding="24"
-                            Background="{StaticResource AppOverlayBrush}"
-                            CornerRadius="10"
-                            Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Не удалось загрузить список сотрудников"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource AppTextBrush}" />
-                            <TextBlock Text="{Binding ErrorMessage}"
-                                       Margin="0,12,0,0"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource AppErrorBrush}" />
-                        </StackPanel>
-                    </Border>
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                    <Border Padding="24"
-                            Background="{StaticResource AppOverlayBrush}"
-                            CornerRadius="10"
-                            Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    MaxWidth="340">
-                            <TextBlock Text="Сотрудники не найдены"
-                                       FontSize="22"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Center" />
-                            <TextBlock Text="После появления пользователей в компании этот список будет доступен здесь."
-                                       Margin="0,12,0,0"
-                                       TextAlignment="Center"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource AppMutedTextBrush}" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-        </Grid>
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource PagePanelBorderStyle}"
+                                    Background="{StaticResource PanelActiveBrush}"
+                                    Padding="18"
+                                    Margin="0,0,16,0">
+                                <StackPanel>
+                                    <TextBlock Text="Сотрудники"
+                                               Style="{StaticResource MetricLabelTextStyle}" />
+                                    <TextBlock Text="{Binding Users.Count}"
+                                               Style="{StaticResource MetricValueTextStyle}"
+                                               Foreground="{StaticResource AccentBrush}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource PagePanelBorderStyle}"
+                                    Padding="18"
+                                    Margin="0,0,16,0">
+                                <StackPanel>
+                                    <TextBlock Text="Состояние списка"
+                                               Style="{StaticResource MetricLabelTextStyle}" />
+                                    <TextBlock Text="{Binding UsersCountText}"
+                                               Margin="0,8,0,0"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2"
+                                    Style="{StaticResource PagePanelBorderStyle}"
+                                    Padding="18">
+                                <StackPanel>
+                                    <TextBlock Text="Рабочая зона"
+                                               Style="{StaticResource MetricLabelTextStyle}" />
+                                    <TextBlock Text="Открывайте профиль сотрудника, меняйте данные, сбрасывайте пароль и управляйте доступом прямо из таблицы."
+                                               Margin="0,8,0,0"
+                                               FontSize="14"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Margin="0,0,0,20"
+                        Padding="14,12"
+                        Background="{StaticResource PanelBrush}"
+                        BorderBrush="{StaticResource BorderBrushNeutral}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Загрузка сотрудников..."
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </Border>
+
+                <Border Grid.Row="3"
+                        Style="{StaticResource PagePanelBorderStyle}"
+                        Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0"
+                                   Background="{StaticResource PanelActiveBrush}"
+                                   LastChildFill="False"
+                                   Margin="0"
+                                   SnapsToDevicePixels="True">
+                            <Border BorderBrush="{StaticResource BorderBrushNeutral}"
+                                    BorderThickness="0,0,0,1"
+                                    CornerRadius="12,12,0,0"
+                                    Padding="20,16"
+                                    Background="Transparent">
+                                <DockPanel LastChildFill="False">
+                                    <StackPanel DockPanel.Dock="Left"
+                                                MaxWidth="720">
+                                        <TextBlock Text="Список сотрудников"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Полный список сотрудников компании с доступными действиями по каждой записи."
+                                                   Margin="0,6,0,0"
+                                                   FontSize="14"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DockPanel>
+
+                        <Grid Grid.Row="1">
+                            <DataGrid ItemsSource="{Binding Users}"
+                                      SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ФИО"
+                                                        Binding="{Binding FullName}"
+                                                        Width="2.3*" />
+                                    <DataGridTextColumn Header="Логин"
+                                                        Binding="{Binding Login}"
+                                                        Width="1.3*" />
+                                    <DataGridTemplateColumn Header="Роль"
+                                                            Width="1.2*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource PillBorderStyle}"
+                                                        Background="#16263A"
+                                                        BorderBrush="{StaticResource AppBorderActiveBrush}">
+                                                    <TextBlock Text="{Binding RoleDisplay}"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource AccentBrush}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Статус"
+                                                            Width="1.1*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="StatusPill"
+                                                        Style="{StaticResource PillBorderStyle}"
+                                                        Background="#152A1D"
+                                                        BorderBrush="{StaticResource AppSuccessBrush}">
+                                                    <TextBlock x:Name="StatusText"
+                                                               Text="{Binding StatusDisplay}"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource AppSuccessBrush}" />
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                        <Setter TargetName="StatusPill" Property="Background" Value="#3B1F24" />
+                                                        <Setter TargetName="StatusPill" Property="BorderBrush" Value="{StaticResource AppErrorBrush}" />
+                                                        <Setter TargetName="StatusText" Property="Foreground" Value="{StaticResource AppErrorBrush}" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Создан"
+                                                        Binding="{Binding CreatedAtDisplay}"
+                                                        Width="1.4*" />
+                                    <DataGridTemplateColumn Header="Действия"
+                                                            Width="470">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid HorizontalAlignment="Left">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Button Grid.Column="0"
+                                                            Margin="0,0,8,0"
+                                                            Content="Открыть"
+                                                            Style="{StaticResource TableActionButtonStyle}"
+                                                            Command="{Binding DataContext.OpenEmployeeAnalyticsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Grid.Column="1"
+                                                            Margin="0,0,8,0"
+                                                            Content="Изменить"
+                                                            Style="{StaticResource TableActionButtonStyle}"
+                                                            Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Grid.Column="2"
+                                                            Margin="0,0,8,0"
+                                                            MinWidth="138"
+                                                            Content="Сбросить пароль"
+                                                            Style="{StaticResource TableActionButtonStyle}"
+                                                            Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Grid.Column="3"
+                                                            MinWidth="126"
+                                                            Content="{Binding ActivationActionDisplay}"
+                                                            Style="{StaticResource TableActionButtonStyle}"
+                                                            Visibility="{Binding DataContext.CanManageUsers, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Command="{Binding DataContext.ToggleUserActivationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <Border Padding="24"
+                                    Background="{StaticResource AppOverlayBrush}"
+                                    CornerRadius="10"
+                                    Margin="20"
+                                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Не удалось загрузить список сотрудников"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding ErrorMessage}"
+                                               Margin="0,12,0,0"
+                                               TextWrapping="Wrap"
+                                               Foreground="{StaticResource AppErrorBrush}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Padding="24"
+                                    Background="{StaticResource AppOverlayBrush}"
+                                    CornerRadius="10"
+                                    Margin="20"
+                                    Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            MaxWidth="360">
+                                    <TextBlock Text="Сотрудники не найдены"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Когда в компании появятся сотрудники, этот список будет доступен здесь."
+                                               Margin="0,12,0,0"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>
