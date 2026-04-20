@@ -305,16 +305,6 @@
 
                         <StackPanel Grid.Column="0"
                                     Margin="0,0,24,0">
-                            <TextBlock Text="Аналитика сотрудника"
-                                       FontSize="30"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       Margin="0,0,0,8" />
-                            <TextBlock Text="Просматривайте рабочую активность, ключевые показатели и распределение времени по выбранному периоду."
-                                       FontSize="15"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,22" />
 
                             <Border Background="{StaticResource PanelActiveBrush}"
                                     BorderBrush="{StaticResource BorderBrushNeutral}"
@@ -594,6 +584,9 @@
                                        FontSize="24"
                                        FontWeight="SemiBold"
                                        TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Center"
+                                       MaxWidth="420"
                                        Foreground="{StaticResource TextPrimaryBrush}" />
                             <TextBlock Text="Попробуйте изменить период или выбрать другую дату. Когда данные появятся, аналитика отобразится здесь автоматически."
                                        Margin="0,12,0,0"
