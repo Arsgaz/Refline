@@ -172,16 +172,11 @@
                                 <DockPanel LastChildFill="False">
                                     <StackPanel DockPanel.Dock="Left"
                                                 MaxWidth="720">
-                                        <TextBlock Text="Пользователи компании, роли и базовый статус аккаунтов"
-                                                   Margin="0,0,0,0"
-                                                   FontSize="18"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Пользователи компании, роли и базовый статус аккаунтов"
-                                                   Margin="0,6,0,0"
-                                                   FontSize="14"
-                                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="Список сотрудников"
+                                                Margin="0"
+                                                FontSize="18"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
