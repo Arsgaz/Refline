@@ -240,7 +240,7 @@
                                                         Binding="{Binding CreatedAtDisplay}"
                                                         Width="1.4*" />
                                     <DataGridTemplateColumn Header="Действия"
-                                                            Width="460">
+                                                            Width="484">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Left">
