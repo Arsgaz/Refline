@@ -206,7 +206,7 @@
                             BorderBrush="{StaticResource AccentBrush}"
                             BorderThickness="1"
                             HorizontalAlignment="Left">
-                        <TextBlock Text="ADMIN CONSOLE"
+                        <TextBlock Text="ПАНЕЛЬ АДМИНИСТРАТОРА
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    TextAlignment="Center"
