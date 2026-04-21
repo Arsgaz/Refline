@@ -6,116 +6,331 @@
         Height="620"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        WindowStyle="SingleBorderWindow">
-    <Grid>
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#0D1117" Offset="0" />
-                <GradientStop Color="#101827" Offset="0.5" />
-                <GradientStop Color="#0A1220" Offset="1" />
-            </LinearGradientBrush>
-        </Grid.Background>
+        WindowStyle="SingleBorderWindow"
+        Background="#0B1220">
+    <Window.Resources>
+        <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0B1220" Offset="0" />
+            <GradientStop Color="#10192B" Offset="1" />
+        </LinearGradientBrush>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.1*" />
-            <ColumnDefinition Width="0.9*" />
-        </Grid.ColumnDefinitions>
+        <SolidColorBrush x:Key="PanelBrush" Color="#111827" />
+        <SolidColorBrush x:Key="PanelActiveBrush" Color="#11263A" />
+        <SolidColorBrush x:Key="PanelHoverBrush" Color="#162033" />
+        <SolidColorBrush x:Key="BorderBrushNeutral" Color="#1E2A3D" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#DDE6F1" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#2DC7FF" />
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#63D8FF" />
+        <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#31161C" />
+        <SolidColorBrush x:Key="ErrorBorderBrush" Color="#7F1D2A" />
+        <SolidColorBrush x:Key="ErrorTextBrush" Color="#F6C7CF" />
 
-        <Grid Grid.Column="0" Margin="56">
-            <StackPanel VerticalAlignment="Center"
-                        MaxWidth="420">
-                <Border Width="124"
-                        Height="36"
-                        CornerRadius="18"
-                        Background="#16263A"
-                        BorderBrush="{StaticResource AppBorderActiveBrush}"
-                        BorderThickness="1"
-                        HorizontalAlignment="Left">
-                    <TextBlock Text="ADMIN PANEL"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource AppAccentBrush}" />
-                </Border>
+        <Style x:Key="PanelBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="28" />
+        </Style>
 
-                <TextBlock Text="Refline Admin"
-                           Margin="0,24,0,0"
-                           FontSize="42"
-                           FontWeight="SemiBold" />
-                <TextBlock Text="Единая административная консоль для управления сотрудниками и будущей аналитикой."
-                           Margin="0,18,0,0"
-                           FontSize="17"
-                           TextWrapping="Wrap"
-                           Foreground="{StaticResource AppMutedTextBrush}" />
+        <Style x:Key="FeatureCardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="18" />
+        </Style>
 
-                <Border Margin="0,36,0,0"
-                        Style="{StaticResource CardBorderStyle}"
-                        Padding="22">
-                    <StackPanel>
-                        <TextBlock Text="Что доступно сейчас"
-                                   FontSize="18"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Margin="0,16,0,0"
-                                   Text="• Авторизация через Refline.Api"
-                                   Foreground="{StaticResource AppMutedTextBrush}" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="• Просмотр списка сотрудников компании"
-                                   Foreground="{StaticResource AppMutedTextBrush}" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="• Готовый shell под аналитику, лицензии и правила"
-                                   Foreground="{StaticResource AppMutedTextBrush}" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Grid>
+        <Style x:Key="FeatureItemBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="14,12" />
+        </Style>
 
-        <Grid Grid.Column="1" Margin="40">
-            <Border Width="380"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Style="{StaticResource SectionCardBorderStyle}">
-                <StackPanel>
-                    <TextBlock Text="Вход в систему"
-                               FontSize="28"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="Используйте учётную запись администратора или менеджера."
-                               Margin="0,8,0,24"
-                               TextWrapping="Wrap"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
+        <Style x:Key="InputLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
 
-                    <TextBlock Text="Логин"
-                               Style="{StaticResource InputLabelStyle}" />
-                    <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" />
+        <Style x:Key="ReflineTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="InputBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="InputBorder" Property="Background" Value="{StaticResource PanelHoverBrush}" />
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="#29425D" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="InputBorder" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                    <TextBlock Text="Пароль"
-                               Margin="0,18,0,6"
-                               Style="{StaticResource InputLabelStyle}" />
-                    <PasswordBox x:Name="PasswordInput"
-                                 PasswordChanged="PasswordInput_OnPasswordChanged" />
+        <Style x:Key="ReflinePasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="InputBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="InputBorder" Property="Background" Value="{StaticResource PanelHoverBrush}" />
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="#29425D" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="InputBorder" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                    <Border Margin="0,18,0,0"
-                            Padding="12,10"
-                            Background="#3D1C22"
-                            BorderBrush="{StaticResource AppErrorBrush}"
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Margin="{TemplateBinding Padding}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource PanelHoverBrush}" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource PanelActiveBrush}" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Background" Value="{StaticResource PanelActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource WindowBackgroundBrush}">
+        <Grid Margin="36">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.08*" />
+                <ColumnDefinition Width="0.92*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0" Margin="22,0,36,0">
+                <StackPanel VerticalAlignment="Center"
+                            MaxWidth="430">
+                    <Border Width="132"
+                            Height="36"
+                            CornerRadius="18"
+                            Background="{StaticResource PanelActiveBrush}"
+                            BorderBrush="{StaticResource AccentBrush}"
                             BorderThickness="1"
-                            CornerRadius="8"
-                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                        <TextBlock Text="{Binding ErrorMessage}"
-                                   TextWrapping="Wrap"
-                                   Foreground="#FFD1D1" />
+                            HorizontalAlignment="Left">
+                        <TextBlock Text="ADMIN CONSOLE"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}" />
                     </Border>
 
-                    <Button Content="Войти"
-                            Height="46"
-                            Margin="0,24,0,0"
-                            Command="{Binding LoginCommand}" />
+                    <TextBlock Text="Refline Admin"
+                               Margin="0,24,0,0"
+                               FontSize="42"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
 
-                    <TextBlock Margin="0,18,0,0"
-                               Text="Подключение к API: http://localhost:8080"
-                               Foreground="{StaticResource AppMutedTextBrush}" />
+                    <TextBlock Text="Управляйте сотрудниками, просматривайте ключевые данные компании и поддерживайте рабочие правила в одном интерфейсе."
+                               Margin="0,18,0,0"
+                               FontSize="17"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+
+                    <Border Margin="0,34,0,0"
+                            Style="{StaticResource FeatureCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Что доступно в консоли"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+
+                            <Border Margin="0,16,0,0"
+                                    Style="{StaticResource FeatureItemBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Сотрудники"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Просмотр списка пользователей, ролей и состояния учётных записей."
+                                               Margin="0,6,0,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,12,0,0"
+                                    Style="{StaticResource FeatureItemBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Аналитика"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Доступ к сводным показателям по сотрудникам и командам."
+                                               Margin="0,6,0,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,12,0,0"
+                                    Style="{StaticResource FeatureItemBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Лицензии и правила"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Управление лицензиями компании и параметрами классификации активности."
+                                               Margin="0,6,0,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </Border>
+            </Grid>
+
+            <Grid Grid.Column="1" Margin="18,0,0,0">
+                <Border Width="392"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource PanelBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Вход в аккаунт"
+                                   FontSize="28"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
+
+                        <TextBlock Text="Используйте корпоративную учётную запись администратора или менеджера."
+                                   Margin="0,8,0,24"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+
+                        <TextBlock Text="Логин"
+                                   Style="{StaticResource InputLabelStyle}" />
+                        <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ReflineTextBoxStyle}" />
+
+                        <TextBlock Text="Пароль"
+                                   Margin="0,18,0,6"
+                                   Style="{StaticResource InputLabelStyle}" />
+                        <PasswordBox x:Name="PasswordInput"
+                                     PasswordChanged="PasswordInput_OnPasswordChanged"
+                                     Style="{StaticResource ReflinePasswordBoxStyle}" />
+
+                        <Border Margin="0,18,0,0"
+                                Padding="12,10"
+                                Background="{StaticResource ErrorBackgroundBrush}"
+                                BorderBrush="{StaticResource ErrorBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ErrorMessage}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource ErrorTextBrush}" />
+                        </Border>
+
+                        <Button Content="Войти"
+                                Height="46"
+                                Margin="0,24,0,0"
+                                Command="{Binding LoginCommand}"
+                                Style="{StaticResource PrimaryActionButtonStyle}" />
+
+                        <TextBlock Margin="0,16,0,0"
+                                   Text="После входа откроется административная консоль компании."
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
