@@ -11,6 +11,7 @@ namespace Refline.Api.Controllers;
 [Route("api/licenses")]
 public sealed class LicensesController(
     LicenseActivationService licenseActivationService,
+    LicenseDeviceManagementService licenseDeviceManagementService,
     IRequestUserContextService requestUserContextService) : ControllerBase
 {
     [HttpPost("activate")]
@@ -46,6 +47,39 @@ public sealed class LicensesController(
             LicenseActivationResultStatus.ActivationRevoked => Conflict(new { message = result.ErrorMessage }),
             LicenseActivationResultStatus.DeviceAssignedToAnotherUser => Conflict(new { message = result.ErrorMessage }),
             LicenseActivationResultStatus.DeviceLimitReached => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("activations/current")]
+    public async Task<ActionResult<CurrentDeviceActivationStatusResponse>> GetCurrentActivationStatus(
+        [FromQuery] string licenseKey,
+        [FromQuery] string deviceId,
+        CancellationToken cancellationToken)
+    {
+        var requestUserResult = await requestUserContextService.ResolveAsync(HttpContext, cancellationToken);
+        if (!requestUserResult.IsSuccess)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = requestUserResult.ErrorMessage });
+        }
+
+        var result = await licenseDeviceManagementService.GetCurrentActivationStatusAsync(
+            new CurrentDeviceActivationStatusRequest
+            {
+                UserId = requestUserResult.Context!.UserId,
+                LicenseKey = licenseKey,
+                DeviceId = deviceId
+            },
+            cancellationToken);
+
+        return result.Status switch
+        {
+            CurrentDeviceActivationStatusResultStatus.Success => Ok(result.Response),
+            CurrentDeviceActivationStatusResultStatus.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            CurrentDeviceActivationStatusResultStatus.UserInactive => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            CurrentDeviceActivationStatusResultStatus.LicenseNotFound => NotFound(new { message = result.ErrorMessage }),
+            CurrentDeviceActivationStatusResultStatus.CompanyMismatch => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            CurrentDeviceActivationStatusResultStatus.ActivationNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

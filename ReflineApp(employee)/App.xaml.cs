@@ -56,6 +56,25 @@ public partial class App : Application
             return false;
         }
 
+        var validationResult = _composition.LicenseActivationService.ValidateCurrentActivationAsync().GetAwaiter().GetResult();
+        if (validationResult.IsSuccess && validationResult.Value != null)
+        {
+            if (validationResult.Value.Status == Business.Identity.CurrentActivationValidationStatus.Revoked)
+            {
+                MessageBox.Show(
+                    "Это устройство было отвязано от лицензии. Выполните активацию заново.",
+                    "Активация отозвана",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (validationResult.Value.Status == Business.Identity.CurrentActivationValidationStatus.NotActivated)
+            {
+                return false;
+            }
+        }
+
         var currentUserResult = _composition.AuthenticationService.GetCurrentUserAsync().GetAwaiter().GetResult();
         return currentUserResult.IsSuccess && currentUserResult.Value != null;
     }

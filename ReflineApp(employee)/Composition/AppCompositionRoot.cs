@@ -73,7 +73,8 @@ public sealed class AppCompositionRoot
             apiAuthorizationService,
             _localActivationStateStore,
             deviceIdentityProvider,
-            CurrentUserContext);
+            CurrentUserContext,
+            _currentUserSessionStore);
 
         ActivationBootstrapService = new ActivationBootstrapService(
             _localActivationStateStore,
@@ -110,7 +111,8 @@ public sealed class AppCompositionRoot
             ActivityBusinessServer,
             ReportBusinessServer,
             ActivitySyncService,
-            WindowTracker);
+            WindowTracker,
+            LicenseActivationService);
     }
 
     public SettingsViewModel CreateSettingsViewModel()

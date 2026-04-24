@@ -88,6 +88,7 @@ builder.Services.AddScoped<ClassificationRuleReadService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenFactory>();
 builder.Services.AddScoped<LicenseActivationService>();
+builder.Services.AddScoped<LicenseDeviceManagementService>();
 
 builder.Services.AddDbContext<ReflineDbContext>(options =>
 {
