@@ -7,6 +7,7 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Refline.Business.Activity;
+using Refline.Business.Identity;
 using Refline.Business.Reports;
 using Refline.Models;
 using Refline.Services;
@@ -24,6 +25,7 @@ public class MainViewModel : ViewModelBase
     private readonly IReportBusinessServer _reportBusinessServer;
     private readonly IActivitySyncService _activitySyncService;
     private readonly WindowTracker _windowTracker;
+    private readonly ILicenseActivationService _licenseActivationService;
     private readonly Dispatcher _uiDispatcher;
 
     private bool _isTracking;
@@ -75,12 +77,14 @@ public class MainViewModel : ViewModelBase
         IActivityBusinessServer activityBusinessServer,
         IReportBusinessServer reportBusinessServer,
         IActivitySyncService activitySyncService,
-        WindowTracker windowTracker)
+        WindowTracker windowTracker,
+        ILicenseActivationService licenseActivationService)
     {
         _activityBusinessServer = activityBusinessServer;
         _reportBusinessServer = reportBusinessServer;
         _activitySyncService = activitySyncService;
         _windowTracker = windowTracker;
+        _licenseActivationService = licenseActivationService;
         _uiDispatcher = Dispatcher.CurrentDispatcher;
 
         _windowTracker.OnWindowTracked += Tracker_OnWindowTracked;
@@ -107,7 +111,7 @@ public class MainViewModel : ViewModelBase
 
         UpdatePeriodPresentation();
         LoadInitialData();
-        _ = TriggerSyncAsync("startup");
+        _ = ValidateActivationAndSyncAsync("startup");
     }
 
     public ObservableCollection<AppActivity> ReportActivities
@@ -478,7 +482,7 @@ public class MainViewModel : ViewModelBase
 
     private async void SyncTimer_Tick(object? sender, EventArgs e)
     {
-        await TriggerSyncAsync("timer");
+        await ValidateActivationAndSyncAsync("timer");
     }
 
     private void Tracker_OnWindowTracked(TrackedWindowInfo trackedWindow)
@@ -957,6 +961,43 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private async Task ValidateActivationAndSyncAsync(string trigger)
+    {
+        try
+        {
+            var validationResult = await _licenseActivationService.ValidateCurrentActivationAsync();
+            if (!validationResult.IsSuccess || validationResult.Value == null)
+            {
+                AppLogger.Log($"Activation validation failed before '{trigger}': {validationResult.Message}", "ERROR");
+                return;
+            }
+
+            if (validationResult.Value.Status == CurrentActivationValidationStatus.Unavailable)
+            {
+                AppLogger.Log($"Activation validation skipped before '{trigger}': {validationResult.Value.Message}");
+                await TriggerSyncAsync(trigger);
+                return;
+            }
+
+            if (validationResult.Value.Status == CurrentActivationValidationStatus.Revoked)
+            {
+                HandleRevokedDevice();
+                return;
+            }
+
+            if (validationResult.Value.Status == CurrentActivationValidationStatus.NotActivated)
+            {
+                return;
+            }
+
+            await TriggerSyncAsync(trigger);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Log($"Ошибка проверки activation перед '{trigger}': {ex.Message}", "ERROR");
+        }
+    }
+
     private async Task TriggerSyncAsync(string trigger)
     {
         try
@@ -978,6 +1019,40 @@ public class MainViewModel : ViewModelBase
         {
             AppLogger.Log($"Ошибка activity sync trigger '{trigger}': {ex.Message}", "ERROR");
         }
+    }
+
+    private void HandleRevokedDevice()
+    {
+        _syncTimer.Stop();
+
+        if (IsTracking)
+        {
+            _windowTracker.Stop();
+            _uiTimer.Stop();
+            var stopResult = _activityBusinessServer.StopTracking();
+            if (!stopResult.IsSuccess)
+            {
+                AppLogger.Log(stopResult.Message, "ERROR");
+            }
+
+            IsTracking = false;
+        }
+
+        StartStopButtonContent = "▶ Старт";
+        StatusText = "Статус: устройство отвязано от лицензии";
+        _sessionTime = TimeSpan.Zero;
+        SessionTimeString = _sessionTime.ToString(@"hh\:mm\:ss");
+
+        _uiDispatcher.Invoke(() =>
+        {
+            MessageBox.Show(
+                "Это устройство было отвязано от лицензии. Выполните активацию заново.",
+                "Активация отозвана",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            Application.Current.Shutdown();
+        });
     }
 
     private sealed record ReportSnapshot(

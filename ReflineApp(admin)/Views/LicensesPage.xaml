@@ -102,6 +102,22 @@
         <Style x:Key="SecondaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ReflineActionButton}">
             <Setter Property="Height" Value="44" />
         </Style>
+
+        <Style x:Key="DevicesGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="RowBackground" Value="{StaticResource PanelBrush}" />
+            <Setter Property="AlternatingRowBackground" Value="{StaticResource PageSecondaryBrush}" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BorderBrushNeutral}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{StaticResource BorderBrushNeutral}" />
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="{StaticResource PageBackgroundBrush}">
@@ -185,6 +201,7 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
@@ -261,6 +278,98 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                 </Grid>
+
+                                <Border Grid.Row="3"
+                                        Margin="0,24,0,0"
+                                        Style="{StaticResource PagePanelBorderStyle}"
+                                        Padding="18"
+                                        Background="{StaticResource PanelActiveBrush}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                                            <TextBlock Text="Активированные устройства"
+                                                       Style="{StaticResource SectionTitleTextStyle}" />
+                                            <TextBlock Text="Список устройств текущей лицензии компании. Отозванные устройства не занимают слот лицензии."
+                                                       Style="{StaticResource SectionDescriptionTextStyle}" />
+                                        </StackPanel>
+
+                                        <Border Grid.Row="1"
+                                                Margin="0,0,0,16"
+                                                Padding="14,12"
+                                                Background="{StaticResource PanelBrush}"
+                                                BorderBrush="{StaticResource BorderBrushNeutral}"
+                                                BorderThickness="1"
+                                                CornerRadius="10"
+                                                Visibility="{Binding HasDevicesError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="{Binding DevicesErrorMessage}"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </Border>
+
+                                        <Grid Grid.Row="2">
+                                            <DataGrid ItemsSource="{Binding Devices}"
+                                                      Style="{StaticResource DevicesGridStyle}"
+                                                      Visibility="{Binding HasDevices, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                      IsReadOnly="True"
+                                                      RowHeaderWidth="0"
+                                                      MinRowHeight="46"
+                                                      SelectionMode="Single">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Пользователь"
+                                                                        Binding="{Binding UserFullName}"
+                                                                        Width="1.4*" />
+                                                    <DataGridTextColumn Header="Логин"
+                                                                        Binding="{Binding UserLogin}"
+                                                                        Width="*" />
+                                                    <DataGridTextColumn Header="MachineName"
+                                                                        Binding="{Binding MachineName}"
+                                                                        Width="1.2*" />
+                                                    <DataGridTextColumn Header="DeviceId"
+                                                                        Binding="{Binding DeviceId}"
+                                                                        Width="1.5*" />
+                                                    <DataGridTextColumn Header="Активировано"
+                                                                        Binding="{Binding ActivatedAtDisplay}"
+                                                                        Width="*" />
+                                                    <DataGridTextColumn Header="Last seen"
+                                                                        Binding="{Binding LastSeenAtDisplay}"
+                                                                        Width="*" />
+                                                    <DataGridTextColumn Header="Статус"
+                                                                        Binding="{Binding StatusDisplay}"
+                                                                        Width="*" />
+                                                    <DataGridTemplateColumn Header=""
+                                                                            Width="1.1*">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <Button Content="Отозвать устройство"
+                                                                        Style="{StaticResource SecondaryActionButtonStyle}"
+                                                                        Command="{Binding DataContext.RevokeDeviceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        IsEnabled="{Binding CanRevoke}"
+                                                                        MinWidth="150" />
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+
+                                            <Border Padding="18"
+                                                    Background="{StaticResource PanelBrush}"
+                                                    BorderBrush="{StaticResource BorderBrushNeutral}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="10"
+                                                    Visibility="{Binding IsDevicesEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="Для текущей лицензии пока нет активированных устройств."
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
                             </Grid>
 
                             <Border Padding="24"

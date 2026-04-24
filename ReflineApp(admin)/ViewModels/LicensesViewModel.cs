@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Collections.ObjectModel;
 using Refline.Admin.Business.Identity;
 using Refline.Admin.Models;
 using Refline.Admin.Services.Api;
@@ -13,9 +14,12 @@ public sealed class LicensesViewModel : ViewModelBase
     private readonly ICompanyLicenseService _companyLicenseService;
     private readonly CurrentSessionContext _currentSessionContext;
     private CompanyLicense? _license;
+    private ObservableCollection<LicenseDeviceActivation> _devices = new();
     private string _errorMessage = string.Empty;
+    private string _devicesErrorMessage = string.Empty;
     private string _copyStatusMessage = string.Empty;
     private bool _isLoading;
+    private bool _isRevokingDevice;
     private bool _hasLoaded;
     private readonly DispatcherTimer _autoRefreshTimer;
 
@@ -26,6 +30,7 @@ public sealed class LicensesViewModel : ViewModelBase
 
         RefreshCommand = new RelayCommand(async () => await LoadAsync(forceReload: true), () => !IsLoading && CanViewLicenses);
         CopyLicenseKeyCommand = new RelayCommand(CopyLicenseKey, () => !IsLoading && HasLicense);
+        RevokeDeviceCommand = new RelayCommand(async parameter => await RevokeDeviceAsync(parameter as LicenseDeviceActivation), CanRevokeDevice);
 
         _autoRefreshTimer = new DispatcherTimer
         {
@@ -38,6 +43,8 @@ public sealed class LicensesViewModel : ViewModelBase
     public ICommand RefreshCommand { get; }
 
     public ICommand CopyLicenseKeyCommand { get; }
+
+    public ICommand RevokeDeviceCommand { get; }
 
     public CompanyLicense? License
     {
@@ -70,6 +77,32 @@ public sealed class LicensesViewModel : ViewModelBase
         private set => SetProperty(ref _copyStatusMessage, value);
     }
 
+    public ObservableCollection<LicenseDeviceActivation> Devices
+    {
+        get => _devices;
+        private set
+        {
+            if (SetProperty(ref _devices, value))
+            {
+                OnPropertyChanged(nameof(HasDevices));
+                OnPropertyChanged(nameof(IsDevicesEmptyStateVisible));
+            }
+        }
+    }
+
+    public string DevicesErrorMessage
+    {
+        get => _devicesErrorMessage;
+        private set
+        {
+            if (SetProperty(ref _devicesErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasDevicesError));
+                OnPropertyChanged(nameof(IsDevicesEmptyStateVisible));
+            }
+        }
+    }
+
     public bool IsLoading
     {
         get => _isLoading;
@@ -89,7 +122,13 @@ public sealed class LicensesViewModel : ViewModelBase
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
+    public bool HasDevices => Devices.Count > 0;
+
+    public bool HasDevicesError => !string.IsNullOrWhiteSpace(DevicesErrorMessage);
+
     public bool IsEmptyStateVisible => !IsLoading && !HasLicense && !HasError;
+
+    public bool IsDevicesEmptyStateVisible => !IsLoading && !HasDevices && !HasDevicesError;
 
     public string LicenseTypeDisplay => License?.LicenseType switch
     {
@@ -233,6 +272,7 @@ public sealed class LicensesViewModel : ViewModelBase
 
         IsLoading = true;
         ErrorMessage = string.Empty;
+        DevicesErrorMessage = string.Empty;
         CopyStatusMessage = string.Empty;
 
         try
@@ -249,6 +289,7 @@ public sealed class LicensesViewModel : ViewModelBase
             }
 
             License = result.Value;
+            await LoadDevicesAsync();
             _hasLoaded = true;
         }
         finally
@@ -285,6 +326,75 @@ public sealed class LicensesViewModel : ViewModelBase
         }
     }
 
+    private async Task LoadDevicesAsync()
+    {
+        var devicesResult = await _companyLicenseService.GetLicenseDevicesAsync();
+        if (!devicesResult.IsSuccess)
+        {
+            Devices = new ObservableCollection<LicenseDeviceActivation>();
+            DevicesErrorMessage = string.IsNullOrWhiteSpace(devicesResult.Message)
+                ? "Не удалось загрузить активированные устройства."
+                : devicesResult.Message;
+            return;
+        }
+
+        Devices = new ObservableCollection<LicenseDeviceActivation>(devicesResult.Value ?? Array.Empty<LicenseDeviceActivation>());
+        DevicesErrorMessage = string.Empty;
+    }
+
+    private bool CanRevokeDevice(object? parameter)
+    {
+        return !IsLoading &&
+               !_isRevokingDevice &&
+               parameter is LicenseDeviceActivation activation &&
+               activation.CanRevoke;
+    }
+
+    private async Task RevokeDeviceAsync(LicenseDeviceActivation? activation)
+    {
+        if (activation is null || !activation.CanRevoke || _isRevokingDevice)
+        {
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            $"Отозвать устройство '{activation.MachineName}' для пользователя '{activation.UserFullName}'?",
+            "Отзыв устройства",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _isRevokingDevice = true;
+        CommandManager.InvalidateRequerySuggested();
+
+        try
+        {
+            var revokeResult = await _companyLicenseService.RevokeLicenseDeviceAsync(activation.ActivationId);
+            if (!revokeResult.IsSuccess)
+            {
+                MessageBox.Show(
+                    string.IsNullOrWhiteSpace(revokeResult.Message)
+                        ? "Не удалось отозвать устройство."
+                        : revokeResult.Message,
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            await LoadAsync(forceReload: true);
+        }
+        finally
+        {
+            _isRevokingDevice = false;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
     private void RaiseStateChanges()
     {
         OnPropertyChanged(nameof(HasLicense));
@@ -297,6 +407,9 @@ public sealed class LicensesViewModel : ViewModelBase
         OnPropertyChanged(nameof(RemainingTimeDisplay));
         OnPropertyChanged(nameof(DeviceLimitDisplay));
         OnPropertyChanged(nameof(ActivatedDevicesDisplay));
+        OnPropertyChanged(nameof(HasDevices));
+        OnPropertyChanged(nameof(HasDevicesError));
+        OnPropertyChanged(nameof(IsDevicesEmptyStateVisible));
         CommandManager.InvalidateRequerySuggested();
     }
 }

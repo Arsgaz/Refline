@@ -6,4 +6,6 @@ namespace Refline.Admin.Services.Api;
 public interface ICompanyLicenseService
 {
     Task<OperationResult<CompanyLicense?>> GetCompanyLicenseAsync(long companyId, CancellationToken cancellationToken = default);
+    Task<OperationResult<IReadOnlyList<LicenseDeviceActivation>>> GetLicenseDevicesAsync(CancellationToken cancellationToken = default);
+    Task<OperationResult> RevokeLicenseDeviceAsync(long activationId, CancellationToken cancellationToken = default);
 }

@@ -9,7 +9,9 @@ using Refline.Api.Services.Auth;
 
 namespace Refline.Api.Services.Admin;
 
-public sealed class AdminUserManagementService(ReflineDbContext dbContext)
+public sealed class AdminUserManagementService(
+    ReflineDbContext dbContext,
+    Services.Licenses.LicenseDeviceManagementService licenseDeviceManagementService)
 {
     public async Task<AdminUserManagementResult<CreateAdminUserResponseDto>> CreateUserAsync(
         AdminAccessContext accessContext,
@@ -301,6 +303,7 @@ public sealed class AdminUserManagementService(ReflineDbContext dbContext)
         }
 
         user.IsActive = false;
+        await licenseDeviceManagementService.RevokeActiveUserDevicesAsync(user.Id, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return AdminUserManagementResult<AdminManagedUserDto>.Success(MapUser(user));

@@ -76,6 +76,82 @@ public sealed class CompanyLicenseApiService : ICompanyLicenseService
         }
     }
 
+    public async Task<OperationResult<IReadOnlyList<LicenseDeviceActivation>>> GetLicenseDevicesAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentSessionContext.CurrentUser is null)
+        {
+            return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Failure("Сессия администратора не найдена.");
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "api/admin/licenses/devices");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            var devices = await response.Content.ReadFromJsonAsync<List<LicenseDeviceActivation>>(_jsonOptions, cancellationToken);
+            return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Success(devices ?? new List<LicenseDeviceActivation>());
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult<IReadOnlyList<LicenseDeviceActivation>>.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
+    public async Task<OperationResult> RevokeLicenseDeviceAsync(long activationId, CancellationToken cancellationToken = default)
+    {
+        if (activationId <= 0)
+        {
+            return OperationResult.Failure("Некорректный идентификатор активации.");
+        }
+
+        if (_currentSessionContext.CurrentUser is null)
+        {
+            return OperationResult.Failure("Сессия администратора не найдена.");
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"api/admin/licenses/devices/{activationId}/revoke");
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+                return OperationResult.Failure(errorMessage, $"HTTP_{(int)response.StatusCode}");
+            }
+
+            return OperationResult.Success();
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult.Failure($"API недоступен: {ex.Message}", "API_UNAVAILABLE");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult.Failure($"Превышено время ожидания API: {ex.Message}", "API_TIMEOUT");
+        }
+    }
+
     private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         try
