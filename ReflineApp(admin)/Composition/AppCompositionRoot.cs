@@ -19,7 +19,7 @@ public sealed class AppCompositionRoot
     {
         var httpClient = new HttpClient
         {
-            BaseAddress = new Uri("http://localhost:8080/"),
+            BaseAddress = new Uri("http://refline.local:8080/"),
             Timeout = TimeSpan.FromSeconds(15)
         };
 
