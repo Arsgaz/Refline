@@ -13,4 +13,6 @@ public sealed class Company
     public ICollection<User> Users { get; set; } = new List<User>();
 
     public ICollection<License> Licenses { get; set; } = new List<License>();
+
+    public ICollection<ActivityClassificationRule> ActivityClassificationRules { get; set; } = new List<ActivityClassificationRule>();
 }

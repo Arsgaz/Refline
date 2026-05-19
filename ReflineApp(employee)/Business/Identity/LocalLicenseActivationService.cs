@@ -175,4 +175,14 @@ public class LocalLicenseActivationService : ILicenseActivationService
             !string.IsNullOrWhiteSpace(state.CurrentLicenseKey) &&
             !string.IsNullOrWhiteSpace(state.CurrentDeviceId));
     }
+
+    public Task<OperationResult<CurrentActivationValidationResult>> ValidateCurrentActivationAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(OperationResult<CurrentActivationValidationResult>.Success(
+            new CurrentActivationValidationResult
+            {
+                Status = CurrentActivationValidationStatus.Valid,
+                Message = "Локальная активация считается действительной."
+            }));
+    }
 }

@@ -17,6 +17,10 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
 
     public DbSet<ActivityRecord> ActivityRecords => Set<ActivityRecord>();
 
+    public DbSet<ActivityClassificationRule> ActivityClassificationRules => Set<ActivityClassificationRule>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReflineDbContext).Assembly);
@@ -48,6 +52,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 Role = Enums.UserRole.Admin,
                 ManagerId = null,
                 IsActive = true,
+                MustChangePassword = false,
                 CreatedAt = companyCreatedAt
             },
             new User
@@ -60,6 +65,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 Role = Enums.UserRole.Manager,
                 ManagerId = 1,
                 IsActive = true,
+                MustChangePassword = false,
                 CreatedAt = companyCreatedAt
             },
             new User
@@ -72,6 +78,7 @@ public sealed class ReflineDbContext(DbContextOptions<ReflineDbContext> options)
                 Role = Enums.UserRole.Employee,
                 ManagerId = 2,
                 IsActive = true,
+                MustChangePassword = false,
                 CreatedAt = companyCreatedAt
             });
 

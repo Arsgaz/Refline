@@ -22,6 +22,58 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+        modelBuilder.Entity("Refline.Api.Entities.ActivityClassificationRule", b =>
+        {
+            b.Property<long>("Id")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bigint");
+
+            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+            b.Property<string>("AppNamePattern")
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnType("character varying(200)");
+
+            b.Property<string>("Category")
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasColumnType("character varying(32)");
+
+            b.Property<long>("CompanyId")
+                .HasColumnType("bigint");
+
+            b.Property<DateTimeOffset>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW()");
+
+            b.Property<bool>("IsEnabled")
+                .HasColumnType("boolean");
+
+            b.Property<int>("Priority")
+                .HasColumnType("integer");
+
+            b.Property<DateTimeOffset>("UpdatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW()");
+
+            b.Property<string>("WindowTitlePattern")
+                .HasMaxLength(500)
+                .HasColumnType("character varying(500)");
+
+            b.HasKey("Id");
+
+            b.HasIndex("CompanyId");
+
+            b.HasIndex("CompanyId", "IsEnabled");
+
+            b.HasIndex("CompanyId", "Priority");
+
+            b.ToTable("activity_classification_rules", (string)null);
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.ActivityRecord", b =>
         {
             b.Property<long>("Id")
@@ -238,6 +290,50 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             });
         });
 
+        modelBuilder.Entity("Refline.Api.Entities.RefreshToken", b =>
+        {
+            b.Property<long>("Id")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bigint");
+
+            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+            b.Property<DateTimeOffset>("CreatedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("ExpiresAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<long?>("ReplacedByTokenId")
+                .HasColumnType("bigint");
+
+            b.Property<long?>("ReplacedTokenId")
+                .HasColumnType("bigint");
+
+            b.Property<DateTimeOffset?>("RevokedAt")
+                .HasColumnType("timestamp with time zone");
+
+            b.Property<string>("TokenHash")
+                .IsRequired()
+                .HasMaxLength(128)
+                .HasColumnType("character varying(128)");
+
+            b.Property<long>("UserId")
+                .HasColumnType("bigint");
+
+            b.HasKey("Id");
+
+            b.HasIndex("ReplacedByTokenId")
+                .IsUnique();
+
+            b.HasIndex("TokenHash")
+                .IsUnique();
+
+            b.HasIndex("UserId", "ExpiresAt");
+
+            b.ToTable("refresh_tokens", (string)null);
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.User", b =>
         {
             b.Property<long>("Id")
@@ -269,6 +365,11 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
             b.Property<long?>("ManagerId")
                 .HasColumnType("bigint");
+
+            b.Property<bool>("MustChangePassword")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("boolean")
+                .HasDefaultValue(false);
 
             b.Property<string>("PasswordHash")
                 .IsRequired()
@@ -302,6 +403,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     FullName = "System Admin",
                     IsActive = true,
                     Login = "admin",
+                    MustChangePassword = false,
                     PasswordHash = "240BE518FABD2724DDB6F04EEB1DA5967448D7E831C08C8FA822809F74C720A9",
                     Role = "Admin"
                 },
@@ -314,6 +416,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "manager",
                     ManagerId = 1L,
+                    MustChangePassword = false,
                     PasswordHash = "866485796CFA8D7C0CF7111640205B83076433547577511D81F8030AE99ECEA5",
                     Role = "Manager"
                 },
@@ -326,6 +429,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                     IsActive = true,
                     Login = "employee",
                     ManagerId = 2L,
+                    MustChangePassword = false,
                     PasswordHash = "5B2F8E27E2E5B4081C03CE70B288C87BD1263140CBD1BD9AE078123509B7CAFF",
                     Role = "Employee"
                 });
@@ -340,6 +444,17 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
                 .IsRequired();
 
             b.Navigation("User");
+        });
+
+        modelBuilder.Entity("Refline.Api.Entities.ActivityClassificationRule", b =>
+        {
+            b.HasOne("Refline.Api.Entities.Company", "Company")
+                .WithMany("ActivityClassificationRules")
+                .HasForeignKey("CompanyId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("Company");
         });
 
         modelBuilder.Entity("Refline.Api.Entities.DeviceActivation", b =>
@@ -371,6 +486,23 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
             b.Navigation("Company");
         });
 
+        modelBuilder.Entity("Refline.Api.Entities.RefreshToken", b =>
+        {
+            b.HasOne("Refline.Api.Entities.RefreshToken", "ReplacedByToken")
+                .WithOne("ReplacedToken")
+                .HasForeignKey("Refline.Api.Entities.RefreshToken", "ReplacedByTokenId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne("Refline.Api.Entities.User", "User")
+                .WithMany("RefreshTokens")
+                .HasForeignKey("UserId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("ReplacedByToken");
+            b.Navigation("User");
+        });
+
         modelBuilder.Entity("Refline.Api.Entities.User", b =>
         {
             b.HasOne("Refline.Api.Entities.Company", "Company")
@@ -390,6 +522,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("Refline.Api.Entities.Company", b =>
         {
+            b.Navigation("ActivityClassificationRules");
             b.Navigation("Licenses");
             b.Navigation("Users");
         });
@@ -403,6 +536,7 @@ partial class ReflineDbContextModelSnapshot : ModelSnapshot
         {
             b.Navigation("ActivityRecords");
             b.Navigation("DeviceActivations");
+            b.Navigation("RefreshTokens");
             b.Navigation("Subordinates");
         });
 #pragma warning restore 612, 618

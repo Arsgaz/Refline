@@ -26,9 +26,13 @@ public sealed class User
 
     public bool IsActive { get; set; } = true;
 
+    public bool MustChangePassword { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public ICollection<DeviceActivation> DeviceActivations { get; set; } = new List<DeviceActivation>();
 
     public ICollection<ActivityRecord> ActivityRecords { get; set; } = new List<ActivityRecord>();
+
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

@@ -45,45 +45,50 @@ public class ActivityClassificationService : IActivityClassificationService
 
     public ActivityCategory Classify(string appName, string? windowTitle)
     {
+        return ClassifyDetailed(appName, windowTitle).Category;
+    }
+
+    public ActivityClassificationDecision ClassifyDetailed(string appName, string? windowTitle)
+    {
         var normalizedAppName = NormalizeText(appName);
         var normalizedTitle = NormalizeText(windowTitle);
 
         if (string.IsNullOrWhiteSpace(normalizedAppName) && string.IsNullOrWhiteSpace(normalizedTitle))
         {
-            return ActivityCategory.Unknown;
+            return CreateDecision(ActivityCategory.Unknown, ActivityClassificationSource.FallbackUnknown);
         }
 
         if (ContainsReflineWorkContext(normalizedAppName, normalizedTitle))
         {
-            return ActivityCategory.Work;
+            return CreateDecision(ActivityCategory.Work, ActivityClassificationSource.BuiltIn);
         }
 
         if (ContainsAny(normalizedAppName, normalizedTitle, SystemMarkers))
         {
-            return ActivityCategory.System;
+            return CreateDecision(ActivityCategory.System, ActivityClassificationSource.BuiltIn);
         }
 
         if (ContainsAny(normalizedAppName, normalizedTitle, WorkMarkers))
         {
-            return ActivityCategory.Work;
+            return CreateDecision(ActivityCategory.Work, ActivityClassificationSource.BuiltIn);
         }
 
         if (ContainsAny(normalizedAppName, normalizedTitle, CommunicationMarkers))
         {
-            return ActivityCategory.Communication;
+            return CreateDecision(ActivityCategory.Communication, ActivityClassificationSource.BuiltIn);
         }
 
         if (ContainsAny(normalizedAppName, normalizedTitle, EntertainmentMarkers))
         {
-            return ActivityCategory.Entertainment;
+            return CreateDecision(ActivityCategory.Entertainment, ActivityClassificationSource.BuiltIn);
         }
 
         if (ContainsAny(normalizedAppName, normalizedTitle, ConditionalWorkMarkers))
         {
-            return ActivityCategory.ConditionalWork;
+            return CreateDecision(ActivityCategory.ConditionalWork, ActivityClassificationSource.BuiltIn);
         }
 
-        return ActivityCategory.Unknown;
+        return CreateDecision(ActivityCategory.Unknown, ActivityClassificationSource.FallbackUnknown);
     }
 
     private static bool ContainsReflineWorkContext(string appName, string windowTitle)
@@ -142,5 +147,14 @@ public class ActivityClassificationService : IActivityClassificationService
                 value.Trim().ToLowerInvariant()
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Trim();
+    }
+
+    private static ActivityClassificationDecision CreateDecision(ActivityCategory category, ActivityClassificationSource source)
+    {
+        return new ActivityClassificationDecision
+        {
+            Category = category,
+            Source = source
+        };
     }
 }

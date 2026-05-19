@@ -1,6 +1,7 @@
 using System.Windows;
 using Refline.Composition;
 using Refline.Utils;
+using Refline.Views;
 
 namespace Refline;
 
@@ -8,19 +9,19 @@ public partial class App : Application
 {
     private AppCompositionRoot? _composition;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _composition = new AppCompositionRoot();
-        var bootstrapResult = _composition.BootstrapIdentityAsync().GetAwaiter().GetResult();
+        var bootstrapResult = await _composition.BootstrapIdentityAsync();
         if (!bootstrapResult.IsSuccess)
         {
             AppLogger.Log($"Identity bootstrap warning: {bootstrapResult.Message}");
         }
 
-        if (ShouldOpenMainWindow())
+        if (await ShouldOpenMainWindowAsync() && await CanProceedAfterPasswordChangeAsync())
         {
             OpenMainWindow();
             AppLogger.Log("Application started.");
@@ -31,7 +32,7 @@ public partial class App : Application
         var loginWindow = new LoginActivationWindow(loginViewModel);
         var loginResult = loginWindow.ShowDialog();
 
-        if (loginResult == true && ShouldOpenMainWindow())
+        if (loginResult == true && await ShouldOpenMainWindowAsync() && await CanProceedAfterPasswordChangeAsync())
         {
             OpenMainWindow();
             AppLogger.Log("Application started after login activation.");
@@ -42,21 +43,62 @@ public partial class App : Application
         Shutdown();
     }
 
-    private bool ShouldOpenMainWindow()
+    private async Task<bool> ShouldOpenMainWindowAsync()
     {
         if (_composition == null)
         {
             return false;
         }
 
-        var activationResult = _composition.LicenseActivationService.IsActivatedAsync().GetAwaiter().GetResult();
+        var activationResult = await _composition.LicenseActivationService.IsActivatedAsync();
         if (!activationResult.IsSuccess || !activationResult.Value)
         {
             return false;
         }
 
-        var currentUserResult = _composition.AuthenticationService.GetCurrentUserAsync().GetAwaiter().GetResult();
+        var validationResult = await _composition.LicenseActivationService.ValidateCurrentActivationAsync();
+        if (validationResult.IsSuccess && validationResult.Value != null)
+        {
+            if (validationResult.Value.Status == Business.Identity.CurrentActivationValidationStatus.Revoked)
+            {
+                MessageBox.Show(
+                    "Это устройство было отвязано от лицензии. Выполните активацию заново.",
+                    "Активация отозвана",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (validationResult.Value.Status == Business.Identity.CurrentActivationValidationStatus.NotActivated)
+            {
+                return false;
+            }
+        }
+
+        var currentUserResult = await _composition.AuthenticationService.GetCurrentUserAsync();
         return currentUserResult.IsSuccess && currentUserResult.Value != null;
+    }
+
+    private async Task<bool> CanProceedAfterPasswordChangeAsync()
+    {
+        if (_composition == null)
+        {
+            return false;
+        }
+
+        var currentUserResult = await _composition.AuthenticationService.GetCurrentUserAsync();
+        if (!currentUserResult.IsSuccess || currentUserResult.Value == null)
+        {
+            return false;
+        }
+
+        if (!currentUserResult.Value.MustChangePassword)
+        {
+            return true;
+        }
+
+        var changePasswordWindow = new ChangePasswordWindow(_composition.CreateChangePasswordViewModel());
+        return changePasswordWindow.ShowDialog() == true;
     }
 
     private void OpenMainWindow()
@@ -76,7 +118,7 @@ public partial class App : Application
         mainWindow.Show();
     }
 
-    public void ShowLoginWindowAfterLogout(Window currentWindow)
+    public async void ShowLoginWindowAfterLogout(Window currentWindow)
     {
         if (_composition == null)
         {
@@ -93,7 +135,7 @@ public partial class App : Application
 
         currentWindow.Close();
 
-        if (loginResult == true && ShouldOpenMainWindow())
+        if (loginResult == true && await ShouldOpenMainWindowAsync() && await CanProceedAfterPasswordChangeAsync())
         {
             OpenMainWindow();
             AppLogger.Log("Application restarted after logout/login.");

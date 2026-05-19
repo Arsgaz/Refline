@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Refline.Business.Activity;
 using Refline.Business.Identity;
 using Refline.Utils;
 
@@ -8,6 +9,8 @@ public class LoginActivationViewModel : ViewModelBase
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly ILicenseActivationService _licenseActivationService;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
+    private readonly ICompanyActivityClassificationService _companyClassificationService;
 
     private string _login = string.Empty;
     private string _password = string.Empty;
@@ -17,10 +20,14 @@ public class LoginActivationViewModel : ViewModelBase
 
     public LoginActivationViewModel(
         IAuthenticationService authenticationService,
-        ILicenseActivationService licenseActivationService)
+        ILicenseActivationService licenseActivationService,
+        ICurrentUserSessionStore currentUserSessionStore,
+        ICompanyActivityClassificationService companyActivityClassificationService)
     {
         _authenticationService = authenticationService;
         _licenseActivationService = licenseActivationService;
+        _currentUserSessionStore = currentUserSessionStore;
+        _companyClassificationService = companyActivityClassificationService;
         LoginAndActivateCommand = new RelayCommand(
             async () => await LoginAndActivateAsync(),
             () => !IsBusy);
@@ -126,6 +133,22 @@ public class LoginActivationViewModel : ViewModelBase
             {
                 ErrorMessage = activationResult.Message;
                 return;
+            }
+
+            var currentUser = _currentUserSessionStore.GetCurrentUser();
+            if (currentUser != null)
+            {
+                var restoreRulesResult = await _companyClassificationService.RestoreCachedRulesAsync(currentUser.CompanyId);
+                if (!restoreRulesResult.IsSuccess)
+                {
+                    AppLogger.Log(restoreRulesResult.Message, "ERROR");
+                }
+
+                var refreshRulesResult = await _companyClassificationService.RefreshRulesAsync(currentUser.CompanyId);
+                if (!refreshRulesResult.IsSuccess)
+                {
+                    AppLogger.Log($"Company rules refresh after login skipped: {refreshRulesResult.Message}", "ERROR");
+                }
             }
 
             LoginSucceeded?.Invoke();

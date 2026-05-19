@@ -4,5 +4,9 @@ public enum AuthResultStatus
 {
     Success,
     InvalidCredentials,
-    InactiveUser
+    InactiveUser,
+    UserNotFound,
+    ValidationFailed,
+    Forbidden,
+    TokenExpired
 }

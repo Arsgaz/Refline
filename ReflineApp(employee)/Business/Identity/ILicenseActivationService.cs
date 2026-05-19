@@ -9,4 +9,5 @@ public interface ILicenseActivationService
     Task<OperationResult<DeviceActivation>> ActivateAsync(Guid userId, string licenseKey);
     Task<OperationResult<LocalActivationState>> GetLocalActivationStateAsync();
     Task<OperationResult<bool>> IsActivatedAsync();
+    Task<OperationResult<CurrentActivationValidationResult>> ValidateCurrentActivationAsync(CancellationToken cancellationToken = default);
 }

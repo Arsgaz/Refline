@@ -65,4 +65,9 @@ public class LocalAuthenticationService : IAuthenticationService
 
         return OperationResult<User?>.Success(userResult.Value);
     }
+
+    public Task<OperationResult> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword)
+    {
+        return Task.FromResult(OperationResult.Failure("Локальная смена пароля не поддерживается."));
+    }
 }

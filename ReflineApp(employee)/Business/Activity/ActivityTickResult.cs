@@ -8,4 +8,5 @@ public sealed class ActivityTickResult
     public AppActivity? UpdatedActivity { get; init; }
     public bool IsNewActivity { get; init; }
     public ActivitySummary Summary { get; init; } = new();
+    public bool IsTrackingSuppressed { get; init; }
 }

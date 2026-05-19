@@ -75,7 +75,7 @@
 
                 <Button Command="{Binding LoginAndActivateCommand}"
                         Height="48"
-                        Style="{StaticResource AnimatedButton}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
                         BorderBrush="#2DC7FF"
                         Foreground="#DDE6F1"
                         Background="Transparent"

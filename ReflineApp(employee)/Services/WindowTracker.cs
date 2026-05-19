@@ -1,12 +1,27 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Refline.Models;
 using System.Windows.Threading;
 
 namespace Refline.Services
 {
     public class WindowTracker
     {
+        private static readonly HashSet<string> ReflineProcessNames = new(StringComparer.Ordinal)
+        {
+            "Refline",
+            "ReflineAdmin"
+        };
+
+        private static readonly HashSet<string> ReflineExecutableNames = new(StringComparer.Ordinal)
+        {
+            "Refline.exe",
+            "ReflineAdmin.exe"
+        };
+
         // Импорт функции GetForegroundWindow из библиотеки user32.dll
         // Эта функция возвращает дескриптор (handle) активного окна, с которым в данный момент работает пользователь.
         [DllImport("user32.dll")]
@@ -17,6 +32,9 @@ namespace Refline.Services
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
         // Таймер для периодической проверки активного окна каждую секунду.
         // Используем DispatcherTimer, чтобы безопасно обновлять UI, если потребуется, и работать в основном потоке WPF.
         private readonly DispatcherTimer _timer;
@@ -26,7 +44,7 @@ namespace Refline.Services
         private const int IdleTimeoutSeconds = 5 * 60; // 5 минут без изменения окна = простой (Idle)
 
         // Событие, которое вызывается каждую секунду для передачи данных об активном окне
-        public event Action<string, bool> OnWindowTracked = delegate { };
+        public event Action<TrackedWindowInfo> OnWindowTracked = delegate { };
 
         public WindowTracker()
         {
@@ -74,14 +92,16 @@ namespace Refline.Services
             if (isIdle)
             {
                 // Передаем статус "простоя", чтобы таймер времени на приложение был "на паузе".
-                OnWindowTracked("Idle", true);
+                OnWindowTracked(new TrackedWindowInfo
+                {
+                    WindowTitle = "Idle",
+                    IsIdle = true
+                });
             }
             else
             {
-                // Передаем название текущего активного окна и статус "не простой".
-                // Если заголовок пустой, можно обозначить как "Unknown".
-                string titleToReport = string.IsNullOrWhiteSpace(currentTitle) ? "Unknown/Desktop" : currentTitle;
-                OnWindowTracked(titleToReport, false);
+                var windowInfo = GetActiveWindowInfo(currentTitle);
+                OnWindowTracked(windowInfo);
             }
         }
 
@@ -103,6 +123,59 @@ namespace Refline.Services
             }
 
             return string.Empty;
+        }
+
+        private TrackedWindowInfo GetActiveWindowInfo(string currentTitle)
+        {
+            IntPtr hWnd = GetForegroundWindow();
+            string processName = string.Empty;
+            string executableName = string.Empty;
+
+            if (hWnd != IntPtr.Zero)
+            {
+                try
+                {
+                    GetWindowThreadProcessId(hWnd, out var processId);
+                    if (processId > 0)
+                    {
+                        using var process = Process.GetProcessById((int)processId);
+                        processName = process.ProcessName ?? string.Empty;
+                        executableName = process.MainModule?.ModuleName ?? string.Empty;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            string titleToReport = string.IsNullOrWhiteSpace(currentTitle) ? "Unknown/Desktop" : currentTitle;
+            var ignoreReason = GetReflineIgnoreReason(processName, executableName);
+
+            return new TrackedWindowInfo
+            {
+                WindowTitle = titleToReport,
+                ProcessName = processName,
+                ExecutableName = executableName,
+                IsIdle = false,
+                IsReflineOwnedWindow = ignoreReason != null,
+                IgnoreReason = ignoreReason
+            };
+        }
+
+        private static string? GetReflineIgnoreReason(string processName, string executableName)
+        {
+            var process = processName ?? string.Empty;
+            var executable = executableName ?? string.Empty;
+
+            // Служебные окна Refline определяем только по имени процесса/EXE.
+            // Заголовок окна использовать нельзя: IDE и другие приложения могут
+            // содержать "Refline" в WindowTitle и должны корректно трекаться.
+            if (ReflineProcessNames.Contains(process) || ReflineExecutableNames.Contains(executable))
+            {
+                return "process/exe относится к Refline";
+            }
+
+            return null;
         }
     }
 }

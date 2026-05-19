@@ -1,7 +1,5 @@
-﻿using System;
-using System.Windows;
+using System;
 using System.Windows.Controls;
-using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Refline.ViewModels;
 
@@ -15,39 +13,25 @@ namespace Refline.Views
             Loaded += ReportsPage_Loaded;
         }
 
-        private void ShowReport_Click(object sender, RoutedEventArgs e)
+        private void ReportsPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            ShowReportButton.Visibility = Visibility.Collapsed;
-            ReportArea.IsHitTestVisible = true;
-
-            var fade = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(350)));
-            ReportArea.BeginAnimation(UIElement.OpacityProperty, fade);
-
-            ScheduleChartsRefresh();
-        }
-
-        private void ReportsPage_Loaded(object sender, RoutedEventArgs e)
-        {
-            ScheduleChartsRefresh();
-        }
-
-        private void ScheduleChartsRefresh()
-        {
+            // Первый тик: дать WPF завершить Layout pass страницы
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
             {
-                RefreshChartsAfterLayout();
+                if (DataContext is MainViewModel mainViewModel)
+                {
+                    mainViewModel.RefreshReportData();
+                }
+
+                // Второй тик: принудительно заставить LiveCharts пересчитать размеры
+                // после того как данные уже установлены
+                Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
+                    DailyTrendChart.InvalidateMeasure();
+                    DailyTrendChart.InvalidateVisual();
+                    DailyTrendChart.UpdateLayout();
+                }));
             }));
-        }
-
-        private void RefreshChartsAfterLayout()
-        {
-            if (DataContext is MainViewModel mainViewModel)
-            {
-                mainViewModel.RefreshReportData();
-            }
-
-            ReportArea.UpdateLayout();
-            InvalidateVisual();
         }
     }
 }

@@ -6,6 +6,7 @@ namespace Refline.Data.Activity;
 public interface IActivityDataService
 {
     OperationResult<IReadOnlyList<AppActivity>> LoadByDate(DateTime activityDate);
+    OperationResult<IReadOnlyList<AppActivity>> LoadByDateRange(DateTime startDate, DateTime endDate);
     OperationResult<AppActivity?> GetByAppAndDate(string appName, DateTime activityDate);
     OperationResult SaveOrUpdate(AppActivity activity);
     OperationResult SaveAll(IEnumerable<AppActivity> activities, DateTime activityDate);

@@ -10,21 +10,27 @@ namespace Refline.Business.Identity;
 public sealed class ApiLicenseActivationService : ILicenseActivationService
 {
     private readonly HttpClient _httpClient;
+    private readonly ApiAuthorizationService _apiAuthorizationService;
     private readonly ILocalActivationStateStore _activationStateStore;
     private readonly IDeviceIdentityProvider _deviceIdentityProvider;
     private readonly ICurrentUserContext _currentUserContext;
+    private readonly ICurrentUserSessionStore _currentUserSessionStore;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
     public ApiLicenseActivationService(
         HttpClient httpClient,
+        ApiAuthorizationService apiAuthorizationService,
         ILocalActivationStateStore activationStateStore,
         IDeviceIdentityProvider deviceIdentityProvider,
-        ICurrentUserContext currentUserContext)
+        ICurrentUserContext currentUserContext,
+        ICurrentUserSessionStore currentUserSessionStore)
     {
         _httpClient = httpClient;
+        _apiAuthorizationService = apiAuthorizationService;
         _activationStateStore = activationStateStore;
         _deviceIdentityProvider = deviceIdentityProvider;
         _currentUserContext = currentUserContext;
+        _currentUserSessionStore = currentUserSessionStore;
     }
 
     public Task<OperationResult<License?>> ValidateLicenseKeyAsync(string key)
@@ -56,20 +62,30 @@ public sealed class ApiLicenseActivationService : ILicenseActivationService
 
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(
-                "api/licenses/activate",
-                new ActivateLicenseRequestDto
-                {
-                    UserId = serverUserId,
-                    LicenseKey = (licenseKey ?? string.Empty).Trim(),
-                    DeviceId = deviceIdResult.Value,
-                    MachineName = Environment.MachineName
-                },
-                _jsonOptions);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/licenses/activate")
+            {
+                Content = JsonContent.Create(
+                    new ActivateLicenseRequestDto
+                    {
+                        UserId = serverUserId,
+                        LicenseKey = (licenseKey ?? string.Empty).Trim(),
+                        DeviceId = deviceIdResult.Value,
+                        MachineName = Environment.MachineName
+                    },
+                    options: _jsonOptions)
+            };
+
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request);
+            if (!authorizeResult.IsSuccess)
+            {
+                return OperationResult<DeviceActivation>.Failure(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
-                var message = await ReadErrorMessageAsync(response);
+                var message = await ReadErrorMessageAsync(response, CancellationToken.None);
                 return OperationResult<DeviceActivation>.Failure(message, $"HTTP_{(int)response.StatusCode}");
             }
 
@@ -146,11 +162,140 @@ public sealed class ApiLicenseActivationService : ILicenseActivationService
             !string.IsNullOrWhiteSpace(state.CurrentDeviceId));
     }
 
-    private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response)
+    public async Task<OperationResult<CurrentActivationValidationResult>> ValidateCurrentActivationAsync(CancellationToken cancellationToken = default)
+    {
+        var stateResult = await _activationStateStore.LoadAsync();
+        if (!stateResult.IsSuccess)
+        {
+            return OperationResult<CurrentActivationValidationResult>.Failure(stateResult.Message, stateResult.ErrorCode);
+        }
+
+        var state = stateResult.Value ?? LocalActivationState.Empty();
+        if (!state.IsActivated ||
+            !state.CurrentUserId.HasValue ||
+            string.IsNullOrWhiteSpace(state.CurrentLicenseKey) ||
+            string.IsNullOrWhiteSpace(state.CurrentDeviceId))
+        {
+            return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+            {
+                Status = CurrentActivationValidationStatus.NotActivated,
+                Message = "Локальная активация отсутствует."
+            });
+        }
+
+        try
+        {
+            var requestUri =
+                $"api/licenses/activations/current?licenseKey={Uri.EscapeDataString(state.CurrentLicenseKey)}&deviceId={Uri.EscapeDataString(state.CurrentDeviceId)}";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            var authorizeResult = await _apiAuthorizationService.AuthorizeRequestAsync(request, cancellationToken);
+            if (!authorizeResult.IsSuccess)
+            {
+                return await HandleValidationFailureAsync(authorizeResult.Message, authorizeResult.ErrorCode);
+            }
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var activationResponse = await response.Content.ReadFromJsonAsync<ActivateLicenseResponseDto>(_jsonOptions, cancellationToken);
+                if (activationResponse == null)
+                {
+                    return OperationResult<CurrentActivationValidationResult>.Failure(
+                        "API вернул пустой ответ проверки активации.",
+                        "API_EMPTY_RESPONSE");
+                }
+
+                if (activationResponse.IsRevoked)
+                {
+                    return await RevokeCurrentActivationAsync();
+                }
+
+                state.LastValidatedAt = activationResponse.LastSeenAt.UtcDateTime;
+                var saveResult = await _activationStateStore.SaveAsync(state);
+                if (!saveResult.IsSuccess)
+                {
+                    return OperationResult<CurrentActivationValidationResult>.Failure(saveResult.Message, saveResult.ErrorCode);
+                }
+
+                return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+                {
+                    Status = CurrentActivationValidationStatus.Valid,
+                    Message = "Активация устройства подтверждена."
+                });
+            }
+
+            var errorMessage = await ReadErrorMessageAsync(response, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound ||
+                response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                return await RevokeCurrentActivationAsync(errorMessage);
+            }
+
+            return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+            {
+                Status = CurrentActivationValidationStatus.Unavailable,
+                Message = string.IsNullOrWhiteSpace(errorMessage)
+                    ? $"Проверка активации недоступна: HTTP {(int)response.StatusCode}."
+                    : errorMessage
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+            {
+                Status = CurrentActivationValidationStatus.Unavailable,
+                Message = $"API недоступен: {ex.Message}"
+            });
+        }
+        catch (TaskCanceledException ex)
+        {
+            return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+            {
+                Status = CurrentActivationValidationStatus.Unavailable,
+                Message = $"Превышено время ожидания API: {ex.Message}"
+            });
+        }
+    }
+
+    private async Task<OperationResult<CurrentActivationValidationResult>> HandleValidationFailureAsync(string message, string? errorCode)
+    {
+        if (string.Equals(errorCode, "HTTP_401", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(errorCode, "HTTP_403", StringComparison.OrdinalIgnoreCase))
+        {
+            return await RevokeCurrentActivationAsync(string.IsNullOrWhiteSpace(message)
+                ? "Текущая активация более недействительна."
+                : message);
+        }
+
+        return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+        {
+            Status = CurrentActivationValidationStatus.Unavailable,
+            Message = message
+        });
+    }
+
+    private async Task<OperationResult<CurrentActivationValidationResult>> RevokeCurrentActivationAsync(string? message = null)
+    {
+        _currentUserContext.Clear();
+        await _currentUserSessionStore.ClearAsync();
+        await _activationStateStore.ClearAsync();
+
+        return OperationResult<CurrentActivationValidationResult>.Success(new CurrentActivationValidationResult
+        {
+            Status = CurrentActivationValidationStatus.Revoked,
+            Message = string.IsNullOrWhiteSpace(message)
+                ? "Это устройство было отвязано от лицензии. Выполните активацию заново."
+                : message
+        });
+    }
+
+    private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         try
         {
-            var error = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(_jsonOptions);
+            var error = await response.Content.ReadFromJsonAsync<ApiErrorResponse>(_jsonOptions, cancellationToken);
             if (!string.IsNullOrWhiteSpace(error?.Message))
             {
                 return error.Message;
@@ -160,7 +305,7 @@ public sealed class ApiLicenseActivationService : ILicenseActivationService
         {
         }
 
-        var fallback = await response.Content.ReadAsStringAsync();
+        var fallback = await response.Content.ReadAsStringAsync(cancellationToken);
         return string.IsNullOrWhiteSpace(fallback)
             ? $"Ошибка API: HTTP {(int)response.StatusCode}."
             : fallback;
